@@ -19,6 +19,7 @@ jobs:
 
     - name: 'Validate build'
       run: |
+        cd build_and_deploy
         npm install
         npm run build
     - name: 'Run tests'
