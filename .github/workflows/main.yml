@@ -8,18 +8,15 @@ on:
 jobs:
   build_test_job:
     name: 'Build and test job'
-    runs-on: ${{ matrix.os }}
-    strategy:
-        matrix:
-          os: [windows-latest, ubuntu-latest, macos-latest]
+    runs-on: ubuntu-latest
     steps:
 
     - name: 'Checking out repo code'
       uses: actions/checkout@v2
 
     - name: 'Validate build'
+      working-directory: ./build_and_deploy
       run: |
-        cd build_and_deploy
         npm install
         npm run build
     - name: 'Run tests'
