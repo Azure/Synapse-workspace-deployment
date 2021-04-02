@@ -1,3 +1,5 @@
+//this is a dummy comment. will delete
+
 import {getParams, getRMUrl} from "../utils/deploy_utils";
 import {
     createArmTemplate,
