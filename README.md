@@ -75,7 +75,8 @@ can be obtained by `Service Principal`. These are sensitive details and must be 
 * Azure US Government - https://dev.azuresynapse.usgovcloudapi.net
 
 
-##Trademarks
+## Trademarks
+
 This project may contain trademarks or logos for projects, products, or services. Authorized use of Microsoft
 trademarks or logos is subject to and must follow
 [Microsoft's Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
