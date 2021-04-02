@@ -49,7 +49,7 @@ TargetWorkspaceName:
 ## Usage
 
 ```yaml
-uses: Azure/synapse_deployment
+uses: Azure/synapse-workspace-deployment
         with:
           TargetWorkspaceName: 'targetworkspace'
           TemplateFile: './TemplateForWorkspace.json'
@@ -64,6 +64,7 @@ uses: Azure/synapse_deployment
           resourceManagerEndpointUrl: ${{ secrets.RME }}
 ```
 
+
 #### Secrets
 `clientId`, `clientSecret`, `subscriptionId`, `tenantId`, `activeDirectoryEndpointUrl`, `resourceManagerEndpointUrl`
 can be obtained by `Service Principal`. These are sensitive details and must be stored in GitHub secrets.
@@ -75,7 +76,6 @@ can be obtained by `Service Principal`. These are sensitive details and must be 
 
 
 ##Trademarks
-
 This project may contain trademarks or logos for projects, products, or services. Authorized use of Microsoft
 trademarks or logos is subject to and must follow
 [Microsoft's Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
