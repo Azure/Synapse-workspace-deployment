@@ -32,7 +32,7 @@ describe("Test deploy utils", () => {
 
     it('should return resource manager url for prod', async () => {
 
-        let RmURL = await getRMUrl('prod');
+        let RmURL = await getRMUrl('Azure Public');
         expect(RmURL).to.be.equal('https://dev.azuresynapse.net');
     });
 
