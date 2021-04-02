@@ -5,7 +5,8 @@
   "main": "entrypoint.js",
   "scripts": {
     "test": "mocha",
-    "start": "node entrypoint.js"
+    "start": "node entrypoint.js",
+    "build": "tsc"
   },
   "keywords": [],
   "author": "Aaditya Sharma",
