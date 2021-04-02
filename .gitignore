@@ -1,0 +1,5 @@
+build_and_deploy/node_modules
+.idea
+build_and_deploy/**/*.js
+build_and_deploy/**/*.js.map
+!build_and_deploy/dist/**
