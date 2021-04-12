@@ -40,4 +40,4 @@ inputs:
     required: true
 runs:
   using: 'node12'
-  main: './build_and_deploy/dist/index.js'
+  main: './dist/index.js'
