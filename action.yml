@@ -1,4 +1,4 @@
-name: 'Synapse action'
+name: 'Synapse workspace deployment'
 description: 'Use this GitHub action to deploy synapse workspace.'
 inputs:
   TargetWorkspaceName:
