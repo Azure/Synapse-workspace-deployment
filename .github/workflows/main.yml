@@ -20,5 +20,6 @@ jobs:
         npm install
         npm run build
     - name: 'Run tests'
+      working-directory: ./build_and_deploy
       run: |
         npm run test
