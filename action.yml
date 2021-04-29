@@ -39,5 +39,5 @@ inputs:
     description: 'Provide Resource Manager Endpoint.'
     required: true
 runs:
-  using: node12
+  using: 'node12'
   main: './dist/index.js'
