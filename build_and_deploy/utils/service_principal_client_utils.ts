@@ -38,7 +38,7 @@ export async function getBearer(
                     core.info(`Unable to fetch service principal token, status: ${resStatus}; status message: ${res.message.statusMessage}`);
                     let error = await res.readBody();
                     core.info(error);
-                    throw new Error(error);
+                    return reject(DeployStatus.failed);
                 }
 
                 core.info(`Able to fetch service principal token: ${resStatus}; status message: ${res.message.statusMessage}`);
