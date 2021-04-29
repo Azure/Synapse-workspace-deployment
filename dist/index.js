@@ -614,30 +614,30 @@ var orchestrator_1 = __nccwpck_require__(2833);
 var core = __importStar(__nccwpck_require__(4120));
 function main() {
     return __awaiter(this, void 0, void 0, function () {
-        var targetWorkspace, templateFile, parametersFile, overrideArmParameters, environment, packageFiles, artifactClient, _a, orchestrator, err_1;
-        return __generator(this, function (_b) {
-            switch (_b.label) {
+        var targetWorkspace, templateFile, parametersFile, overrideArmParameters, environment, packageFiles, params, artifactClient, orchestrator, err_1;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
                 case 0:
                     targetWorkspace = core.getInput('TargetWorkspaceName');
                     templateFile = core.getInput("TemplateFile");
                     parametersFile = core.getInput("ParametersFile");
                     overrideArmParameters = core.getInput('OverrideArmParameters');
                     environment = core.getInput('Environment');
-                    _b.label = 1;
+                    _a.label = 1;
                 case 1:
-                    _b.trys.push([1, 4, , 5]);
+                    _a.trys.push([1, 4, , 5]);
                     packageFiles = new package_file_1.PackageFile(templateFile, parametersFile);
-                    _a = artifacts_client_1.ArtifactClient.bind;
                     return [4 /*yield*/, deploy_utils_1.getParams()];
                 case 2:
-                    artifactClient = new (_a.apply(artifacts_client_1.ArtifactClient, [void 0, _b.sent()]))();
+                    params = _a.sent();
+                    artifactClient = new artifacts_client_1.ArtifactClient(params);
                     orchestrator = new orchestrator_1.Orchestrator(packageFiles, artifactClient, targetWorkspace, environment, overrideArmParameters);
                     return [4 /*yield*/, orchestrator.orchestrateFromPublishBranch()];
                 case 3:
-                    _b.sent();
+                    _a.sent();
                     return [3 /*break*/, 5];
                 case 4:
-                    err_1 = _b.sent();
+                    err_1 = _a.sent();
                     throw new Error(err_1.message);
                 case 5: return [2 /*return*/];
             }
@@ -9578,7 +9578,7 @@ function getBearer(clientId, clientSecret, subscriptionId, tenantId, resourceMan
                                     case 1:
                                         error = _a.sent();
                                         core.info(error);
-                                        throw new Error(error);
+                                        return [2 /*return*/, reject(deploy_utils_1.DeployStatus.failed)];
                                     case 2:
                                         core.info("Able to fetch service principal token: " + resStatus + "; status message: " + res.message.statusMessage);
                                         return [4 /*yield*/, res.readBody()];

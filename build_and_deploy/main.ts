@@ -18,7 +18,8 @@ export async function main() {
 
     try{
         let packageFiles: PackageFile = new PackageFile(templateFile, parametersFile);
-        let artifactClient: ArtifactClient = new ArtifactClient(await getParams());
+        let params = await getParams();
+        let artifactClient: ArtifactClient = new ArtifactClient(params);
 
         let orchestrator: Orchestrator = new Orchestrator(
             packageFiles,
