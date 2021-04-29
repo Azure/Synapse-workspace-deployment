@@ -525,8 +525,6 @@ var ArtifactClient = /** @class */ (function () {
     };
     ArtifactClient.prototype.getUrlByEnvironment = function (workspace, environment) {
         switch (environment) {
-            case deploy_utils_1.Env.ppe.toString():
-                return "https://" + workspace + ".dev.azuresynapse-dogfood.net";
             case deploy_utils_1.Env.prod.toString():
                 return "https://" + workspace + ".dev.azuresynapse.net";
             case deploy_utils_1.Env.mooncake.toString():
@@ -616,7 +614,7 @@ var orchestrator_1 = __nccwpck_require__(2833);
 var core = __importStar(__nccwpck_require__(4120));
 function main() {
     return __awaiter(this, void 0, void 0, function () {
-        var targetWorkspace, templateFile, parametersFile, overrideArmParameters, environment, packageFiles, artifactClient, _a, orchestrator;
+        var targetWorkspace, templateFile, parametersFile, overrideArmParameters, environment, packageFiles, artifactClient, _a, orchestrator, err_1;
         return __generator(this, function (_b) {
             switch (_b.label) {
                 case 0:
@@ -625,16 +623,23 @@ function main() {
                     parametersFile = core.getInput("ParametersFile");
                     overrideArmParameters = core.getInput('OverrideArmParameters');
                     environment = core.getInput('Environment');
+                    _b.label = 1;
+                case 1:
+                    _b.trys.push([1, 4, , 5]);
                     packageFiles = new package_file_1.PackageFile(templateFile, parametersFile);
                     _a = artifacts_client_1.ArtifactClient.bind;
                     return [4 /*yield*/, deploy_utils_1.getParams()];
-                case 1:
+                case 2:
                     artifactClient = new (_a.apply(artifacts_client_1.ArtifactClient, [void 0, _b.sent()]))();
                     orchestrator = new orchestrator_1.Orchestrator(packageFiles, artifactClient, targetWorkspace, environment, overrideArmParameters);
                     return [4 /*yield*/, orchestrator.orchestrateFromPublishBranch()];
-                case 2:
+                case 3:
                     _b.sent();
-                    return [2 /*return*/];
+                    return [3 /*break*/, 5];
+                case 4:
+                    err_1 = _b.sent();
+                    throw new Error(err_1.message);
+                case 5: return [2 /*return*/];
             }
         });
     });
@@ -9402,7 +9407,6 @@ var DeployStatus;
 var Env;
 (function (Env) {
     Env["prod"] = "Azure Public";
-    Env["ppe"] = "Azure Ppe";
     Env["mooncake"] = "Azure China";
     Env["usnat"] = "Azure US Government";
     Env["blackforest"] = "Azure Germany";
@@ -9463,8 +9467,6 @@ function getRMUrl(env) {
         return __generator(this, function (_a) {
             switch (env) {
                 case Env.prod.toString():
-                    return [2 /*return*/, "https://dev.azuresynapse.net"];
-                case Env.ppe.toString():
                     return [2 /*return*/, "https://dev.azuresynapse.net"];
                 case Env.mooncake.toString():
                     return [2 /*return*/, "https://dev.azuresynapse.azure.cn"];
@@ -9556,37 +9558,41 @@ function getBearer(clientId, clientSecret, subscriptionId, tenantId, resourceMan
     return __awaiter(this, void 0, void 0, function () {
         var _this = this;
         return __generator(this, function (_a) {
-            return [2 /*return*/, new Promise(function (resolve, reject) {
-                    var url = "" + activeDirectoryEndpointUrl + tenantId + "/oauth2/token";
-                    var headers = {
-                        'Content-Type': 'application/x-www-form-urlencoded'
-                    };
-                    var requestBody = "client_id=" + clientId + "&client_secret=" + clientSecret + "&resource=" + encodeURIComponent(resourceManagerEndpointUrl) + "&subscription_id=" + subscriptionId + "&grant_type=client_credentials";
-                    client.post(url, requestBody, headers).then(function (res) { return __awaiter(_this, void 0, void 0, function () {
-                        var resStatus, error, body;
-                        return __generator(this, function (_a) {
-                            switch (_a.label) {
-                                case 0:
-                                    resStatus = res.message.statusCode;
-                                    if (!(resStatus != 200 && resStatus != 201 && resStatus != 202)) return [3 /*break*/, 2];
-                                    core.info("Unable to fetch service principal token, status: " + resStatus + "; status message: " + res.message.statusMessage);
-                                    return [4 /*yield*/, res.readBody()];
-                                case 1:
-                                    error = _a.sent();
-                                    core.info(error);
-                                    throw new Error(error);
-                                case 2:
-                                    core.info("Able to fetch service principal token: " + resStatus + "; status message: " + res.message.statusMessage);
-                                    return [4 /*yield*/, res.readBody()];
-                                case 3:
-                                    body = _a.sent();
-                                    return [2 /*return*/, resolve(JSON.parse(body)["access_token"])];
-                            }
-                        });
-                    }); });
-                }).catch(function (err) {
-                    throw new Error("Unable to fetch the service principal token: " + err.message);
-                })];
+            try {
+                return [2 /*return*/, new Promise(function (resolve, reject) {
+                        var url = "" + activeDirectoryEndpointUrl + tenantId + "/oauth2/token";
+                        var headers = {
+                            'Content-Type': 'application/x-www-form-urlencoded'
+                        };
+                        var requestBody = "client_id=" + clientId + "&client_secret=" + clientSecret + "&resource=" + encodeURIComponent(resourceManagerEndpointUrl) + "&subscription_id=" + subscriptionId + "&grant_type=client_credentials";
+                        client.post(url, requestBody, headers).then(function (res) { return __awaiter(_this, void 0, void 0, function () {
+                            var resStatus, error, body;
+                            return __generator(this, function (_a) {
+                                switch (_a.label) {
+                                    case 0:
+                                        resStatus = res.message.statusCode;
+                                        if (!(resStatus != 200 && resStatus != 201 && resStatus != 202)) return [3 /*break*/, 2];
+                                        core.info("Unable to fetch service principal token, status: " + resStatus + "; status message: " + res.message.statusMessage);
+                                        return [4 /*yield*/, res.readBody()];
+                                    case 1:
+                                        error = _a.sent();
+                                        core.info(error);
+                                        throw new Error(error);
+                                    case 2:
+                                        core.info("Able to fetch service principal token: " + resStatus + "; status message: " + res.message.statusMessage);
+                                        return [4 /*yield*/, res.readBody()];
+                                    case 3:
+                                        body = _a.sent();
+                                        return [2 /*return*/, resolve(JSON.parse(body)["access_token"])];
+                                }
+                            });
+                        }); });
+                    })];
+            }
+            catch (err) {
+                throw new Error("Unable to fetch the service principal token: " + err.message);
+            }
+            return [2 /*return*/];
         });
     });
 }
@@ -9595,38 +9601,41 @@ function getWorkspaceLocation(params, targetWorkspace) {
     return __awaiter(this, void 0, void 0, function () {
         var _this = this;
         return __generator(this, function (_a) {
-            return [2 /*return*/, new Promise(function (resolve, reject) {
-                    var resourceManagerEndpointUrl = params.resourceManagerEndpointUrl;
-                    var subscriptionId = params.subscriptionId;
-                    var resourceGroup = params.resourceGroup;
-                    var headers = {
-                        'Authorization': 'Bearer ' + params.bearer
-                    };
-                    var url = resourceManagerEndpointUrl + "subscriptions/" + subscriptionId + "/" +
-                        ("resourceGroups/" + resourceGroup + "/providers/Microsoft.Synapse/workspaces/") +
-                        (targetWorkspace + "?api-version=2019-06-01-preview");
-                    client.get(url, headers).then(function (res) { return __awaiter(_this, void 0, void 0, function () {
-                        var resStatus, body;
-                        return __generator(this, function (_a) {
-                            switch (_a.label) {
-                                case 0:
-                                    resStatus = res.message.statusCode;
-                                    if (resStatus != 200 && resStatus != 201 && resStatus != 202) {
-                                        core.info("Unable to fetch location of workspace, status: " + resStatus + "; status message: " + res.message.statusMessage);
-                                        throw new Error("Unable to fetch location of workspace, status: " + resStatus);
-                                    }
-                                    core.info("Able to fetch location of workspace: " + resStatus + "; status message: " + res.message.statusMessage);
-                                    return [4 /*yield*/, res.readBody()];
-                                case 1:
-                                    body = _a.sent();
-                                    return [2 /*return*/, resolve(JSON.parse(body)['location'])];
-                            }
-                        });
-                    }); });
-                }).catch(function (err) {
-                    core.info(err.message);
-                    process.exit(1);
-                })];
+            try {
+                return [2 /*return*/, new Promise(function (resolve, reject) {
+                        var resourceManagerEndpointUrl = params.resourceManagerEndpointUrl;
+                        var subscriptionId = params.subscriptionId;
+                        var resourceGroup = params.resourceGroup;
+                        var headers = {
+                            'Authorization': 'Bearer ' + params.bearer
+                        };
+                        var url = resourceManagerEndpointUrl + "subscriptions/" + subscriptionId + "/" +
+                            ("resourceGroups/" + resourceGroup + "/providers/Microsoft.Synapse/workspaces/") +
+                            (targetWorkspace + "?api-version=2019-06-01-preview");
+                        client.get(url, headers).then(function (res) { return __awaiter(_this, void 0, void 0, function () {
+                            var resStatus, body;
+                            return __generator(this, function (_a) {
+                                switch (_a.label) {
+                                    case 0:
+                                        resStatus = res.message.statusCode;
+                                        if (resStatus != 200 && resStatus != 201 && resStatus != 202) {
+                                            core.info("Unable to fetch location of workspace, status: " + resStatus + "; status message: " + res.message.statusMessage);
+                                            throw new Error("Unable to fetch location of workspace, status: " + resStatus);
+                                        }
+                                        core.info("Able to fetch location of workspace: " + resStatus + "; status message: " + res.message.statusMessage);
+                                        return [4 /*yield*/, res.readBody()];
+                                    case 1:
+                                        body = _a.sent();
+                                        return [2 /*return*/, resolve(JSON.parse(body)['location'])];
+                                }
+                            });
+                        }); }).catch(function (err) { throw new Error(err.message); });
+                    })];
+            }
+            catch (err) {
+                throw new Error("Unable to fetch the location of the workspace: " + err.message);
+            }
+            return [2 /*return*/];
         });
     });
 }
