@@ -16,18 +16,23 @@ export async function main() {
     const overrideArmParameters: string = core.getInput('OverrideArmParameters');
     const environment: string = core.getInput('Environment');
 
+    try{
+        let packageFiles: PackageFile = new PackageFile(templateFile, parametersFile);
+        let artifactClient: ArtifactClient = new ArtifactClient(await getParams());
 
-    let packageFiles: PackageFile = new PackageFile(templateFile, parametersFile);
-    let artifactClient: ArtifactClient = new ArtifactClient(await getParams());
+        let orchestrator: Orchestrator = new Orchestrator(
+            packageFiles,
+            artifactClient,
+            targetWorkspace,
+            environment,
+            overrideArmParameters
+        );
+        await orchestrator.orchestrateFromPublishBranch();
+    }catch(err){
+        throw new Error(err.message);
+    }
 
-    let orchestrator: Orchestrator = new Orchestrator(
-        packageFiles,
-        artifactClient,
-        targetWorkspace,
-        environment,
-        overrideArmParameters
-    );
-    await orchestrator.orchestrateFromPublishBranch();
+
 }
 
 main()
