@@ -9550,6 +9550,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.getWorkspaceLocation = exports.getBearer = void 0;
 var httpClient = __importStar(__nccwpck_require__(6291));
+var deploy_utils_1 = __nccwpck_require__(3850);
 var core = __importStar(__nccwpck_require__(4120));
 var userAgent = 'synapse-github-cicd-deploy-task';
 var requestOptions = {};
@@ -9620,7 +9621,7 @@ function getWorkspaceLocation(params, targetWorkspace) {
                                         resStatus = res.message.statusCode;
                                         if (resStatus != 200 && resStatus != 201 && resStatus != 202) {
                                             core.info("Unable to fetch location of workspace, status: " + resStatus + "; status message: " + res.message.statusMessage);
-                                            throw new Error("Unable to fetch location of workspace, status: " + resStatus);
+                                            return [2 /*return*/, reject(deploy_utils_1.DeployStatus.failed)];
                                         }
                                         core.info("Able to fetch location of workspace: " + resStatus + "; status message: " + res.message.statusMessage);
                                         return [4 /*yield*/, res.readBody()];
@@ -9629,7 +9630,7 @@ function getWorkspaceLocation(params, targetWorkspace) {
                                         return [2 /*return*/, resolve(JSON.parse(body)['location'])];
                                 }
                             });
-                        }); }).catch(function (err) { throw new Error(err.message); });
+                        }); });
                     })];
             }
             catch (err) {

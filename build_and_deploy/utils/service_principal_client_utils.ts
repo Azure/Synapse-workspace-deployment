@@ -75,13 +75,13 @@ export async function getWorkspaceLocation(params: Params, targetWorkspace: stri
                 let resStatus = res.message.statusCode;
                 if (resStatus != 200 && resStatus != 201 && resStatus != 202) {
                     core.info(`Unable to fetch location of workspace, status: ${resStatus}; status message: ${res.message.statusMessage}`);
-                    throw new Error(`Unable to fetch location of workspace, status: ${resStatus}`)
+                    return reject(DeployStatus.failed);
                 }
 
                 core.info(`Able to fetch location of workspace: ${resStatus}; status message: ${res.message.statusMessage}`);
                 let body = await res.readBody();
                 return resolve(JSON.parse(body)['location']);
-            }).catch((err) => {throw new Error(err.message)});
+            })
         });
     } catch (err) {
         throw new Error("Unable to fetch the location of the workspace: " + err.message);
