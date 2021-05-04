@@ -17,7 +17,7 @@ TargetWorkspaceName:
     description: 'Specify the path to the template parameter file.'
     required: true
   OverrideArmParameters:
-    description: 'Specify deployment parameter values.'
+    description: 'Specify the path to deployment parameter values.'
     default: ''
     required: false
   Environment:
