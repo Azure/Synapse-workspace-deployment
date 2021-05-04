@@ -15,16 +15,14 @@ export class Orchestrator{
     private artifactClient: ArtifactClient;
     private targetWorkspace: string;
     private environment: string;
-    private overrideArmParameters: string
 
     constructor(packageFiles: PackageFile, artifactClient: ArtifactClient,
-                targetWorkspace: string, environment: string, overrideArmParameters: string) {
+                targetWorkspace: string, environment: string) {
 
         this.packageFiles = packageFiles;
         this.artifactClient = artifactClient;
         this.targetWorkspace = targetWorkspace;
         this.environment = environment;
-        this.overrideArmParameters = overrideArmParameters;
     }
 
     public async orchestrateFromPublishBranch(){
@@ -32,13 +30,14 @@ export class Orchestrator{
             let packageFilesContent: PackageFilesContent = await this.packageFiles.getPackageFiles();
             let armTemplateContent = packageFilesContent.templateFileContent;
             let armParameterContent = packageFilesContent.parametersFileContent;
+            let overrideArmParameters = packageFilesContent.armOverridesContent;
 
             if (!(armTemplateContent && armParameterContent)) {
                 throw new Error('Empty template or parameters file');
             }
 
             let targetLocation = await getWorkspaceLocation(this.artifactClient.getParams(), this.targetWorkspace);
-            let artifactsToDeploy: Resource[][] = await getArtifacts(armParameterContent, armTemplateContent, this.overrideArmParameters,
+            let artifactsToDeploy: Resource[][] = await getArtifacts(armParameterContent, armTemplateContent, overrideArmParameters,
                                                                     this.targetWorkspace, targetLocation);
 
             await this.deployResourcesInOrder(this.artifactClient, artifactsToDeploy, this.targetWorkspace, this.environment);

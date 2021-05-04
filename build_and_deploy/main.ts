@@ -17,7 +17,7 @@ export async function main() {
     const environment: string = core.getInput('Environment');
 
     try{
-        let packageFiles: PackageFile = new PackageFile(templateFile, parametersFile);
+        let packageFiles: PackageFile = new PackageFile(templateFile, parametersFile, overrideArmParameters);
         let params = await getParams();
         let artifactClient: ArtifactClient = new ArtifactClient(params);
 
@@ -25,8 +25,7 @@ export async function main() {
             packageFiles,
             artifactClient,
             targetWorkspace,
-            environment,
-            overrideArmParameters
+            environment
         );
         await orchestrator.orchestrateFromPublishBranch();
     }catch(err){

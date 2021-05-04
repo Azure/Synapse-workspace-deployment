@@ -10,7 +10,8 @@ describe("Validate package file modules", () => {
     it('should fetch content of files', () => {
         let templateFile = "./test/helpers/templates/template.txt";
         let parametersFile = "./test/helpers/templates/template.txt";
-        let packageFiles: PackageFile = new PackageFile(templateFile, parametersFile);
+        let armOverrides = "./test/helpers/templates/template.txt";
+        let packageFiles: PackageFile = new PackageFile(templateFile, parametersFile, armOverrides);
         let packageFilesContent: PackageFilesContent = packageFiles.getPackageFiles();
         let armTemplateContent = packageFilesContent.templateFileContent;
         let armParameterContent = packageFilesContent.parametersFileContent;
@@ -21,14 +22,16 @@ describe("Validate package file modules", () => {
     it('should fail while reading the files (file name incorrect)', () => {
         let templateFile = './test/helpers/templates/fail.txt';
         let parametersFile = './test/helpers/templates/fail.txt';
-        let packageFiles: PackageFile = new PackageFile(templateFile, parametersFile);
+        let armOverrides = "./test/helpers/templates/fail.txt";
+        let packageFiles: PackageFile = new PackageFile(templateFile, parametersFile, armOverrides);
         assert.throws(function(){ packageFiles.getPackageFiles()}, Error);
     });
 
     it('should fail while reading the files (is a directory)', () => {
         let templateFile = './helpers/templates';
         let parametersFile = './helpers/templates';
-        let packageFiles: PackageFile = new PackageFile(templateFile, parametersFile);
+        let armOverrides = './helpers/templates';
+        let packageFiles: PackageFile = new PackageFile(templateFile, parametersFile, armOverrides);
         assert.throws(function(){ packageFiles.getPackageFiles()}, Error);
     });
 

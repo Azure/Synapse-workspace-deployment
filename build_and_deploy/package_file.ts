@@ -4,31 +4,36 @@
 
 export interface PackageFiles {
     templateFile: string,
-    parametersFile: string
+    parametersFile: string,
+    armOverrides: string
 }
 
 export interface PackageFilesContent {
     templateFileContent: string,
-    parametersFileContent: string
+    parametersFileContent: string,
+    armOverridesContent: string
 }
 
 export class PackageFile {
     fs = require("fs");
     packageFiles: PackageFiles;
 
-    constructor(templateFile: string, parametersFile: string) {
+    constructor(templateFile: string, parametersFile: string, armOverrides: string) {
         this.packageFiles = {
             templateFile: templateFile,
-            parametersFile: parametersFile
+            parametersFile: parametersFile,
+            armOverrides: armOverrides
         };
     }
 
     public getPackageFiles() :PackageFilesContent {
         let parametersFileContent = this.getPackageFileContent(this.packageFiles.parametersFile);
         let templateFileContent = this.getPackageFileContent(this.packageFiles.templateFile);
+        let armOverridesContent = this.getPackageFileContent(this.packageFiles.armOverrides);
         return {
             templateFileContent: templateFileContent,
-            parametersFileContent: parametersFileContent
+            parametersFileContent: parametersFileContent,
+            armOverridesContent: armOverridesContent
         };
     }
 

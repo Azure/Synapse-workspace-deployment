@@ -626,12 +626,12 @@ function main() {
                     _a.label = 1;
                 case 1:
                     _a.trys.push([1, 4, , 5]);
-                    packageFiles = new package_file_1.PackageFile(templateFile, parametersFile);
+                    packageFiles = new package_file_1.PackageFile(templateFile, parametersFile, overrideArmParameters);
                     return [4 /*yield*/, deploy_utils_1.getParams()];
                 case 2:
                     params = _a.sent();
                     artifactClient = new artifacts_client_1.ArtifactClient(params);
-                    orchestrator = new orchestrator_1.Orchestrator(packageFiles, artifactClient, targetWorkspace, environment, overrideArmParameters);
+                    orchestrator = new orchestrator_1.Orchestrator(packageFiles, artifactClient, targetWorkspace, environment);
                     return [4 /*yield*/, orchestrator.orchestrateFromPublishBranch()];
                 case 3:
                     _a.sent();
@@ -8580,16 +8580,15 @@ var deploy_utils_1 = __nccwpck_require__(3850);
 var core = __importStar(__nccwpck_require__(4120));
 var artifacts_enum_1 = __nccwpck_require__(5724);
 var Orchestrator = /** @class */ (function () {
-    function Orchestrator(packageFiles, artifactClient, targetWorkspace, environment, overrideArmParameters) {
+    function Orchestrator(packageFiles, artifactClient, targetWorkspace, environment) {
         this.packageFiles = packageFiles;
         this.artifactClient = artifactClient;
         this.targetWorkspace = targetWorkspace;
         this.environment = environment;
-        this.overrideArmParameters = overrideArmParameters;
     }
     Orchestrator.prototype.orchestrateFromPublishBranch = function () {
         return __awaiter(this, void 0, void 0, function () {
-            var packageFilesContent, armTemplateContent, armParameterContent, targetLocation, artifactsToDeploy, err_1;
+            var packageFilesContent, armTemplateContent, armParameterContent, overrideArmParameters, targetLocation, artifactsToDeploy, err_1;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
@@ -8599,13 +8598,14 @@ var Orchestrator = /** @class */ (function () {
                         packageFilesContent = _a.sent();
                         armTemplateContent = packageFilesContent.templateFileContent;
                         armParameterContent = packageFilesContent.parametersFileContent;
+                        overrideArmParameters = packageFilesContent.armOverridesContent;
                         if (!(armTemplateContent && armParameterContent)) {
                             throw new Error('Empty template or parameters file');
                         }
                         return [4 /*yield*/, service_principal_client_utils_1.getWorkspaceLocation(this.artifactClient.getParams(), this.targetWorkspace)];
                     case 2:
                         targetLocation = _a.sent();
-                        return [4 /*yield*/, arm_template_utils_1.getArtifacts(armParameterContent, armTemplateContent, this.overrideArmParameters, this.targetWorkspace, targetLocation)];
+                        return [4 /*yield*/, arm_template_utils_1.getArtifacts(armParameterContent, armTemplateContent, overrideArmParameters, this.targetWorkspace, targetLocation)];
                     case 3:
                         artifactsToDeploy = _a.sent();
                         return [4 /*yield*/, this.deployResourcesInOrder(this.artifactClient, artifactsToDeploy, this.targetWorkspace, this.environment)];
@@ -8718,19 +8718,22 @@ exports.Orchestrator = Orchestrator;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.PackageFile = void 0;
 var PackageFile = /** @class */ (function () {
-    function PackageFile(templateFile, parametersFile) {
+    function PackageFile(templateFile, parametersFile, armOverrides) {
         this.fs = __nccwpck_require__(5747);
         this.packageFiles = {
             templateFile: templateFile,
-            parametersFile: parametersFile
+            parametersFile: parametersFile,
+            armOverrides: armOverrides
         };
     }
     PackageFile.prototype.getPackageFiles = function () {
         var parametersFileContent = this.getPackageFileContent(this.packageFiles.parametersFile);
         var templateFileContent = this.getPackageFileContent(this.packageFiles.templateFile);
+        var armOverridesContent = this.getPackageFileContent(this.packageFiles.armOverrides);
         return {
             templateFileContent: templateFileContent,
-            parametersFileContent: parametersFileContent
+            parametersFileContent: parametersFileContent,
+            armOverridesContent: armOverridesContent
         };
     };
     PackageFile.prototype.getPackageFileContent = function (filePath) {
