@@ -38,7 +38,7 @@ export async function getBearer(
                     core.info(`Unable to fetch service principal token, status: ${resStatus}; status message: ${res.message.statusMessage}`);
                     let error = await res.readBody();
                     core.info(error);
-                    throw new Error(error);
+                    return reject(DeployStatus.failed);
                 }
 
                 core.info(`Able to fetch service principal token: ${resStatus}; status message: ${res.message.statusMessage}`);
@@ -70,17 +70,18 @@ export async function getWorkspaceLocation(params: Params, targetWorkspace: stri
                 `resourceGroups/${resourceGroup}/providers/Microsoft.Synapse/workspaces/` +
                 `${targetWorkspace}?api-version=2019-06-01-preview`;
 
+
             client.get(url, headers).then(async (res) => {
                 let resStatus = res.message.statusCode;
                 if (resStatus != 200 && resStatus != 201 && resStatus != 202) {
                     core.info(`Unable to fetch location of workspace, status: ${resStatus}; status message: ${res.message.statusMessage}`);
-                    throw new Error(`Unable to fetch location of workspace, status: ${resStatus}`)
+                    return reject(DeployStatus.failed);
                 }
 
                 core.info(`Able to fetch location of workspace: ${resStatus}; status message: ${res.message.statusMessage}`);
                 let body = await res.readBody();
                 return resolve(JSON.parse(body)['location']);
-            });
+            })
         });
     } catch (err) {
         throw new Error("Unable to fetch the location of the workspace: " + err.message);
