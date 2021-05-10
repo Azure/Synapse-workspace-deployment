@@ -1,13 +1,14 @@
-import {getParams, getRMUrl} from "../utils/deploy_utils";
+import * as core from '@actions/core';
 import {
     createArmTemplate,
     findDefaultArtifacts,
     getArtifactsFromArmTemplate,
     Resource
 } from "../utils/arm_template_utils";
-import {armParams, armTemplate, armTemplate_complete, expectedArmTemplate} from "./helpers/utils_test_helpers";
+import { getParams, getRMUrl } from "../utils/deploy_utils";
+import { ILogger, SystemLogger } from "../utils/logger";
+import { armParams, armTemplate, armTemplate_complete, expectedArmTemplate } from "./helpers/utils_test_helpers";
 const pcu = require("../utils/service_principal_client_utils");
-import * as core from '@actions/core';
 
 const chai_object = require('chai');
 const sinon = require("sinon");
@@ -17,9 +18,9 @@ const assert = chai_object.assert;
 describe("Test deploy utils", () => {
 
     it('should fetch params', async () => {
-        let stubbedGetBearer = sinon.stub(pcu, "getBearer").callsFake(() => {return "bearer"});
-        let stubbedSPAttributes = sinon.stub(core, "getInput").callsFake((x: any) => {return x});
-        let params =  await getParams();
+        let stubbedGetBearer = sinon.stub(pcu, "getBearer").callsFake(() => { return "bearer" });
+        let stubbedSPAttributes = sinon.stub(core, "getInput").callsFake((x: any) => { return x });
+        let params = await getParams();
         expect(params.clientId).to.be.equal('clientId');
         expect(params.clientSecret).to.be.equal('clientSecret');
         expect(params.subscriptionId).to.be.equal('subscriptionId');
@@ -69,9 +70,40 @@ describe("Test Arm template utils", () => {
         let defaultArtifacts = findDefaultArtifacts(completeArmTemplate, targetWorkspaceName);
         completeArmTemplate = JSON.stringify(JSON.parse(completeArmTemplate));
 
-        assert.throws(function(){getArtifactsFromArmTemplate(completeArmTemplate, 'useast', defaultArtifacts), Error,
-            "Could not figure out full dependency model. Some dependencies may not exist in template."});
+        assert.throws(function () {
+            getArtifactsFromArmTemplate(completeArmTemplate, 'useast', defaultArtifacts), Error,
+                "Could not figure out full dependency model. Some dependencies may not exist in template."
+        });
 
     })
 
+});
+
+describe("Test SystemLogger utils", () => {
+    it('undefined logger should not cause exception when calling log methods', () => {
+        SystemLogger.setLogger(undefined)
+        SystemLogger.info("Test");
+    });
+
+    it('ensure private logger log methods are called by system logger', () => {
+        const testLogger: ILogger = {
+            info(mesage: string) {
+                return mesage;
+            },
+            debug(message: string) {
+                return message;
+            },
+            error(message: string) {
+                return message;
+            },
+            warn(message: string) {
+                return message;
+            }
+        }
+        SystemLogger.setLogger(testLogger)
+        expect(SystemLogger.info("1")).to.be.equal("1");
+        expect(SystemLogger.debug("1")).to.be.equal("1");
+        expect(SystemLogger.error("1")).to.be.equal("1");
+        expect(SystemLogger.warn("1")).to.be.equal("1");
+    });
 });

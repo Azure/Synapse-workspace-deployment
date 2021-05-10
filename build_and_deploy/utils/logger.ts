@@ -13,7 +13,7 @@ interface ILogger {
 class SystemLogger {
     private static logger: ILogger | undefined = undefined;
 
-    static setLogger(logger: ILogger): void {
+    static setLogger(logger: ILogger | undefined): void {
         SystemLogger.logger = logger;
     }
 
