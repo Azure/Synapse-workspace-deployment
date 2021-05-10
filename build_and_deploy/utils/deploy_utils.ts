@@ -27,7 +27,7 @@ export interface Params {
     activeDirectoryEndpointUrl: string;
     resourceManagerEndpointUrl: string;
     bearer: string,
-    resourceGroup: string
+    resourceGroup: string,
 }
 
 export type ResourceType = 'credential' | 'sqlPool' | 'bigDataPool' | 'sqlscript' | 'notebook' | 'sparkjobdefinition'
@@ -50,7 +50,7 @@ export async function getParams(dataplane: boolean = false, env: string = ""): P
         throw new Error("Unable to parse the secret: " + err.message);
     }
 
-    try{
+    try {
         if (dataplane) {
             resourceManagerEndpointUrl = await getRMUrl(env);
         }

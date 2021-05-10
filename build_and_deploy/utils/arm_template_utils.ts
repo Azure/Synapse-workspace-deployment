@@ -2,15 +2,15 @@
 // Licensed under the MIT license.
 
 
-import { v4 as uuidv4 } from 'uuid';
-import * as core from '@actions/core';
 import * as yaml from 'js-yaml';
+import { v4 as uuidv4 } from 'uuid';
+import { SystemLogger } from './logger';
 
 
 let reg = /\[concat\((.*?),\s(.*?)\)\]/g;
 // Just 2 random Guids to replace backslash in parameters file.
-const backslash:string = "7FD5C49AB6444AC1ACCD56B689067FBBAD85B74B0D8943CA887371839DFECF85";
-const quote:string = "48C16896271D483C916DE1C4EC6F24DBC945F900F9AB464B828EC8005364D322";
+const backslash: string = "7FD5C49AB6444AC1ACCD56B689067FBBAD85B74B0D8943CA887371839DFECF85";
+const quote: string = "48C16896271D483C916DE1C4EC6F24DBC945F900F9AB464B828EC8005364D322";
 
 
 export interface Resource {
@@ -22,7 +22,7 @@ export interface Resource {
 }
 
 export async function getArtifacts(armParams: string, armTemplate: string, overrideArmParameters: string,
-                                   targetWorkspaceName: string, targetLocation: string): Promise<Resource[][]> {
+    targetWorkspaceName: string, targetLocation: string): Promise<Resource[][]> {
 
 
     armTemplate = createArmTemplate(armParams, armTemplate, overrideArmParameters, targetWorkspaceName);
@@ -32,7 +32,7 @@ export async function getArtifacts(armParams: string, armTemplate: string, overr
     return getArtifactsFromArmTemplate(armTemplate, targetLocation, defaultArtifacts);
 }
 
-export function createArmTemplate(armParams: string, armTemplate: string, overrideArmParameters: string, targetWorkspaceName: string){
+export function createArmTemplate(armParams: string, armTemplate: string, overrideArmParameters: string, targetWorkspaceName: string) {
 
     armParams = replaceBackSlash(armParams);
     overrideArmParameters = replaceBackSlash(overrideArmParameters);
@@ -43,24 +43,20 @@ export function createArmTemplate(armParams: string, armTemplate: string, overri
     return armTemplate;
 }
 
-export function replaceBackSlashCode(inputString: string): string
-{
-    if(inputString == null)
-    {
+export function replaceBackSlashCode(inputString: string): string {
+    if (inputString == null) {
         return "";
     }
 
     let outputString: string = inputString;
 
-    while(outputString.indexOf(quote)>=0)
-    {
+    while (outputString.indexOf(quote) >= 0) {
         outputString = outputString.substr(0, outputString.indexOf(quote))
             + `\\\"`
             + outputString.substr(outputString.indexOf(quote) + quote.length);
     }
 
-    while(outputString.indexOf(backslash)>=0)
-    {
+    while (outputString.indexOf(backslash) >= 0) {
         outputString = outputString.substr(0, outputString.indexOf(backslash))
             + `\\`
             + outputString.substr(outputString.indexOf(backslash) + backslash.length);
@@ -70,41 +66,34 @@ export function replaceBackSlashCode(inputString: string): string
 }
 
 function replaceBackSlash(inputString: string): string {
-    if(inputString == null || inputString=="")
-    {
+    if (inputString == null || inputString == "") {
         return "";
     }
 
     let outputString: string = inputString;
 
-    while(outputString.indexOf(`\\\"`)>=0)
-    {
+    while (outputString.indexOf(`\\\"`) >= 0) {
         outputString = outputString.substr(0, outputString.indexOf(`\\\"`)) + quote + outputString.substr(outputString.indexOf(`\\\"`) + 2);
     }
 
-    while(outputString.indexOf(`\\`)>=0)
-    {
-        outputString = outputString.substr(0, outputString.indexOf(`\\`)) + backslash + outputString.substr(outputString.indexOf(`\\`)+1);
+    while (outputString.indexOf(`\\`) >= 0) {
+        outputString = outputString.substr(0, outputString.indexOf(`\\`)) + backslash + outputString.substr(outputString.indexOf(`\\`) + 1);
     }
 
     return outputString;
 }
 
-export function findDefaultArtifacts(armTemplate: string, targetworkspace: string): Map<string, string>
-{
+export function findDefaultArtifacts(armTemplate: string, targetworkspace: string): Map<string, string> {
     let defaultArtifacts = new Map<string, string>();
 
     let jsonArmTemplateParams = JSON.parse(armTemplate);
 
-    for (let value in jsonArmTemplateParams.resources)
-    {
+    for (let value in jsonArmTemplateParams.resources) {
         let artifactJson = jsonArmTemplateParams.resources[value];
         let artifactName: string = artifactJson.name;
-        if(artifactName.toLowerCase().indexOf("workspacedefaultsqlserver") >= 0 ||
-            artifactName.toLowerCase().indexOf("workspacedefaultstorage") >= 0)
-        {
-            if(artifactName.indexOf("/") > 0)
-            {
+        if (artifactName.toLowerCase().indexOf("workspacedefaultsqlserver") >= 0 ||
+            artifactName.toLowerCase().indexOf("workspacedefaultstorage") >= 0) {
+            if (artifactName.indexOf("/") > 0) {
                 //example `${targetworkspace}/sourceworkspace-WorkspaceDefaultStorage`;
                 let nametoreplace = artifactName.substr(artifactName.lastIndexOf("/") + 1);
                 nametoreplace = nametoreplace.substr(0, nametoreplace.lastIndexOf("-"));
@@ -114,8 +103,7 @@ export function findDefaultArtifacts(armTemplate: string, targetworkspace: strin
 
                 nametoreplace = artifactName.substr(artifactName.lastIndexOf("/") + 1);
 
-                if(nametoreplace == replacedName)
-                {
+                if (nametoreplace == replacedName) {
                     // source and target workspace are same.
                     continue;
                 }
@@ -129,7 +117,7 @@ export function findDefaultArtifacts(armTemplate: string, targetworkspace: strin
 }
 
 function replaceParameters(armParams: string, armTemplate: string, overrideArmParameters: string, targetWorkspaceName: string): string {
-    core.info("Begin replacement of parameters in the template");
+    SystemLogger.info("Begin replacement of parameters in the template");
     // Build parameters
     let armParamValues = getParameterValuesFromArmTemplate(armParams, armTemplate, overrideArmParameters, targetWorkspaceName);
 
@@ -139,13 +127,13 @@ function replaceParameters(armParams: string, armTemplate: string, overrideArmPa
         armTemplate = armTemplate.split(key).join(`'${value}'`);
     });
 
-    core.info("Complete replacement of parameters in the template");
+    SystemLogger.info("Complete replacement of parameters in the template");
     return armTemplate;
 }
 
-function replaceVariables(armTemplate: string) : string {
+function replaceVariables(armTemplate: string): string {
     // Build variables
-    core.info("Begin replacement of variables in the template");
+    SystemLogger.info("Begin replacement of variables in the template");
     let jsonArmTemplateParams = JSON.parse(armTemplate);
     let armVariableValues = new Map<string, string>();
     for (let value in jsonArmTemplateParams.variables) {
@@ -158,11 +146,11 @@ function replaceVariables(armTemplate: string) : string {
         armTemplate = armTemplate.split(key).join(`${value}`);
     });
 
-    core.info("Complete replacement of variables in the template");
+    SystemLogger.info("Complete replacement of variables in the template");
     return armTemplate;
 }
 
-function replaceStrByRegex(str : string, regex: any) : string {
+function replaceStrByRegex(str: string, regex: any): string {
     return str.replace(regex, function (matchedStr: string, arg1: string, arg2: string) {
         if (arg1.endsWith("'")) {
             arg1 = arg1.substring(1, arg1.length - 1);
@@ -175,7 +163,7 @@ function replaceStrByRegex(str : string, regex: any) : string {
 }
 
 function getParameterValuesFromArmTemplate(armParams: string, armTemplate: string, overrideArmParameters: string,
-                                           targetWorkspaceName: string): Map<string, string> {
+    targetWorkspaceName: string): Map<string, string> {
 
     // Parse the parameters and keep a map of these values
     let jsonArmParams = JSON.parse(armParams);
@@ -202,10 +190,9 @@ function getParameterValuesFromArmTemplate(armParams: string, armTemplate: strin
 
     // Add any overrides.-key1 value1 -key2 value2 -key3 value3
     // Checking length to be > 2 for someone to specify name value, space in between etc. just to be on safe side.
-    if(overrideArmParameters != null && overrideArmParameters.length > 2)
-    {
+    if (overrideArmParameters != null && overrideArmParameters.length > 2) {
         let cnt = 1;
-        if(overrideArmParameters.startsWith('-')){
+        if (overrideArmParameters.startsWith('-')) {
             while (overrideArmParameters.length > 0 && overrideArmParameters.indexOf('-') > -1 && overrideArmParameters.indexOf(' ') > -1 && cnt < 1000) {
                 cnt = cnt + 1;
                 let startIndex = overrideArmParameters.indexOf('-') + '-'.length;
@@ -225,10 +212,10 @@ function getParameterValuesFromArmTemplate(armParams: string, armTemplate: strin
         }
 
         // Means user has give a yaml as input
-        else{
+        else {
             let overrides = yaml.load(overrideArmParameters);
             let overridesObj = JSON.parse(JSON.stringify(overrides));
-            for(let key in overridesObj){
+            for (let key in overridesObj) {
                 let paramValue = JSON.stringify(overridesObj[key]);
                 armParamValues.set(`parameters('${key}')`, sanitize(paramValue));
             }
@@ -238,10 +225,10 @@ function getParameterValuesFromArmTemplate(armParams: string, armTemplate: strin
     return armParamValues;
 }
 
-function sanitize(paramValue: string): string{
-    if((paramValue.startsWith("\"") && paramValue.endsWith("\"")) ||
+function sanitize(paramValue: string): string {
+    if ((paramValue.startsWith("\"") && paramValue.endsWith("\"")) ||
         (paramValue.startsWith("'") && paramValue.endsWith("'"))) {
-        paramValue = paramValue.substr(1, paramValue.length -2);
+        paramValue = paramValue.substr(1, paramValue.length - 2);
     }
     return paramValue;
 }
@@ -253,11 +240,11 @@ function removeWorkspaceNameFromResourceName(resourceName: string): string {
     return resourceName;
 }
 
-function skipArtifactDeployment(artifactType: string): boolean{
-    if(artifactType.toLowerCase().indexOf(`sqlpools`) > -1 ||
+function skipArtifactDeployment(artifactType: string): boolean {
+    if (artifactType.toLowerCase().indexOf(`sqlpools`) > -1 ||
         artifactType.toLowerCase().indexOf(`bigdatapools`) > -1 ||
         artifactType.toLowerCase().indexOf(`managedvirtualnetworks`) > -1 ||
-        artifactType.toLowerCase().indexOf(`managedprivateendpoints`) > -1){
+        artifactType.toLowerCase().indexOf(`managedprivateendpoints`) > -1) {
 
         return true;
     }
@@ -266,7 +253,7 @@ function skipArtifactDeployment(artifactType: string): boolean{
 }
 
 export function getArtifactsFromArmTemplate(armTemplate: string, targetLocation: string, defaultArtifacts: Map<string, string>): Resource[][] {
-    core.info("Begin getting Artifacts From Template");
+    SystemLogger.info("Begin getting Artifacts From Template");
     //now get the resources out:
     let jsonArmTemplateParams = JSON.parse(armTemplate);
     let artifacts = new Array<Resource>();
@@ -280,7 +267,7 @@ export function getArtifactsFromArmTemplate(armTemplate: string, targetLocation:
             continue;
         }
 
-        if(artifactType.toLowerCase().indexOf(`sparkjobdefinition`) > -1) {
+        if (artifactType.toLowerCase().indexOf(`sparkjobdefinition`) > -1) {
             let fileLocation = artifactJson['properties']['jobProperties']['file'];
             if (!fileLocation) {
                 throw new Error("File is missing in spark job defination ");
@@ -289,14 +276,12 @@ export function getArtifactsFromArmTemplate(armTemplate: string, targetLocation:
 
         artifactJson.name = removeWorkspaceNameFromResourceName(artifactJson.name);
 
-        for(let i=0;i<artifactJson.dependsOn.length;i++)
-        {
+        for (let i = 0; i < artifactJson.dependsOn.length; i++) {
             let dependancyName: string = artifactJson.dependsOn[i]!;
 
             defaultArtifacts.forEach((value, key) => {
-                if(dependancyName.indexOf(key) > -1 &&
-                    dependancyName.indexOf("linkedServices") > -1)
-                {
+                if (dependancyName.indexOf(key) > -1 &&
+                    dependancyName.indexOf("linkedServices") > -1) {
                     artifactJson.dependsOn[i] = artifactJson.dependsOn[i].replace(key, value);
                 }
             });
@@ -304,17 +289,13 @@ export function getArtifactsFromArmTemplate(armTemplate: string, targetLocation:
 
 
         let artifactProperties = artifactJson.properties;
-        if(artifactProperties!=null)
-        {
+        if (artifactProperties != null) {
             let linkedServiceName = artifactProperties.linkedServiceName;
-            if(linkedServiceName != null)
-            {
+            if (linkedServiceName != null) {
                 let referenceName = linkedServiceName.referenceName;
-                if(referenceName!=null)
-                {
+                if (referenceName != null) {
                     defaultArtifacts.forEach((value, key) => {
-                        if(referenceName.indexOf(key) > -1)
-                        {
+                        if (referenceName.indexOf(key) > -1) {
                             artifactJson.properties.linkedServiceName.referenceName = artifactJson.properties.linkedServiceName.referenceName.replace(key, value);
                         }
                     });
@@ -322,24 +303,19 @@ export function getArtifactsFromArmTemplate(armTemplate: string, targetLocation:
             }
         }
 
-        for (var artifactJsonValue in artifactJson.properties)
-        {
+        for (var artifactJsonValue in artifactJson.properties) {
             if (artifactJsonValue != "typeProperties" ||
-                JSON.stringify(artifactJson.properties.typeProperties).indexOf(`LinkedServiceReference`) == -1)
-            {
+                JSON.stringify(artifactJson.properties.typeProperties).indexOf(`LinkedServiceReference`) == -1) {
                 continue;
             }
 
-            for(var artifactJsonTypeProperties in artifactJson.properties.typeProperties)
-            {
-                if (JSON.stringify(artifactJson.properties.typeProperties[`${artifactJsonTypeProperties}`]).indexOf(`LinkedServiceReference`) == -1)
-                {
+            for (var artifactJsonTypeProperties in artifactJson.properties.typeProperties) {
+                if (JSON.stringify(artifactJson.properties.typeProperties[`${artifactJsonTypeProperties}`]).indexOf(`LinkedServiceReference`) == -1) {
                     continue;
                 }
 
                 let artifactJsonTypePropertiesJson = artifactJson.properties.typeProperties[`${artifactJsonTypeProperties}`];
-                for(var artifactJsonTypePropertiesValues in artifactJsonTypePropertiesJson)
-                {
+                for (var artifactJsonTypePropertiesValues in artifactJsonTypePropertiesJson) {
                     let artifactJsonTypePropertiesValueslinkedService =
                         artifactJson.properties.typeProperties[`${artifactJsonTypeProperties}`][artifactJsonTypePropertiesValues].linkedService;
                     if (artifactJsonTypePropertiesValueslinkedService == null) {
@@ -351,12 +327,10 @@ export function getArtifactsFromArmTemplate(armTemplate: string, targetLocation:
                         continue;
                     }
 
-                    if(artifactJson.properties.typeProperties[`${artifactJsonTypeProperties}`][artifactJsonTypePropertiesValues].linkedService.type
-                        == "LinkedServiceReference")
-                    {
+                    if (artifactJson.properties.typeProperties[`${artifactJsonTypeProperties}`][artifactJsonTypePropertiesValues].linkedService.type
+                        == "LinkedServiceReference") {
                         defaultArtifacts.forEach((value, key) => {
-                            if(artifactJson.properties.typeProperties[`${artifactJsonTypeProperties}`][artifactJsonTypePropertiesValues].linkedService.referenceName.indexOf(key) > -1)
-                            {
+                            if (artifactJson.properties.typeProperties[`${artifactJsonTypeProperties}`][artifactJsonTypePropertiesValues].linkedService.referenceName.indexOf(key) > -1) {
                                 artifactJson.properties.typeProperties[`${artifactJsonTypeProperties}`][artifactJsonTypePropertiesValues].linkedService.referenceName
                                     = artifactJson.properties.typeProperties[`${artifactJsonTypeProperties}`][artifactJsonTypePropertiesValues].linkedService.referenceName.replace(key, value);
                             }
@@ -371,8 +345,7 @@ export function getArtifactsFromArmTemplate(armTemplate: string, targetLocation:
         defaultArtifacts.forEach((value, key) => {
             let refName: string = `"referenceName":"${key}"`;
             let refNameReplacement: string = `"referenceName":"${value}"`;
-            while(artifactJsonContent.indexOf(refName) > -1)
-            {
+            while (artifactJsonContent.indexOf(refName) > -1) {
                 artifactJsonContent = artifactJsonContent.replace(refName, refNameReplacement);
             }
         });
@@ -385,15 +358,15 @@ export function getArtifactsFromArmTemplate(armTemplate: string, targetLocation:
             dependson: getDependentsFromArtifact(artifactJsonContent)
         };
 
-        if(artifactType.toLowerCase().indexOf(`notebook`) > -1) {
+        if (artifactType.toLowerCase().indexOf(`notebook`) > -1) {
             if (!artifactJson.name) {
                 resource.content = convertIpynb2Payload(artifactJson);
             }
         }
 
-        core.info(`Found Artifact of type ${artifactType}`);
+        SystemLogger.info(`Found Artifact of type ${artifactType}`);
 
-        if(artifactJson.name.toLowerCase().indexOf("workspacedefaultsqlserver") >= 0 ||
+        if (artifactJson.name.toLowerCase().indexOf("workspacedefaultsqlserver") >= 0 ||
             artifactJson.name.toLowerCase().indexOf("workspacedefaultstorage") >= 0) {
             resource.isDefault = true;
             defaultArtifacts.forEach((value, key) => {
@@ -403,7 +376,7 @@ export function getArtifactsFromArmTemplate(armTemplate: string, targetLocation:
             console.log(`\tWill be skipped as its a default resource.`);
         }
 
-        if(!checkIfArtifactExists(resource, artifacts)) {
+        if (!checkIfArtifactExists(resource, artifacts)) {
             artifacts.push(resource);
         }
     }
@@ -411,17 +384,17 @@ export function getArtifactsFromArmTemplate(armTemplate: string, targetLocation:
     return createDependancyTree(artifacts);
 }
 
-function createDependancyTree(artifacts: Array<Resource>){
+function createDependancyTree(artifacts: Array<Resource>) {
     let artifactsOrdered = new Array<Resource>();
     let artifactsBatches = new Array<Array<Resource>>();
     let artifactBatch = new Array<Resource>();
     let iteration = 0;
 
-    for(let i=0;i<artifacts.length;i++ ) {
+    for (let i = 0; i < artifacts.length; i++) {
         //Replace backslash with \
         artifacts[i].content = replaceBackSlashCode(artifacts[i].content);
         artifacts[i].name = replaceBackSlashCode(artifacts[i].name);
-        for(let j=0;j< artifacts[i].dependson.length;j++) {
+        for (let j = 0; j < artifacts[i].dependson.length; j++) {
             artifacts[i].dependson[j] = replaceBackSlashCode(artifacts[i].dependson[j]);
         }
     }
@@ -432,22 +405,22 @@ function createDependancyTree(artifacts: Array<Resource>){
 
     while (artifactsOrdered.length < artifacts.length && iteration < MAX_ITERATIONS) {
         iteration++;
-        if(artifactBatch.length>0) {
+        if (artifactBatch.length > 0) {
             artifactsBatches.push(artifactBatch);
             artifactBatch = new Array<Resource>();
         }
 
         for (var res = 0; res < artifacts.length; res++) {
-            if(checkIfArtifactExists(artifacts[res], artifactsOrdered)) {
+            if (checkIfArtifactExists(artifacts[res], artifactsOrdered)) {
                 // So this artifact is already added to the ordered list. Skip.
                 continue;
             }
 
             let dependancies = artifacts[res].dependson;
-            if(dependancies.length==0) {
+            if (dependancies.length == 0) {
                 // Adding to the ordered list as this artifact has no dependancies.
                 artifactsOrdered.push(artifacts[res]);
-                if(artifactBatch.length>= MAX_PARALLEL_ARTIFACTS) {
+                if (artifactBatch.length >= MAX_PARALLEL_ARTIFACTS) {
                     artifactsBatches.push(artifactBatch);
                     artifactBatch = new Array<Resource>();
                 }
@@ -458,15 +431,15 @@ function createDependancyTree(artifacts: Array<Resource>){
 
             let allDependencyMet = true;
             dependancies.forEach((dep: string) => {
-                if(!checkIfNameExists(dep, artifactsOrdered)){
+                if (!checkIfNameExists(dep, artifactsOrdered)) {
                     allDependencyMet = false;
                 }
             });
 
-            if(allDependencyMet){
+            if (allDependencyMet) {
                 // Adding to the ordered list as all dependencies are already in the list
                 artifactsOrdered.push(artifacts[res]);
-                if(artifactBatch.length>= MAX_PARALLEL_ARTIFACTS){
+                if (artifactBatch.length >= MAX_PARALLEL_ARTIFACTS) {
                     artifactsBatches.push(artifactBatch);
                     artifactBatch = new Array<Resource>();
                 }
@@ -475,43 +448,39 @@ function createDependancyTree(artifacts: Array<Resource>){
             }
         }
 
-        core.info(`Iteration ${iteration} Figured out deployment order for ${artifactsOrdered.length} / ${artifacts.length} Artifacts for Dependencies.`);
+        SystemLogger.info(`Iteration ${iteration} Figured out deployment order for ${artifactsOrdered.length} / ${artifacts.length} Artifacts for Dependencies.`);
     }
 
-    if(artifactBatch.length > 0){
+    if (artifactBatch.length > 0) {
         artifactsBatches.push(artifactBatch);
     }
 
-    if(iteration == MAX_ITERATIONS)
-    {
-        core.info("Could not figure out full dependancy model for these artifacts. Check template for correctness.");
-        core.info("-----------------------------------------------------------------------------------------------");
-        for (var res = 0; res < artifacts.length; res++)
-        {
-            if(!checkIfArtifactExists(artifacts[res], artifactsOrdered))
-            {
+    if (iteration == MAX_ITERATIONS) {
+        SystemLogger.info("Could not figure out full dependancy model for these artifacts. Check template for correctness.");
+        SystemLogger.info("-----------------------------------------------------------------------------------------------");
+        for (var res = 0; res < artifacts.length; res++) {
+            if (!checkIfArtifactExists(artifacts[res], artifactsOrdered)) {
                 // So this artifact's dependancy could not be verified.
-                core.info(`Name: ${artifacts[res].name}, Type: ${artifacts[res].type}`);
+                SystemLogger.info(`Name: ${artifacts[res].name}, Type: ${artifacts[res].type}`);
                 let dependancies = artifacts[res].dependson;
-                dependancies.forEach((dep: string) =>
-                {
-                    if(!checkIfNameExists(dep, artifactsOrdered)){
-                        core.info(`    Dependency Not found: ${dep}`);
+                dependancies.forEach((dep: string) => {
+                    if (!checkIfNameExists(dep, artifactsOrdered)) {
+                        SystemLogger.info(`    Dependency Not found: ${dep}`);
                     }
                 });
             }
         }
 
-        core.info("-----------------------------------------------------------------------------------------------");
+        SystemLogger.info("-----------------------------------------------------------------------------------------------");
         throw new Error("Could not figure out full dependancy model. Some dependancies may not exist in template.");
     }
 
-    core.info("Complete getting Artifacts From Template");
+    SystemLogger.info("Complete getting Artifacts From Template");
     return artifactsBatches;
 }
 
 function convertIpynb2Payload(payloadObj: any): string {
-    core.info('Converting payload');
+    SystemLogger.info('Converting payload');
     let payload = {
         "name": uuidv4(),
         "properties": {
@@ -539,7 +508,7 @@ function convertIpynb2Payload(payloadObj: any): string {
 function checkIfNameExists(nameToCheck: string, selectedListOfResources: Resource[]): boolean {
     let nameExists: boolean = false;
 
-    if(nameToCheck.toLowerCase().indexOf(`/managedvirtualnetworks/`) > -1 ||
+    if (nameToCheck.toLowerCase().indexOf(`/managedvirtualnetworks/`) > -1 ||
         nameToCheck.toLowerCase().indexOf(`/sqlpools/`) > -1 ||
         nameToCheck.toLowerCase().indexOf(`/bigdatapools/`) > -1 ||
         nameToCheck.toLowerCase().indexOf(`/managedprivateendpoints/`) > -1) {
@@ -551,7 +520,7 @@ function checkIfNameExists(nameToCheck: string, selectedListOfResources: Resourc
         let resource: Resource = selectedListOfResources[res];
         let resName: string = resource.name;
         let restype: string = resource.type;
-        if(restype.indexOf("Microsoft.Synapse/workspaces/")> -1){
+        if (restype.indexOf("Microsoft.Synapse/workspaces/") > -1) {
             restype = restype.substr("Microsoft.Synapse/workspaces/".length);
         }
 
@@ -571,7 +540,7 @@ function checkIfArtifactExists(resourceToCheck: Resource, selectedListOfResource
 
     for (var res = 0; res < selectedListOfResources.length; res++) {
         let resource: Resource = selectedListOfResources[res];
-        if (resource.name == resourceToCheck.name && resource.type == resourceToCheck.type){
+        if (resource.name == resourceToCheck.name && resource.type == resourceToCheck.type) {
             return true;
         }
     }
