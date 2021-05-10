@@ -83,6 +83,9 @@ describe("Test SystemLogger utils", () => {
     it('undefined logger should not cause exception when calling log methods', () => {
         SystemLogger.setLogger(undefined)
         SystemLogger.info("Test");
+        SystemLogger.debug("Test");
+        SystemLogger.warn("Test");
+        SystemLogger.error("Test");
     });
 
     it('ensure private logger log methods are called by system logger', () => {
