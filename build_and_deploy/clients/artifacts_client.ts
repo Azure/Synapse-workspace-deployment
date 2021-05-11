@@ -25,8 +25,8 @@ export var typeMap = new Map<string, Artifact>([
     [DataFactoryType.sqlscript.toLowerCase(), Artifact.sqlscript],
     [DataFactoryType.trigger.toLowerCase(), Artifact.trigger],
     [DataFactoryType.managedVirtualNetworks.toLowerCase(), Artifact.managedvirtualnetworks],
-    [DataFactoryType.managedPrivateEndpoints.toLowerCase(), Artifact.managedprivateendpoints]
-
+    [DataFactoryType.managedPrivateEndpoints.toLowerCase(), Artifact.managedprivateendpoints],
+    [DataFactoryType.kqlScript.toLowerCase(), Artifact.kqlScript]
 ]);
 
 export interface DeploymentTrackingRequest {
@@ -86,6 +86,8 @@ export class ArtifactClient {
                 return this.deployIntegrationruntime(base_url, payload, token);
             case Artifact.credential:
                 return this.deployCredential(baseUrl, payload, token);
+            case Artifact.kqlScript:
+                return this.deployKqlScript(baseUrl, payload, token);
             default:
                 return DeployStatus.skipped;
         }
@@ -149,6 +151,16 @@ export class ArtifactClient {
                 `${Artifact.integrationruntime.toString()}s`, payload, token);
         } catch (err) {
             throw new Error("Integration runtime deployment failed " + JSON.stringify(err));
+        }
+    }
+
+    public async deployKqlScript(baseUrl: string, payload: Resource, token: string): Promise<string> {
+        try {
+            return await this.artifactDeploymentTask(baseUrl,
+                `${Artifact.kqlScript.toString()}s`, payload, token);
+        } catch (err) {
+            console.log(err);
+            throw new Error("Credential deployment failed " + JSON.stringify(err));
         }
     }
 

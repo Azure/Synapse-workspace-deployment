@@ -32,7 +32,7 @@ export interface Params {
 
 export type ResourceType = 'credential' | 'sqlPool' | 'bigDataPool' | 'sqlscript' | 'notebook' | 'sparkjobdefinition'
     | 'linkedService' | 'pipeline' | 'dataset' | 'trigger' | 'integrationRuntime' | 'dataflow'
-    | 'managedVirtualNetworks' | 'managedPrivateEndpoints';
+    | 'managedVirtualNetworks' | 'managedPrivateEndpoints' | 'kqlScript';
 
 
 export async function getParams(dataplane: boolean = false, env: string = ""): Promise<Params> {
