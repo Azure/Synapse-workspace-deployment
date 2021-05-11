@@ -6,8 +6,6 @@ import * as yaml from 'js-yaml';
 import { v4 as uuidv4 } from 'uuid';
 import { SystemLogger } from './logger';
 
-
-let reg = /\[concat\((.*?),\s(.*?)\)\]/g;
 // Just 2 random Guids to replace backslash in parameters file.
 const backslash: string = "7FD5C49AB6444AC1ACCD56B689067FBBAD85B74B0D8943CA887371839DFECF85";
 const quote: string = "48C16896271D483C916DE1C4EC6F24DBC945F900F9AB464B828EC8005364D322";
@@ -38,7 +36,7 @@ export function createArmTemplate(armParams: string, armTemplate: string, overri
     overrideArmParameters = replaceBackSlash(overrideArmParameters);
     armTemplate = replaceParameters(armParams, armTemplate, overrideArmParameters, targetWorkspaceName);
     armTemplate = replaceVariables(armTemplate);
-    armTemplate = replaceStrByRegex(armTemplate, reg);
+    armTemplate = replaceStrByRegex(armTemplate);
 
     return armTemplate;
 }
@@ -121,6 +119,26 @@ function replaceParameters(armParams: string, armTemplate: string, overrideArmPa
     // Build parameters
     let armParamValues = getParameterValuesFromArmTemplate(armParams, armTemplate, overrideArmParameters, targetWorkspaceName);
 
+    armParamValues.forEach((value, key) => {
+        if(value.indexOf(`parameters`)>-1) {
+            armParamValues.forEach((valueInside, keyInside) => {
+                if(value.indexOf(keyInside) > -1) {
+                    armParamValues.set(key, value.split('['+keyInside+']').join(`'${valueInside}'`));
+                }
+                if(value.indexOf(keyInside) > -1) {
+                    armParamValues.set(key, value.split(keyInside).join(`'${valueInside}'`));
+                }
+            });
+        }
+    });
+
+    armParamValues.forEach((value, key) => {
+        if(value.indexOf("concat")>-1) {
+            armParamValues.set(key, replaceStrByRegex(value));
+        }
+    });
+
+
     // Replace parameterValues
     armParamValues.forEach((value, key) => {
         armTemplate = armTemplate.split('[' + key + ']').join(`${value}`);
@@ -138,7 +156,7 @@ function replaceVariables(armTemplate: string): string {
     let armVariableValues = new Map<string, string>();
     for (let value in jsonArmTemplateParams.variables) {
         let variableValue = jsonArmTemplateParams.variables[value] as string;
-        variableValue = replaceStrByRegex(variableValue, reg);
+        variableValue = replaceStrByRegex(variableValue);
         armVariableValues.set(`variables('${value}')`, variableValue);
     }
     // Replace variables
@@ -150,16 +168,23 @@ function replaceVariables(armTemplate: string): string {
     return armTemplate;
 }
 
-function replaceStrByRegex(str: string, regex: any): string {
-    return str.replace(regex, function (matchedStr: string, arg1: string, arg2: string) {
-        if (arg1.endsWith("'")) {
-            arg1 = arg1.substring(1, arg1.length - 1);
-        }
-        if (arg2.startsWith("'")) {
-            arg2 = arg2.substring(1, arg2.length - 1);
-        }
-        return `${arg1}${arg2}`;
+function replaceStrByRegex(str: string): string {
+    var regexOutside = /\[concat\((.*?)\)\]/g;
+    var resultOutside = str.replace(regexOutside, function (matchedStr: string, strOutside: string) {
+        var result: string = ``;
+        let resultArgs = strOutside.split(`,`);
+        resultArgs.forEach((arg) => {
+            let fragment = arg.trim();
+            if (fragment.endsWith("'")) {
+                fragment = fragment.substring(1, fragment.length - 1);
+            }
+            result += fragment;
+        });
+
+        return result;
     });
+
+    return resultOutside;
 }
 
 function getParameterValuesFromArmTemplate(armParams: string, armTemplate: string, overrideArmParameters: string,
