@@ -297,7 +297,6 @@ export class ArtifactClient {
     }
 
     private async checkStatus(url: string, name: string, token: string) {
-        SystemLogger.info("Url to track artifact deployment status: " + url);
         var timeout = new Date().getTime() + (60000 * 20); // 20 Minutes
         var delayMilliSecs = 30000; // 0.5 minute
 
