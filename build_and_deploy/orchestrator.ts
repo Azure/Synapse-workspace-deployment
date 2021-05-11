@@ -2,22 +2,22 @@
 // Licensed under the MIT license.
 
 
-import {PackageFile, PackageFilesContent} from "./package_file";
-import {ArtifactClient, typeMap} from "./clients/artifacts_client";
-import {getWorkspaceLocation} from "./utils/service_principal_client_utils";
-import {getArtifacts, Resource} from "./utils/arm_template_utils";
-import {DeployStatus} from "./utils/deploy_utils";
-import * as core from '@actions/core';
-import {Artifact} from "./utils/artifacts_enum";
+import { ArtifactClient, typeMap } from "./clients/artifacts_client";
+import { PackageFile, PackageFilesContent } from "./package_file";
+import { getArtifacts, Resource } from "./utils/arm_template_utils";
+import { Artifact } from "./utils/artifacts_enum";
+import { DeployStatus } from "./utils/deploy_utils";
+import { SystemLogger } from "./utils/logger";
+import { getWorkspaceLocation } from "./utils/service_principal_client_utils";
 
-export class Orchestrator{
+export class Orchestrator {
     private packageFiles: PackageFile;
     private artifactClient: ArtifactClient;
     private targetWorkspace: string;
     private environment: string;
 
     constructor(packageFiles: PackageFile, artifactClient: ArtifactClient,
-                targetWorkspace: string, environment: string) {
+        targetWorkspace: string, environment: string) {
 
         this.packageFiles = packageFiles;
         this.artifactClient = artifactClient;
@@ -25,7 +25,7 @@ export class Orchestrator{
         this.environment = environment;
     }
 
-    public async orchestrateFromPublishBranch(){
+    public async orchestrateFromPublishBranch() {
         try {
             let packageFilesContent: PackageFilesContent = await this.packageFiles.getPackageFiles();
             let armTemplateContent = packageFilesContent.templateFileContent;
@@ -38,7 +38,7 @@ export class Orchestrator{
 
             let targetLocation = await getWorkspaceLocation(this.artifactClient.getParams(), this.targetWorkspace);
             let artifactsToDeploy: Resource[][] = await getArtifacts(armParameterContent, armTemplateContent, overrideArmParameters,
-                                                                    this.targetWorkspace, targetLocation);
+                this.targetWorkspace, targetLocation);
 
             await this.deployResourcesInOrder(this.artifactClient, artifactsToDeploy, this.targetWorkspace, this.environment);
 
@@ -48,19 +48,19 @@ export class Orchestrator{
     }
 
     private async deployResourcesInOrder(artifactClient: ArtifactClient, artifactsToDeploy: Resource[][],
-                                          targetWorkspace: string, environment: string) {
-        for(let i=0;i<artifactsToDeploy.length;i++){
+        targetWorkspace: string, environment: string) {
+        for (let i = 0; i < artifactsToDeploy.length; i++) {
             let batchOfArtifacts = artifactsToDeploy[i];
-            await this.deployBatch(artifactClient, batchOfArtifacts,targetWorkspace, environment);
+            await this.deployBatch(artifactClient, batchOfArtifacts, targetWorkspace, environment);
             await artifactClient.WaitForAllDeployments();
         }
     }
 
-    private skipDeployment(artifactTypeToDeploy: string){
-        if(artifactTypeToDeploy == Artifact.sqlpool ||
+    private skipDeployment(artifactTypeToDeploy: string) {
+        if (artifactTypeToDeploy == Artifact.sqlpool ||
             artifactTypeToDeploy == Artifact.bigdatapools ||
-            artifactTypeToDeploy == Artifact.managedvirtualnetworks||
-            artifactTypeToDeploy == Artifact.managedprivateendpoints){
+            artifactTypeToDeploy == Artifact.managedvirtualnetworks ||
+            artifactTypeToDeploy == Artifact.managedprivateendpoints) {
             return true;
         }
 
@@ -68,27 +68,27 @@ export class Orchestrator{
     }
 
     private async deployBatch(artifactClient: ArtifactClient, artifactsToDeploy: Resource[],
-                              targetWorkspace: string, environment: string) {
+        targetWorkspace: string, environment: string) {
 
         for (let resource of artifactsToDeploy) {
 
-            if(resource.isDefault) {
-                core.info("Skipping default workspace resource.");
+            if (resource.isDefault) {
+                SystemLogger.info("Skipping default workspace resource.");
                 continue;
             }
 
             let artifactTypeToDeploy: string = typeMap.get(resource.type.toLowerCase())!
             if (!resource.content) {
-                core.info(`Empty artifactMap of type : ${resource.type} skipping deployment`);
+                SystemLogger.info(`Empty artifactMap of type : ${resource.type} skipping deployment`);
                 continue;
             }
 
-            core.info(`Deploy ${artifactTypeToDeploy} ${resource.type}`);
-            let result : string;
+            SystemLogger.info(`Deploy ${artifactTypeToDeploy} ${resource.type}`);
+            let result: string;
             if (this.skipDeployment(artifactTypeToDeploy)) {
                 // Currently not supporting Sql and spark pools. Skipping
                 //result = await armclient.deploy(resource.content);
-                core.info(`Deployment of type ${artifactsToDeploy} is not currently supported.`);
+                SystemLogger.info(`Deployment of type ${artifactsToDeploy} is not currently supported.`);
                 continue;
             }
             else {
@@ -96,7 +96,7 @@ export class Orchestrator{
                 result = await artifactClient.deployArtifact(artifactTypeToDeploy, resource, targetWorkspace,
                     environment);
             }
-            core.info(`Deployment status : ${result}`);
+            SystemLogger.info(`Deployment status : ${result}`);
             if (result != DeployStatus.success) {
                 throw new Error("Failure in deployment: " + result);
             }

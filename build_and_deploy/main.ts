@@ -2,11 +2,12 @@
 // Licensed under the MIT license.
 
 
-import { ArtifactClient } from './clients/artifacts_client';
-import { getParams } from './utils/deploy_utils';
-import { PackageFile } from './package_file';
-import {Orchestrator} from "./orchestrator";
 import * as core from '@actions/core';
+import { ArtifactClient } from './clients/artifacts_client';
+import { Orchestrator } from "./orchestrator";
+import { PackageFile } from './package_file';
+import { getParams } from './utils/deploy_utils';
+import { ActionLogger, SystemLogger } from './utils/logger';
 
 export async function main() {
 
@@ -16,23 +17,22 @@ export async function main() {
     const overrideArmParameters: string = core.getInput('OverrideArmParameters');
     const environment: string = core.getInput('Environment');
 
-    try{
-        let packageFiles: PackageFile = new PackageFile(templateFile, parametersFile, overrideArmParameters);
-        let params = await getParams();
-        let artifactClient: ArtifactClient = new ArtifactClient(params);
+    try {
+        const packageFiles: PackageFile = new PackageFile(templateFile, parametersFile, overrideArmParameters);
+        const params = await getParams();
+        const artifactClient: ArtifactClient = new ArtifactClient(params);
+        SystemLogger.setLogger(new ActionLogger(true));
 
-        let orchestrator: Orchestrator = new Orchestrator(
+        const orchestrator: Orchestrator = new Orchestrator(
             packageFiles,
             artifactClient,
             targetWorkspace,
             environment
         );
         await orchestrator.orchestrateFromPublishBranch();
-    }catch(err){
+    } catch (err) {
         throw new Error(err.message);
     }
-
-
 }
 
 main()
@@ -40,7 +40,7 @@ main()
         process.exit(0)
     })
     .catch((err: Error) => {
-        core.info("Action failed -> "+ err);
+        core.info("Action failed -> " + err);
         process.exit(1);
     });
 

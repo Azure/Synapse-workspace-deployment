@@ -2,12 +2,13 @@
 // Licensed under the MIT license.
 
 
-import {Params, DeployStatus, Env, getParams} from '../utils/deploy_utils';
+import * as core from '@actions/core';
 import * as httpClient from 'typed-rest-client/HttpClient';
 import * as httpInterfaces from 'typed-rest-client/Interfaces';
-import * as core from '@actions/core';
 import { Resource } from '../utils/arm_template_utils';
-import {Artifact, DataFactoryType} from "../utils/artifacts_enum";
+import { Artifact, DataFactoryType } from "../utils/artifacts_enum";
+import { DeployStatus, Env, getParams, Params } from '../utils/deploy_utils';
+import { SystemLogger } from '../utils/logger';
 
 
 export var typeMap = new Map<string, Artifact>([
@@ -53,7 +54,7 @@ export class ArtifactClient {
         this.deploymentTrackingRequests = new Array<DeploymentTrackingRequest>();
     }
 
-    public getParams(): Params{
+    public getParams(): Params {
         return this.params;
     }
 
@@ -91,13 +92,13 @@ export class ArtifactClient {
     }
 
 
-    public async WaitForAllDeployments(){
-        for(let i=0;i<this.deploymentTrackingRequests.length;i++){
+    public async WaitForAllDeployments() {
+        for (let i = 0; i < this.deploymentTrackingRequests.length; i++) {
             let deploymentTrackingRequest = this.deploymentTrackingRequests[i];
             await this.checkStatus(deploymentTrackingRequest.url, deploymentTrackingRequest.name, deploymentTrackingRequest.token);
         }
 
-        while(this.deploymentTrackingRequests.length>0){
+        while (this.deploymentTrackingRequests.length > 0) {
             this.deploymentTrackingRequests.pop();
         }
     }
@@ -196,7 +197,7 @@ export class ArtifactClient {
         }
     }
 
-    private async deploySqlScript(baseUrl: string, payload: Resource, token: string) :Promise<string> {
+    private async deploySqlScript(baseUrl: string, payload: Resource, token: string): Promise<string> {
         try {
             return await this.artifactDeploymentTask(baseUrl,
                 `${Artifact.sqlscript.toString()}s`, payload, token);
@@ -226,37 +227,37 @@ export class ArtifactClient {
     }
 
     private async artifactDeploymentTask(baseUrl: string, resourceType: string, payloadObj: Resource,
-                                         token: string) : Promise<string> {
+        token: string): Promise<string> {
 
         return new Promise<string>(async (resolve, reject) => {
 
             let url: string = this.buildArtifactUrl(baseUrl, resourceType, payloadObj.name);
-            core.info("Url to deploy artifact: "+ url);
+            SystemLogger.info("Url to deploy artifact: " + url);
 
             let payload: string = payloadObj.content;
 
             this.client.put(url, payload, this.getHeaders(token)).then((res) => {
 
                 let resStatus = res.message.statusCode;
-                core.info(`ArtifactDeploymentTask status: ${resStatus}; status message: ${res.message.statusMessage}`);
+                SystemLogger.info(`ArtifactDeploymentTask status: ${resStatus}; status message: ${res.message.statusMessage}`);
 
                 if (resStatus != 200 && resStatus != 201 && resStatus != 202) {
                     // Remove this after testing
                     res.readBody().then((body) => {
                         if (!!body) {
                             let responseJson = JSON.parse(body);
-                            core.info("Deploy artifact failed: "+ JSON.stringify(responseJson));
+                            SystemLogger.info("Deploy artifact failed: " + JSON.stringify(responseJson));
                         }
                     });
                     return reject(DeployStatus.failed);
                 }
 
-                let location :string = res.message.headers.location!;
+                let location: string = res.message.headers.location!;
                 res.readBody().then(async (body) => {
                     let responseJson = JSON.parse(body);
                     let operationId = responseJson['operationId'];
                     if (!!operationId) {
-                        try{
+                        try {
                             if (!location) {
                                 location = this.getStatusUrl(baseUrl, resourceType, operationId);
                             }
@@ -266,8 +267,8 @@ export class ArtifactClient {
                                 token: token
                             }
                             this.deploymentTrackingRequests.push(deploymentTrackingRequest);
-                        } catch(err) {
-                            core.info('Deployment failed with error: ' + JSON.stringify(err));
+                        } catch (err) {
+                            SystemLogger.info('Deployment failed with error: ' + JSON.stringify(err));
                             return reject(DeployStatus.failed);
                         }
 
@@ -277,41 +278,41 @@ export class ArtifactClient {
                     }
                 });
             }, (reason) => {
-                core.info("Artifact Deployment failed: " + reason);
+                SystemLogger.info("Artifact Deployment failed: " + reason);
                 return reject(DeployStatus.failed);
             });
         });
     }
 
     private async checkStatus(url: string, name: string, token: string) {
-        core.info("Url to track artifact deployment status: "+ url);
+        SystemLogger.info("Url to track artifact deployment status: " + url);
         var timeout = new Date().getTime() + (60000 * 20); // 20 Minutes
         var delayMilliSecs = 30000; // 0.5 minute
 
         while (true) {
             var currentTime = new Date().getTime();
             if (timeout < currentTime) {
-                core.info('Current time: '+ currentTime);
+                SystemLogger.info('Current time: ' + currentTime);
                 throw new Error("Timeout error in checkStatus");
             }
             var nbName = '';
 
             var res = await this.client.get(url, this.getHeaders(token));
             var resStatus = res.message.statusCode;
-            core.info(`Checkstatus: ${resStatus}; status message: ${res.message.statusMessage}`);
+            SystemLogger.info(`Checkstatus: ${resStatus}; status message: ${res.message.statusMessage}`);
             if (resStatus != 200 && resStatus != 201 && resStatus != 202) {
                 throw new Error(`Checkstatus => status: ${resStatus}; status message: ${res.message.statusMessage}`);
             }
             var body = await res.readBody();
             if (!body) {
-                core.info("No status response for url: "+ url);
+                SystemLogger.info("No status response for url: " + url);
                 await this.delay(delayMilliSecs);
                 continue;
             }
             let responseJson = JSON.parse(body);
             var status = responseJson['status'];
             if (!!status && status == 'Failed') {
-                core.info("Artifact Deployment status: "+ status);
+                SystemLogger.info("Artifact Deployment status: " + status);
                 throw new Error(`Failed to fetch the deployment status ${JSON.stringify(responseJson['error'])}`);
             } else if (!!status && status == 'InProgress') {
                 await this.delay(delayMilliSecs);
@@ -319,7 +320,7 @@ export class ArtifactClient {
             }
             nbName = responseJson['name'];
             if (nbName === name) {
-                core.info("Artifact deployed");
+                SystemLogger.info("Artifact deployed");
                 break;
             } else {
                 throw new Error('Artifiact deployment validation failed');
@@ -340,7 +341,7 @@ export class ArtifactClient {
         return headers;
     }
 
-    private getAudienceUrl(env : string): string {
+    private getAudienceUrl(env: string): string {
         switch (env) {
             case Env.prod.toString():
                 return `https://dev.azuresynapse.net`;
