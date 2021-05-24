@@ -1,43 +1,43 @@
-name: 'Synapse workspace deployment'
-description: 'Use this GitHub action to deploy synapse workspace.'
+name: "Synapse workspace deployment"
+description: "Use this GitHub action to deploy synapse workspace."
 inputs:
-  TargetWorkspaceName:
-    description: 'Provide the Synapse workspace name where you want to deploy the artifacts.'
-    required: true
-  TemplateFile:
-    description: 'Specify the path to the workspace artifacts template.'
-    required: true
-  ParametersFile:
-    description: 'Specify the path to the template parameter file.'
-    required: true
-  OverrideArmParameters:
-    description: 'Specify deployment parameter values.'
-    default: ''
-    required: false
-  Environment:
-    description: 'Provide the type of cloud environment. Valid values are: Azure Public, Azure China, Azure US Government, Azure Germany'
-    required: true
-  resourceGroup:
-    description: 'Provide the resource group of the target Synapse workspace.'
-    required: true
-  clientId:
-    description: 'Provide client id of service principal.'
-    required: true
-  clientSecret:
-    description: 'Provide client secret of the service principal.'
-    required: true
-  subscriptionId:
-    description: 'Provide subscription id.'
-    required: true
-  tenantId:
-    description: 'Provide tenant id.'
-    required: true
-  activeDirectoryEndpointUrl:
-    description: 'Provide Active Directory Endpoint.'
-    required: true
-  resourceManagerEndpointUrl:
-    description: 'Provide Resource Manager Endpoint.'
-    required: true
+    TargetWorkspaceName:
+        description: "Provide the Synapse workspace name where you want to deploy the artifacts."
+        required: true
+    TemplateFile:
+        description: "Specify the path to the workspace artifacts template."
+        required: true
+    ParametersFile:
+        description: "Specify the path to the template parameter file."
+        required: true
+    OverrideArmParameters:
+        description: "Specify deployment parameter values."
+        default: ""
+        required: false
+    Environment:
+        description: "Provide the type of cloud environment. Valid values are: Azure Public, Azure China, Azure US Government, Azure Germany"
+        required: true
+    resourceGroup:
+        description: "Provide the resource group of the target Synapse workspace."
+        required: true
+    clientId:
+        description: "Provide client id of service principal."
+        required: true
+    clientSecret:
+        description: "Provide client secret of the service principal."
+        required: true
+    subscriptionId:
+        description: "Provide subscription id."
+        required: true
+    tenantId:
+        description: "Provide tenant id."
+        required: true
+    activeDirectoryEndpointUrl:
+        description: "Provide Active Directory Endpoint."
+        required: true
+    resourceManagerEndpointUrl:
+        description: "Provide Resource Manager Endpoint."
+        required: true
 runs:
-  using: 'node12'
-  main: './dist/index.js'
+    using: "node12"
+    main: "./src/index.js"
