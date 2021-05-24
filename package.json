@@ -6,7 +6,10 @@
   "scripts": {
     "test": "mocha",
     "start": "node entrypoint.js",
-    "build": "tsc"
+    "clean": "rimraf dist",
+    "lint-and-fix": "eslint . --ext .ts --fix",
+    "lint": "eslint . --ext .ts",
+    "build": "npm run clean && tsc && ncc build ./dist/index.js -m -o ./src/"
   },
   "keywords": [],
   "author": "Aaditya Sharma",
@@ -25,6 +28,6 @@
   "dependencies": {
     "@actions/core": "^1.2.6",
     "@azure/synapse-cicd-library": "file:../synapse-cicd-library",
-    "process": "^0.11.10"
+    "@vercel/ncc": "^0.28.3"
   }
 }
