@@ -3,6 +3,7 @@ build_and_deploy/node_modules
 build_and_deploy/**/*.js
 build_and_deploy/**/*.js.map
 dist
+dist/index.js
 
 # Logs
 logs
