@@ -16,8 +16,8 @@ Credit:
 import { getInput, setFailed, info, error, debug, ExitCode, isDebug } from "@actions/core";
 import {
     ILogger,
-    deployArtifactMainAsync, 
-    IDeployArtifactMainParameters, 
+    deployArtifactMainAsync,
+    IDeployArtifactMainParameters,
     SupportedAzureEnvironments,
     AuthType,
 } from "@azure/synapse-cicd-library";
@@ -46,58 +46,66 @@ class GithubActionConsole implements ILogger {
 }
 
 class DeployArtifactMainParameters implements IDeployArtifactMainParameters {
+    private _bearer?: string;
+
     get workspaceName() {
-        return <string>getInput("workspaceName")
+        return <string>getInput("workspaceName");
     }
 
     get azureEnvironment() {
-        return <string>getInput("azureEnvironment")
+        return <string>getInput("azureEnvironment");
     }
 
     get TemplateFilePath() {
-        return <string>getInput("TemplateFilePath")
+        return <string>getInput("TemplateFilePath");
     }
 
     get ParametersFilePath() {
-        return <string>getInput("ParametersFilePath")
+        return <string>getInput("ParametersFilePath");
     }
 
     get OverrideArmParameters() {
-        return <string>getInput("OverrideArmParameters")
+        return <string>getInput("OverrideArmParameters");
     }
 
     get clientId() {
-        return <string>getInput("clientId")
+        return <string>getInput("clientId");
     }
 
     get clientSecret() {
-        return <string>getInput("clientSecret")
+        return <string>getInput("clientSecret");
     }
 
     get subscriptionId() {
-        return <string>getInput("subscriptionId")
+        return <string>getInput("subscriptionId");
     }
 
     get tenantId() {
-        return <string>getInput("tenantId")
+        return <string>getInput("tenantId");
     }
 
     get activeDirectoryEndpointUrl() {
-        return <string>getInput("activeDirectoryEndpointUrl")
+        return <string>getInput("activeDirectoryEndpointUrl");
     }
 
     get resourceManagerEndpointUrl() {
-        return <string>getInput("resourceManagerEndpointUrl")
-    }
-
-    get bearer() {
-        return <string>getInput("bearer")
+        return <string>getInput("resourceManagerEndpointUrl");
     }
 
     get resourceGroup() {
-        return <string>getInput("resourceGroup")
+        return <string>getInput("resourceGroup");
     }
 
+    get bearer() {
+        if (this._bearer === undefined) {
+            throw new Error("Attempting to access bearer token when one does not exist");
+        }
+        return this._bearer;
+    }
+
+    set bearer(token: string) {
+        this._bearer = token;
+    }
 }
 
 const logger = new GithubActionConsole();
