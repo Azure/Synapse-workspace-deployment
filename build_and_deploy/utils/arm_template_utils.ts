@@ -168,6 +168,10 @@ function replaceVariables(armTemplate: string): string {
     return armTemplate;
 }
 
+/*
+    This function will replace variables like [concat('Microsoft.Synapse/workspaces/', 'workspaceName')]
+    and convert it into [Microsoft.Synapse/workspaces/workspaceName]
+ */
 function replaceStrByRegex(str: string): string {
     var regexOutside = /\[concat\((.*?)\)\]/g;
     var resultOutside = str.replace(regexOutside, function (matchedStr: string, strOutside: string) {
