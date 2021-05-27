@@ -93,14 +93,24 @@ export class ArtifactClient {
         }
     }
 
+    public async deleteArtifact(resourceType: string, payload: Resource, workspace: string, environment: string): Promise<string> {
+        const baseUrl: string = this.getBaseurl(workspace, environment, resourceType);
+        let param: Params = await getParams(true, environment);
+        let token = param.bearer;
+        return await this.artifactDeletionTask(baseUrl, resourceType, payload, token);
+    }
 
-    public async WaitForAllDeployments() {
-        for (let i = 0; i < this.deploymentTrackingRequests.length; i++) {
+    public async WaitForAllDeployments(isDelete: boolean){
+        for(let i=0;i<this.deploymentTrackingRequests.length;i++){
             let deploymentTrackingRequest = this.deploymentTrackingRequests[i];
-            await this.checkStatus(deploymentTrackingRequest.url, deploymentTrackingRequest.name, deploymentTrackingRequest.token);
+            if(isDelete) {
+                await this.checkStatusForDelete(deploymentTrackingRequest.url, deploymentTrackingRequest.name, deploymentTrackingRequest.token);
+            }
+            else {
+                await this.checkStatus(deploymentTrackingRequest.url, deploymentTrackingRequest.name, deploymentTrackingRequest.token);
+            }
         }
-
-        while (this.deploymentTrackingRequests.length > 0) {
+        while(this.deploymentTrackingRequests.length>0){
             this.deploymentTrackingRequests.pop();
         }
     }
@@ -296,6 +306,43 @@ export class ArtifactClient {
         });
     }
 
+    private async artifactDeletionTask(baseUrl: string, resourceType: string, payloadObj: Resource,
+                                       token: string) : Promise<string> {
+        return new Promise<string>(async (resolve, reject) => {
+            var url: string = this.buildArtifactUrl(baseUrl, `${resourceType}s`, payloadObj.name);
+            console.log("Url to delete artifact: ", url);
+
+            this.client.del(url, this.getHeaders(token)).then((res) => {
+                var resStatus = res.message.statusCode;
+                console.log(`ArtifactDeletionTask status: ${resStatus}; status message: ${res.message.statusMessage}`);
+
+                res.readBody().then((body) => {
+                    if (!!body) {
+                        let responseJson = JSON.parse(body);
+                        console.log("Delete artifact response body: ", JSON.stringify(responseJson));
+                    }
+                });
+
+                var location :string = res.message.headers.location!;
+
+                let deploymentTrackingRequest: DeploymentTrackingRequest = {
+                    url: location,
+                    name: payloadObj.name,
+                    token: token
+                }
+                this.deploymentTrackingRequests.push(deploymentTrackingRequest);
+
+                if (resStatus != 200 && resStatus != 201 && resStatus != 202) {
+                    return reject(DeployStatus.failed);
+                }
+                return resolve(DeployStatus.success);
+            }, (reason) => {
+                console.log("Artifact Delete failed: " + reason);
+                return reject(DeployStatus.failed);
+            });
+        });
+    }
+
     private async checkStatus(url: string, name: string, token: string) {
         var timeout = new Date().getTime() + (60000 * 20); // 20 Minutes
         var delayMilliSecs = 30000; // 0.5 minute
@@ -336,6 +383,30 @@ export class ArtifactClient {
             } else {
                 throw new Error('Artifiact deployment validation failed');
             }
+        }
+    }
+
+    private async checkStatusForDelete(url: string, name: string, token: string) {
+        console.log("Url to track artifact deletion status: ", url);
+        var timeout = new Date().getTime() + (60000 * 20); // 20 Minutes
+        var delayMilliSecs = 30000; // 0.5 minute
+
+        while (true) {
+            var currentTime = new Date().getTime();
+            if (timeout < currentTime) {
+                console.log('Current time: ', currentTime);
+                throw new Error("Timeout error in checkStatus");
+            }
+            var nbName = '';
+
+            var res = await this.client.get(url, this.getHeaders(token));
+            var resStatus: number = res.message.statusCode!;
+            console.log(`Checkstatus: ${resStatus}; status message: ${res.message.statusMessage}`);
+            if (resStatus != 200 && resStatus < 203) {
+                await this.delay(delayMilliSecs);
+                continue;
+            }
+            return;
         }
     }
 
