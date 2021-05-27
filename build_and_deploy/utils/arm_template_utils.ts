@@ -535,7 +535,9 @@ function convertIpynb2Payload(payloadObj: any): string {
 
 // Checks if the name provided is part of the artifacts list already in some form.
 function checkIfNameExists(nameToCheck: string, selectedListOfResources: Resource[]): boolean {
-    let nameExists: boolean = false;
+    if(nameToCheck.indexOf(`/`)!=0) {
+        nameToCheck = `/` + nameToCheck;
+    }
 
     if (nameToCheck.toLowerCase().indexOf(`/managedvirtualnetworks/`) > -1 ||
         nameToCheck.toLowerCase().indexOf(`/sqlpools/`) > -1 ||
@@ -554,18 +556,17 @@ function checkIfNameExists(nameToCheck: string, selectedListOfResources: Resourc
         }
 
         // Check if name is same / the last part of the name including workspace etc.
-        if (resName == nameToCheck ||
-            (nameToCheck.indexOf('/' + restype + '/' + resName) != -1 &&
-                nameToCheck.indexOf('/' + restype + '/' + resName) + restype.length + resName.length == nameToCheck.length - 2)) {
-            nameExists = true;
-            break;
+        if (resName.toLowerCase() == nameToCheck.toLowerCase() ||
+            (nameToCheck.toLowerCase().indexOf('/' + restype.toLowerCase() + '/' + resName.toLowerCase()) != -1 &&
+                nameToCheck.toLowerCase().indexOf('/' + restype.toLowerCase() + '/' + resName.toLowerCase()) + restype.length + resName.length == nameToCheck.length - 2)) {
+            return true;
         }
     }
 
-    return nameExists;
+    return false;
 }
 
-function checkIfArtifactExists(resourceToCheck: Resource, selectedListOfResources: Resource[]): boolean {
+export function checkIfArtifactExists(resourceToCheck: Resource, selectedListOfResources: Resource[]): boolean {
 
     for (var res = 0; res < selectedListOfResources.length; res++) {
         let resource: Resource = selectedListOfResources[res];
@@ -578,13 +579,15 @@ function checkIfArtifactExists(resourceToCheck: Resource, selectedListOfResource
 }
 
 // Gets the list of artifacts this artifact depends on.
-function getDependentsFromArtifact(artifactContent: string): string[] {
+export function getDependentsFromArtifact(artifactContent: string): string[] {
     let dependants = new Array<string>();
     let artifact = JSON.parse(artifactContent);
 
-    artifact[`dependsOn`].forEach((x: string) => {
-        dependants.push(x);
-    });
+    if(artifactContent.indexOf(`dependsOn`) > -1 && artifact[`dependsOn`] != null) {
+        artifact[`dependsOn`].forEach((x: string) => {
+            dependants.push(x);
+        });
+    }
 
     return dependants;
 }
