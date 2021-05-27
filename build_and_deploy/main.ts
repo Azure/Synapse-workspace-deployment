@@ -17,6 +17,14 @@ export async function main() {
     const overrideArmParameters: string = core.getInput('OverrideArmParameters');
     const environment: string = core.getInput('Environment');
 
+    let  deleteArtifactsNotInTemplate: boolean = false;
+    const deleteArtifactsNotInTemplateString = core.getInput("DeleteArtifactsNotInTemplate");
+    if(deleteArtifactsNotInTemplateString.toLowerCase() == "true")
+    {
+        deleteArtifactsNotInTemplate = true;
+    }
+    console.log(`DeleteArtifactsNotInTemplate=${deleteArtifactsNotInTemplate}`);
+
     try {
         const packageFiles: PackageFile = new PackageFile(templateFile, parametersFile, overrideArmParameters);
         const params = await getParams();
@@ -27,7 +35,8 @@ export async function main() {
             packageFiles,
             artifactClient,
             targetWorkspace,
-            environment
+            environment,
+            deleteArtifactsNotInTemplate
         );
         await orchestrator.orchestrateFromPublishBranch();
     } catch (err) {
