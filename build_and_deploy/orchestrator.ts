@@ -9,6 +9,11 @@ import { Artifact } from "./utils/artifacts_enum";
 import { DeployStatus } from "./utils/deploy_utils";
 import { SystemLogger } from "./utils/logger";
 import { getWorkspaceLocation } from "./utils/service_principal_client_utils";
+import {
+    getArtifactsFromWorkspace,
+    getArtifactsToDeleteFromWorkspace,
+    getArtifactsToDeleteFromWorkspaceInOrder
+} from "./utils/workspace_artifacts_getter";
 
 export class Orchestrator {
     private packageFiles: PackageFile;

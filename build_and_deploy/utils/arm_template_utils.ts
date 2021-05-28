@@ -534,7 +534,7 @@ function convertIpynb2Payload(payloadObj: any): string {
 }
 
 // Checks if the name provided is part of the artifacts list already in some form.
-function checkIfNameExists(nameToCheck: string, selectedListOfResources: Resource[]): boolean {
+export function checkIfNameExists(nameToCheck: string, selectedListOfResources: Resource[]): boolean {
     if(nameToCheck.indexOf(`/`)!=0) {
         nameToCheck = `/` + nameToCheck;
     }

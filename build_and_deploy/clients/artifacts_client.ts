@@ -438,10 +438,10 @@ export class ArtifactClient {
     }
 
     private getBaseurl(workspace: string, environment: string, resourceType: string) {
-        return this.getUrlByEnvironment(workspace, environment);
+        return ArtifactClient.getUrlByEnvironment(workspace, environment);
     }
 
-    private getUrlByEnvironment(workspace: string, environment: string): string {
+    public static getUrlByEnvironment(workspace: string, environment: string): string {
         switch (environment) {
             case Env.prod.toString():
                 return `https://${workspace}.dev.azuresynapse.net`;
