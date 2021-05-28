@@ -254,21 +254,18 @@ export class ArtifactClient {
         return new Promise<string>(async (resolve, reject) => {
 
             let url: string = this.buildArtifactUrl(baseUrl, resourceType, payloadObj.name);
-            SystemLogger.info("Url to deploy artifact: " + url);
-
             let payload: string = payloadObj.content;
 
             this.client.put(url, payload, this.getHeaders(token)).then((res) => {
 
                 let resStatus = res.message.statusCode;
-                SystemLogger.info(`ArtifactDeploymentTask status: ${resStatus}; status message: ${res.message.statusMessage}`);
+                SystemLogger.info(`For Artifact: ${payloadObj.name}: ArtifactDeploymentTask status: ${resStatus}; status message: ${res.message.statusMessage}`);
 
                 if (resStatus != 200 && resStatus != 201 && resStatus != 202) {
                     // Remove this after testing
                     res.readBody().then((body) => {
                         if (!!body) {
                             let responseJson = JSON.parse(body);
-                            SystemLogger.info("Deploy artifact failed: " + JSON.stringify(responseJson));
                         }
                     });
                     return reject(DeployStatus.failed);
@@ -290,7 +287,7 @@ export class ArtifactClient {
                             }
                             this.deploymentTrackingRequests.push(deploymentTrackingRequest);
                         } catch (err) {
-                            SystemLogger.info('Deployment failed with error: ' + JSON.stringify(err));
+                            console.log(`For Artifact: ${payloadObj.name}: Deployment failed with error: ${JSON.stringify(err)}`);
                             return reject(DeployStatus.failed);
                         }
 
@@ -300,7 +297,7 @@ export class ArtifactClient {
                     }
                 });
             }, (reason) => {
-                SystemLogger.info("Artifact Deployment failed: " + reason);
+                SystemLogger.info(`For Artifact: ${payloadObj.name}: Artifact Deployment failed: ${reason}`);
                 return reject(DeployStatus.failed);
             });
         });
@@ -310,16 +307,13 @@ export class ArtifactClient {
                                        token: string) : Promise<string> {
         return new Promise<string>(async (resolve, reject) => {
             var url: string = this.buildArtifactUrl(baseUrl, `${resourceType}s`, payloadObj.name);
-            console.log("Url to delete artifact: ", url);
-
             this.client.del(url, this.getHeaders(token)).then((res) => {
                 var resStatus = res.message.statusCode;
-                console.log(`ArtifactDeletionTask status: ${resStatus}; status message: ${res.message.statusMessage}`);
+                console.log(`For Artifact: ${payloadObj.name}: ArtifactDeletionTask status: ${resStatus}; status message: ${res.message.statusMessage}`);
 
                 res.readBody().then((body) => {
                     if (!!body) {
                         let responseJson = JSON.parse(body);
-                        console.log("Delete artifact response body: ", JSON.stringify(responseJson));
                     }
                 });
 
@@ -357,20 +351,19 @@ export class ArtifactClient {
 
             var res = await this.client.get(url, this.getHeaders(token));
             var resStatus = res.message.statusCode;
-            SystemLogger.info(`Checkstatus: ${resStatus}; status message: ${res.message.statusMessage}`);
+            console.log(`For artifact: ${name}: Checkstatus: ${resStatus}; status message: ${res.message.statusMessage}`);
             if (resStatus != 200 && resStatus != 201 && resStatus != 202) {
                 throw new Error(`Checkstatus => status: ${resStatus}; status message: ${res.message.statusMessage}`);
             }
             var body = await res.readBody();
             if (!body) {
-                SystemLogger.info("No status response for url: " + url);
                 await this.delay(delayMilliSecs);
                 continue;
             }
             let responseJson = JSON.parse(body);
             var status = responseJson['status'];
             if (!!status && status == 'Failed') {
-                SystemLogger.info("Artifact Deployment status: " + status);
+                console.log(`For artifact: ${name}: Artifact Deployment status: ${status}`);
                 throw new Error(`Failed to fetch the deployment status ${JSON.stringify(responseJson['error'])}`);
             } else if (!!status && status == 'InProgress') {
                 await this.delay(delayMilliSecs);
@@ -378,7 +371,7 @@ export class ArtifactClient {
             }
             nbName = responseJson['name'];
             if (nbName === name) {
-                SystemLogger.info("Artifact deployed");
+                console.log(`Artifact ${name} deployed successfully.`);
                 break;
             } else {
                 throw new Error('Artifiact deployment validation failed');
@@ -387,7 +380,6 @@ export class ArtifactClient {
     }
 
     private async checkStatusForDelete(url: string, name: string, token: string) {
-        console.log("Url to track artifact deletion status: ", url);
         var timeout = new Date().getTime() + (60000 * 20); // 20 Minutes
         var delayMilliSecs = 30000; // 0.5 minute
 
@@ -401,7 +393,7 @@ export class ArtifactClient {
 
             var res = await this.client.get(url, this.getHeaders(token));
             var resStatus: number = res.message.statusCode!;
-            console.log(`Checkstatus: ${resStatus}; status message: ${res.message.statusMessage}`);
+            console.log(`For Artifact: ${name}: Checkstatus: ${resStatus}; status message: ${res.message.statusMessage}`);
             if (resStatus != 200 && resStatus < 203) {
                 await this.delay(delayMilliSecs);
                 continue;

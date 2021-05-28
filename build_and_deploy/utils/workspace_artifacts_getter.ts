@@ -39,7 +39,6 @@ export async function getArtifactsFromWorkspaceOfType(artifactTypeToQuery: Artif
     var resp = new Promise<string>((resolve, reject) => {
         client.get(resourceUrl, headers).then(async (res) => {
             var resStatus = res.message.statusCode;
-            console.log(`getArtifactsFromWorkspace: status code ${resStatus}`);
 
             if (resStatus != 200 && resStatus != 201 && resStatus != 202) {
                 console.log(`Failed to fetch workspace info, status: ${resStatus}; status message: ${res.message.statusMessage}`);
@@ -87,14 +86,18 @@ export async function getArtifactsFromWorkspaceOfType(artifactTypeToQuery: Artif
     return artifacts;
 }
 
-export async function getArtifactsFromWorkspace(targetWorkspaceName: string, environment: string): Promise<Resource[]> {
+export async function getArtifactsFromWorkspace(
+    targetWorkspaceName: string,
+    environment: string): Promise<Resource[]>
+{
+    console.log(`Getting Artifacts from workspace: ${targetWorkspaceName}.`);
     let artifacts = new Array<Resource>();
 
     for(let x=0;x<artifactTypesToQuery.length;x++)
     {
         let artifactsOfType = await getArtifactsFromWorkspaceOfType(artifactTypesToQuery[x], targetWorkspaceName, environment);
         artifactsOfType.forEach((value)=>{
-            artifacts.push();
+            artifacts.push(value);
         });
     }
 
@@ -106,6 +109,7 @@ export function getArtifactsToDeleteFromWorkspace(
     artifactsToDeploy: Resource[][],
     typeMap: Map<string, Artifact>): Resource[]
 {
+    console.log("Getting Artifacts which should be deleted from workspace.");
     let artifactsToDelete = new Array<Resource>();
     let resourceFound: boolean = true;
 
@@ -146,7 +150,7 @@ export function getArtifactsToDeleteFromWorkspace(
 
             if(!resourceFound)
             {
-                console.log(`Resource not found in template. deleting ${checkResource.name} of type ${checkResource.type}`);
+                console.log(`Artifact not found in template. deleting ${checkResource.name} of type ${checkResource.type}`);
                 artifactsToDelete.push(checkResource);
             }
         }
@@ -155,15 +159,46 @@ export function getArtifactsToDeleteFromWorkspace(
     return artifactsToDelete;
 }
 
+function countOfArtifactDependancy(checkArtifact: Resource, selectedListOfResources: Resource[]): number
+{
+    let result: number =0;
+    for (var res = 0; res < selectedListOfResources.length; res++) {
+        let resource: Resource = selectedListOfResources[res];
+
+        let resName: string = checkArtifact.name;
+        let restype: string = checkArtifact.type;
+        if(restype.indexOf("Microsoft.Synapse/workspaces/")> -1){
+            restype = restype.substr("Microsoft.Synapse/workspaces/".length);
+        }
+        let nameToCheck = `${restype}/${resName}`;
+        nameToCheck = nameToCheck.toLowerCase();
+
+        for(let i=0;i< resource.dependson.length;i++)
+        {
+            if( resource.dependson[i].toLowerCase() == nameToCheck)
+            {
+                result++;
+                break;
+            }
+
+        }
+    }
+
+    return result;
+}
+
 export function getArtifactsToDeleteFromWorkspaceInOrder(
     artifactsToDelete: Resource[]): Resource[][]
 {
+    console.log("Computing dependancies for Artifacts which should be deleted from workspace.");
+
     let artifactsBatches = new Array<Array<Resource>>();
     let artifactBatch = new Array<Resource>();
     let artifactsOrdered = new Array<Resource>();
 
     // This will be a diff logic than the deploy one. We only need to check dependancy within the list.
-    // If A depends on B, C when B is in this list and C is not. We will delete B and then A.
+    // If A is a dependency for B, C when B is in this list and C is not. We will delete A and then B.
+
     // This is the max times, we will go through the artifacts to look for dependancies. So this is the max level of dependancies supported.
     let MAX_ITERATIONS = 500;
     let MAX_PARALLEL_ARTIFACTS = 20;
@@ -188,28 +223,22 @@ export function getArtifactsToDeleteFromWorkspaceInOrder(
                 continue;
             }
 
-            let dependancies = artifactsToDelete[res].dependson;
-            if(dependancies.length==0)
-            {
-                // Adding to the ordered list as this artifact has no dependancies.
-                artifactsOrdered.push(artifactsToDelete[res]);
-                if(artifactBatch.length>= MAX_PARALLEL_ARTIFACTS)
-                {
-                    artifactsBatches.push(artifactBatch);
-                    artifactBatch = new Array<Resource>();
-                }
+            let allDependencyMet = false;
+            // check if, in all other artifacts being deleted, something depends on this artifact
+            //its ok if not at all or if it is in artifactsOrdered, but not in artifactBatch
+            let dependencyInArtifactsToDelete: number = countOfArtifactDependancy(artifactsToDelete[res], artifactsToDelete);
+            let dependencyInArtifactsOrdered: number = countOfArtifactDependancy(artifactsToDelete[res], artifactsOrdered);
+            let dependancyInCurrentBatch: number = countOfArtifactDependancy(artifactsToDelete[res], artifactBatch);
 
-                artifactBatch.push(artifactsToDelete[res]);
-                continue;
+            if(dependencyInArtifactsToDelete==0)
+            {
+                //nothing in the delete list depends on it
+                allDependencyMet = true;
             }
-
-            let allDependencyMet = true;
-            dependancies.forEach((dep: string) =>
+            else if(dependancyInCurrentBatch==0 && dependencyInArtifactsOrdered == dependencyInArtifactsToDelete)
             {
-                if(!checkIfNameExists(dep, artifactsOrdered) && checkIfNameExists(dep, artifactsToDelete)){
-                    allDependencyMet = false;
-                }
-            });
+                allDependencyMet = true;
+            }
 
             if(allDependencyMet){
                 // Adding to the ordered list as all dependancies are already in the list
@@ -242,18 +271,10 @@ export function getArtifactsToDeleteFromWorkspaceInOrder(
             {
                 // So this artifact's dependancy could not be verified.
                 console.log(`Name: ${artifactsToDelete[res].name}, Type: ${artifactsToDelete[res].type}`);
-                let dependancies = artifactsToDelete[res].dependson;
-                dependancies.forEach((dep: string) =>
-                {
-                    if(!checkIfNameExists(dep, artifactsOrdered) &&
-                        checkIfNameExists(dep, artifactsToDelete)){
-                        console.log(`    Dependency Not found: ${dep}`);
-                    }
-                });
             }
         }
 
-        throw new Error("Could not figure out full dependancy model for deleting artifacts not in template.");
+        throw new Error("Could not figure out full dependancy model for deleting artifacts not in template. For the list above, check the template to see which artifacts depends on them.");
     }
 
     return artifactsBatches;

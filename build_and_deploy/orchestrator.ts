@@ -50,8 +50,11 @@ export class Orchestrator {
             if(this.deleteArtifactsNotInTemplate)
             {
                 // Delete extra artifacts in the workspace
+                console.log("Attempting to delete artifacts from workspace, that were not in the template.");
                 var artifactsInWorkspace = await getArtifactsFromWorkspace(this.targetWorkspace, this.environment);
+                console.log(`Found ${artifactsInWorkspace.length} artifacts in the workspace.`);
                 var artifactsToDeleteInWorkspace = getArtifactsToDeleteFromWorkspace(artifactsInWorkspace, artifactsToDeploy, typeMap);
+                console.log(`Found ${artifactsToDeleteInWorkspace.length} artifacts in the workspace that many need to be deleted.`);
                 var artifactsToDeleteInWorkspaceInOrder = getArtifactsToDeleteFromWorkspaceInOrder(artifactsToDeleteInWorkspace);
                 await this.deleteResourcesInOrder(this.artifactClient, artifactsToDeleteInWorkspaceInOrder!, this.targetWorkspace, this.environment, armParameterContent);
                 console.log("Completed deleting artifacts from workspace, that were not in the template.");
@@ -102,7 +105,7 @@ export class Orchestrator {
         for (let resource of artifactsToDeploy) {
 
             if (resource.isDefault) {
-                SystemLogger.info("Skipping default workspace resource.");
+                console.log(`Skipping deployment of ${resource.name} as its a default workspace resource.`);
                 continue;
             }
 
@@ -127,7 +130,7 @@ export class Orchestrator {
             }
             SystemLogger.info(`Deployment status : ${result}`);
             if (result != DeployStatus.success) {
-                throw new Error("Failure in deployment: " + result);
+                throw new Error(`For Artifact ${resource.name}: Failure in deployment: ${result}`);
             }
 
         }
@@ -144,7 +147,7 @@ export class Orchestrator {
         for (var resource of artifactsToDelete) {
             if(resource.isDefault)
             {
-                console.log("Skipping default workspace resource.");
+                console.log(`Skipping deletion of ${resource.name} as its a default workspace resource.`);
                 continue;
             }
 

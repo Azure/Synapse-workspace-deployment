@@ -120,7 +120,8 @@ function replaceParameters(armParams: string, armTemplate: string, overrideArmPa
     let armParamValues = getParameterValuesFromArmTemplate(armParams, armTemplate, overrideArmParameters, targetWorkspaceName);
 
     armParamValues.forEach((value, key) => {
-        if(value.indexOf(`parameters`)>-1) {
+        value = value.toString();
+        if(value.indexOf("parameters") > -1){
             armParamValues.forEach((valueInside, keyInside) => {
                 if(value.indexOf(keyInside) > -1) {
                     armParamValues.set(key, value.split('['+keyInside+']').join(`'${valueInside}'`));
@@ -133,6 +134,7 @@ function replaceParameters(armParams: string, armTemplate: string, overrideArmPa
     });
 
     armParamValues.forEach((value, key) => {
+        value = value.toString();
         if(value.indexOf("concat")>-1) {
             armParamValues.set(key, replaceStrByRegex(value));
         }
@@ -172,7 +174,7 @@ function replaceVariables(armTemplate: string): string {
     This function will replace variables like [concat('Microsoft.Synapse/workspaces/', 'workspaceName')]
     and convert it into [Microsoft.Synapse/workspaces/workspaceName]
  */
-function replaceStrByRegex(str: string): string {
+export function replaceStrByRegex(str: string): string {
     var regexOutside = /\[concat\((.*?)\)\]/g;
     var resultOutside = str.replace(regexOutside, function (matchedStr: string, strOutside: string) {
         var result: string = ``;
@@ -198,7 +200,7 @@ function getParameterValuesFromArmTemplate(armParams: string, armTemplate: strin
     let jsonArmParams = JSON.parse(armParams);
     let armParamValues = new Map<string, string>()
     for (let value in jsonArmParams.parameters) {
-        armParamValues.set(`parameters('${value}')`, jsonArmParams.parameters[value].value);
+        armParamValues.set(`parameters('${value}')`, jsonArmParams.parameters[value].value.toString());
     }
 
     // Convert arm template to json, look at the default parameters if any and add missing ones to the map we have
