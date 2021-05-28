@@ -23,9 +23,8 @@ const artifactTypesToQuery:Artifact[] = [
     Artifact.trigger
 ];
 
-export async function getArtifactsFromWorkspaceOfType(artifactTypeToQuery: Artifact, targetWorkspaceName: string,
-    environment: string): Promise<Resource[]> {
-    var params = await deployUtils.getParams();
+export async function getArtifactsFromWorkspaceOfType(artifactTypeToQuery: Artifact, targetWorkspaceName: string, environment: string): Promise<Resource[]> {
+    var params = await deployUtils.getParams(true, environment);
     var token =  params.bearer;
 
     var headers: httpInterfaces.IHeaders = {
@@ -87,14 +86,10 @@ export async function getArtifactsFromWorkspaceOfType(artifactTypeToQuery: Artif
     return artifacts;
 }
 
-export async function getArtifactsFromWorkspace(
-    targetWorkspaceName: string,
-    environment: string): Promise<Resource[]>
-{
+export async function getArtifactsFromWorkspace(targetWorkspaceName: string, environment: string): Promise<Resource[]> {
     SystemLogger.info(`Getting Artifacts from workspace: ${targetWorkspaceName}.`);
     let artifacts = new Array<Resource>();
-
-    for(let x=0;x<artifactTypesToQuery.length;x++)
+    for(let x=0; x < artifactTypesToQuery.length; x++)
     {
         let artifactsOfType = await getArtifactsFromWorkspaceOfType(artifactTypesToQuery[x], targetWorkspaceName, environment);
         artifactsOfType.forEach((value)=>{
