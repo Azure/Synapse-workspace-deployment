@@ -23,7 +23,7 @@ export async function main() {
     {
         deleteArtifactsNotInTemplate = true;
     }
-    console.log(`DeleteArtifactsNotInTemplate=${deleteArtifactsNotInTemplate}`);
+    SystemLogger.info(`DeleteArtifactsNotInTemplate=${deleteArtifactsNotInTemplate}`);
 
     try {
         const packageFiles: PackageFile = new PackageFile(templateFile, parametersFile, overrideArmParameters);

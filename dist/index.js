@@ -266,7 +266,7 @@ var ArtifactClient = /** @class */ (function () {
                     case 1: return [2 /*return*/, _a.sent()];
                     case 2:
                         err_3 = _a.sent();
-                        console.log(err_3);
+                        logger_1.SystemLogger.info(err_3);
                         throw new Error("Credential deployment failed " + JSON.stringify(err_3));
                     case 3: return [2 /*return*/];
                 }
@@ -450,7 +450,7 @@ var ArtifactClient = /** @class */ (function () {
                                                 this.deploymentTrackingRequests.push(deploymentTrackingRequest);
                                             }
                                             catch (err) {
-                                                console.log("For Artifact: " + payloadObj.name + ": Deployment failed with error: " + JSON.stringify(err));
+                                                logger_1.SystemLogger.info("For Artifact: " + payloadObj.name + ": Deployment failed with error: " + JSON.stringify(err));
                                                 return [2 /*return*/, reject(deploy_utils_1.DeployStatus.failed)];
                                             }
                                             return [2 /*return*/, resolve(deploy_utils_1.DeployStatus.success)];
@@ -482,7 +482,7 @@ var ArtifactClient = /** @class */ (function () {
                             url = this.buildArtifactUrl(baseUrl, resourceType + "s", payloadObj.name);
                             this.client.del(url, this.getHeaders(token)).then(function (res) {
                                 var resStatus = res.message.statusCode;
-                                console.log("For Artifact: " + payloadObj.name + ": ArtifactDeletionTask status: " + resStatus + "; status message: " + res.message.statusMessage);
+                                logger_1.SystemLogger.info("For Artifact: " + payloadObj.name + ": ArtifactDeletionTask status: " + resStatus + "; status message: " + res.message.statusMessage);
                                 res.readBody().then(function (body) {
                                     if (!!body) {
                                         var responseJson = JSON.parse(body);
@@ -500,7 +500,7 @@ var ArtifactClient = /** @class */ (function () {
                                 }
                                 return resolve(deploy_utils_1.DeployStatus.success);
                             }, function (reason) {
-                                console.log("Artifact Delete failed: " + reason);
+                                logger_1.SystemLogger.info("Artifact Delete failed: " + reason);
                                 return reject(deploy_utils_1.DeployStatus.failed);
                             });
                             return [2 /*return*/];
@@ -530,7 +530,7 @@ var ArtifactClient = /** @class */ (function () {
                     case 2:
                         res = _a.sent();
                         resStatus = res.message.statusCode;
-                        console.log("For artifact: " + name + ": Checkstatus: " + resStatus + "; status message: " + res.message.statusMessage);
+                        logger_1.SystemLogger.info("For artifact: " + name + ": Checkstatus: " + resStatus + "; status message: " + res.message.statusMessage);
                         if (resStatus != 200 && resStatus != 201 && resStatus != 202) {
                             throw new Error("Checkstatus => status: " + resStatus + "; status message: " + res.message.statusMessage);
                         }
@@ -546,7 +546,7 @@ var ArtifactClient = /** @class */ (function () {
                         responseJson = JSON.parse(body);
                         status = responseJson['status'];
                         if (!(!!status && status == 'Failed')) return [3 /*break*/, 6];
-                        console.log("For artifact: " + name + ": Artifact Deployment status: " + status);
+                        logger_1.SystemLogger.info("For artifact: " + name + ": Artifact Deployment status: " + status);
                         throw new Error("Failed to fetch the deployment status " + JSON.stringify(responseJson['error']));
                     case 6:
                         if (!(!!status && status == 'InProgress')) return [3 /*break*/, 8];
@@ -557,7 +557,7 @@ var ArtifactClient = /** @class */ (function () {
                     case 8:
                         nbName = responseJson['name'];
                         if (nbName === name) {
-                            console.log("Artifact " + name + " deployed successfully.");
+                            logger_1.SystemLogger.info("Artifact " + name + " deployed successfully.");
                             return [3 /*break*/, 9];
                         }
                         else {
@@ -582,7 +582,7 @@ var ArtifactClient = /** @class */ (function () {
                         if (false) {}
                         currentTime = new Date().getTime();
                         if (timeout < currentTime) {
-                            console.log('Current time: ', currentTime);
+                            logger_1.SystemLogger.info("Current time: ' " + currentTime);
                             throw new Error("Timeout error in checkStatus");
                         }
                         nbName = '';
@@ -590,7 +590,7 @@ var ArtifactClient = /** @class */ (function () {
                     case 2:
                         res = _a.sent();
                         resStatus = res.message.statusCode;
-                        console.log("For Artifact: " + name + ": Checkstatus: " + resStatus + "; status message: " + res.message.statusMessage);
+                        logger_1.SystemLogger.info("For Artifact: " + name + ": Checkstatus: " + resStatus + "; status message: " + res.message.statusMessage);
                         if (!(resStatus != 200 && resStatus < 203)) return [3 /*break*/, 4];
                         return [4 /*yield*/, this.delay(delayMilliSecs)];
                     case 3:
@@ -740,7 +740,7 @@ function main() {
                     if (deleteArtifactsNotInTemplateString.toLowerCase() == "true") {
                         deleteArtifactsNotInTemplate = true;
                     }
-                    console.log("DeleteArtifactsNotInTemplate=" + deleteArtifactsNotInTemplate);
+                    logger_1.SystemLogger.info("DeleteArtifactsNotInTemplate=" + deleteArtifactsNotInTemplate);
                     _a.label = 1;
                 case 1:
                     _a.trys.push([1, 4, , 5]);
@@ -8712,25 +8712,25 @@ var Orchestrator = /** @class */ (function () {
                         artifactsToDeploy = _a.sent();
                         if (!this.deleteArtifactsNotInTemplate) return [3 /*break*/, 6];
                         // Delete extra artifacts in the workspace
-                        console.log("Attempting to delete artifacts from workspace, that were not in the template.");
+                        logger_1.SystemLogger.info("Attempting to delete artifacts from workspace, that were not in the template.");
                         return [4 /*yield*/, workspace_artifacts_getter_1.getArtifactsFromWorkspace(this.targetWorkspace, this.environment)];
                     case 4:
                         artifactsInWorkspace = _a.sent();
-                        console.log("Found " + artifactsInWorkspace.length + " artifacts in the workspace.");
+                        logger_1.SystemLogger.info("Found " + artifactsInWorkspace.length + " artifacts in the workspace.");
                         artifactsToDeleteInWorkspace = workspace_artifacts_getter_1.getArtifactsToDeleteFromWorkspace(artifactsInWorkspace, artifactsToDeploy, artifacts_client_1.typeMap);
-                        console.log("Found " + artifactsToDeleteInWorkspace.length + " artifacts in the workspace that many need to be deleted.");
+                        logger_1.SystemLogger.info("Found " + artifactsToDeleteInWorkspace.length + " artifacts in the workspace that many need to be deleted.");
                         artifactsToDeleteInWorkspaceInOrder = workspace_artifacts_getter_1.getArtifactsToDeleteFromWorkspaceInOrder(artifactsToDeleteInWorkspace);
                         return [4 /*yield*/, this.deleteResourcesInOrder(this.artifactClient, artifactsToDeleteInWorkspaceInOrder, this.targetWorkspace, this.environment, armParameterContent)];
                     case 5:
                         _a.sent();
-                        console.log("Completed deleting artifacts from workspace, that were not in the template.");
+                        logger_1.SystemLogger.info("Completed deleting artifacts from workspace, that were not in the template.");
                         _a.label = 6;
                     case 6:
-                        console.log("Start deploying artifacts from the template.");
+                        logger_1.SystemLogger.info("Start deploying artifacts from the template.");
                         return [4 /*yield*/, this.deployResourcesInOrder(this.artifactClient, artifactsToDeploy, this.targetWorkspace, this.environment)];
                     case 7:
                         _a.sent();
-                        console.log("Completed deploying artifacts from the template.");
+                        logger_1.SystemLogger.info("Completed deploying artifacts from the template.");
                         return [3 /*break*/, 9];
                     case 8:
                         err_1 = _a.sent();
@@ -8813,7 +8813,7 @@ var Orchestrator = /** @class */ (function () {
                         if (!(_i < artifactsToDeploy_1.length)) return [3 /*break*/, 6];
                         resource = artifactsToDeploy_1[_i];
                         if (resource.isDefault) {
-                            console.log("Skipping deployment of " + resource.name + " as its a default workspace resource.");
+                            logger_1.SystemLogger.info("Skipping deployment of " + resource.name + " as its a default workspace resource.");
                             return [3 /*break*/, 5];
                         }
                         artifactTypeToDeploy = artifacts_client_1.typeMap.get(resource.type.toLowerCase());
@@ -8860,11 +8860,11 @@ var Orchestrator = /** @class */ (function () {
                         if (!(_i < artifactsToDelete_1.length)) return [3 /*break*/, 4];
                         resource = artifactsToDelete_1[_i];
                         if (resource.isDefault) {
-                            console.log("Skipping deletion of " + resource.name + " as its a default workspace resource.");
+                            logger_1.SystemLogger.info("Skipping deletion of " + resource.name + " as its a default workspace resource.");
                             return [3 /*break*/, 3];
                         }
                         artifactTypeToDelete = artifacts_client_1.typeMap.get(resource.type.toLowerCase());
-                        console.log("Deleting " + resource.name + " of type " + artifactTypeToDelete);
+                        logger_1.SystemLogger.info("Deleting " + resource.name + " of type " + artifactTypeToDelete);
                         if (artifactTypeToDelete == artifacts_enum_1.Artifact.sqlpool ||
                             artifactTypeToDelete == artifacts_enum_1.Artifact.bigdatapools ||
                             artifactTypeToDelete == artifacts_enum_1.Artifact.managedvirtualnetworks ||
@@ -8876,14 +8876,14 @@ var Orchestrator = /** @class */ (function () {
                     case 2:
                         // Do the artifact deletion
                         result = _a.sent();
-                        console.log("Deletion status : " + result);
+                        logger_1.SystemLogger.info("Deletion status : " + result);
                         deletionStatus = {
                             key: resource.type.toLowerCase(),
                             value: "Deployment status : " + result
                         };
                         if (result != deploy_utils_1.DeployStatus.success) {
                             // If deletion is not a success, its ok. we move forward.
-                            console.log("Failure in deployment: " + result);
+                            logger_1.SystemLogger.info("Failure in deployment: " + result);
                         }
                         _a.label = 3;
                     case 3:
@@ -9345,7 +9345,7 @@ function getArtifactsFromArmTemplate(armTemplate, targetLocation, defaultArtifac
             defaultArtifacts.forEach(function (value, key) {
                 resource.name = resource.name.replace(key, value);
             });
-            console.log("\tWill be skipped as its a default resource.");
+            logger_1.SystemLogger.info("\tWill be skipped as its a default resource.");
         }
         if (!checkIfArtifactExists(resource, artifacts)) {
             artifacts.push(resource);
@@ -10031,6 +10031,7 @@ var deployUtils = __importStar(__nccwpck_require__(3850));
 var httpClient = __importStar(__nccwpck_require__(6291));
 var arm_template_utils_1 = __nccwpck_require__(2983);
 var artifacts_enum_1 = __nccwpck_require__(5724);
+var logger_1 = __nccwpck_require__(4659);
 var userAgent = 'synapse-github-cicd-deploy-task';
 var requestOptions = {};
 var client = new httpClient.HttpClient(userAgent, undefined, requestOptions);
@@ -10071,21 +10072,21 @@ function getArtifactsFromWorkspaceOfType(artifactTypeToQuery, targetWorkspaceNam
                                     case 0:
                                         resStatus = res.message.statusCode;
                                         if (resStatus != 200 && resStatus != 201 && resStatus != 202) {
-                                            console.log("Failed to fetch workspace info, status: " + resStatus + "; status message: " + res.message.statusMessage);
+                                            logger_1.SystemLogger.info("Failed to fetch workspace info, status: " + resStatus + "; status message: " + res.message.statusMessage);
                                             return [2 /*return*/, reject("Failed to fetch workspace info " + res.message.statusMessage)];
                                         }
                                         return [4 /*yield*/, res.readBody()];
                                     case 1:
                                         body = _a.sent();
                                         if (!body) {
-                                            console.log("No response body for url: ", resourceUrl);
+                                            logger_1.SystemLogger.info("No response body for url: " + resourceUrl);
                                             return [2 /*return*/, reject("Failed to fetch workspace info response")];
                                         }
                                         return [2 /*return*/, resolve(body)];
                                 }
                             });
                         }); }, function (reason) {
-                            console.log('Failed to fetch artifacts from workspace: ', reason);
+                            logger_1.SystemLogger.info('Failed to fetch artifacts from workspace: ' + reason);
                             return reject(deployUtils.DeployStatus.failed);
                         });
                     });
@@ -10122,7 +10123,7 @@ function getArtifactsFromWorkspace(targetWorkspaceName, environment) {
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
-                    console.log("Getting Artifacts from workspace: " + targetWorkspaceName + ".");
+                    logger_1.SystemLogger.info("Getting Artifacts from workspace: " + targetWorkspaceName + ".");
                     artifacts = new Array();
                     x = 0;
                     _a.label = 1;
@@ -10145,7 +10146,7 @@ function getArtifactsFromWorkspace(targetWorkspaceName, environment) {
 }
 exports.getArtifactsFromWorkspace = getArtifactsFromWorkspace;
 function getArtifactsToDeleteFromWorkspace(artifactsInWorkspace, artifactsToDeploy, typeMap) {
-    console.log("Getting Artifacts which should be deleted from workspace.");
+    logger_1.SystemLogger.info("Getting Artifacts which should be deleted from workspace.");
     var artifactsToDelete = new Array();
     var resourceFound = true;
     artifactsInWorkspace.forEach(function (checkResource) {
@@ -10173,7 +10174,7 @@ function getArtifactsToDeleteFromWorkspace(artifactsInWorkspace, artifactsToDepl
                 }
             }
             if (!resourceFound) {
-                console.log("Artifact not found in template. deleting " + checkResource.name + " of type " + checkResource.type);
+                logger_1.SystemLogger.info("Artifact not found in template. deleting " + checkResource.name + " of type " + checkResource.type);
                 artifactsToDelete.push(checkResource);
             }
         }
@@ -10202,7 +10203,7 @@ function countOfArtifactDependancy(checkArtifact, selectedListOfResources) {
     return result;
 }
 function getArtifactsToDeleteFromWorkspaceInOrder(artifactsToDelete) {
-    console.log("Computing dependancies for Artifacts which should be deleted from workspace.");
+    logger_1.SystemLogger.info("Computing dependancies for Artifacts which should be deleted from workspace.");
     var artifactsBatches = new Array();
     var artifactBatch = new Array();
     var artifactsOrdered = new Array();
@@ -10247,20 +10248,19 @@ function getArtifactsToDeleteFromWorkspaceInOrder(artifactsToDelete) {
                 artifactBatch.push(artifactsToDelete[res]);
             }
         }
-        console.log("Iteration " + iteration + " Figured out deletion order for " + artifactsOrdered.length + " / " + artifactsToDelete.length + " Artifacts for Dependancies.");
+        logger_1.SystemLogger.info("Iteration " + iteration + " Figured out deletion order for " + artifactsOrdered.length + " / " + artifactsToDelete.length + " Artifacts for Dependancies.");
         count = artifactsOrdered.length;
     }
     if (artifactBatch.length > 0) {
         artifactsBatches.push(artifactBatch);
     }
     if (iteration == MAX_ITERATIONS) {
-        console.log();
-        console.log("Could not figure out full dependancy model for these artifact for delete. Check template and target workspace for correctness.");
-        console.log("-----------------------------------------------------------------------------------------------");
+        logger_1.SystemLogger.info("Could not figure out full dependancy model for these artifact for delete. Check template and target workspace for correctness.");
+        logger_1.SystemLogger.info("-----------------------------------------------------------------------------------------------");
         for (var res = 0; res < artifactsToDelete.length; res++) {
             if (!arm_template_utils_1.checkIfArtifactExists(artifactsToDelete[res], artifactsOrdered)) {
                 // So this artifact's dependancy could not be verified.
-                console.log("Name: " + artifactsToDelete[res].name + ", Type: " + artifactsToDelete[res].type);
+                logger_1.SystemLogger.info("Name: " + artifactsToDelete[res].name + ", Type: " + artifactsToDelete[res].type);
             }
         }
         throw new Error("Could not figure out full dependancy model for deleting artifacts not in template. For the list above, check the template to see which artifacts depends on them.");

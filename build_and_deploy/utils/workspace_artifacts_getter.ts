@@ -4,6 +4,7 @@ import * as httpClient from 'typed-rest-client/HttpClient';
 import * as httpInterfaces from 'typed-rest-client/Interfaces';
 import { checkIfArtifactExists, checkIfNameExists, Resource } from './arm_template_utils';
 import { Artifact } from './artifacts_enum';
+import {SystemLogger} from "./logger";
 
 const userAgent: string = 'synapse-github-cicd-deploy-task'
 const requestOptions: httpInterfaces.IRequestOptions = {};
@@ -41,19 +42,19 @@ export async function getArtifactsFromWorkspaceOfType(artifactTypeToQuery: Artif
             var resStatus = res.message.statusCode;
 
             if (resStatus != 200 && resStatus != 201 && resStatus != 202) {
-                console.log(`Failed to fetch workspace info, status: ${resStatus}; status message: ${res.message.statusMessage}`);
+                SystemLogger.info(`Failed to fetch workspace info, status: ${resStatus}; status message: ${res.message.statusMessage}`);
                 return reject("Failed to fetch workspace info " + res.message.statusMessage);
             }
             var body = await res.readBody();
 
             if (!body) {
-                console.log("No response body for url: ", resourceUrl);
+                SystemLogger.info("No response body for url: " + resourceUrl);
                 return reject("Failed to fetch workspace info response");
             }
             return resolve(body);
 
         }, (reason) => {
-            console.log('Failed to fetch artifacts from workspace: ', reason);
+            SystemLogger.info('Failed to fetch artifacts from workspace: '+ reason);
             return reject(deployUtils.DeployStatus.failed);
         });
     });
@@ -90,7 +91,7 @@ export async function getArtifactsFromWorkspace(
     targetWorkspaceName: string,
     environment: string): Promise<Resource[]>
 {
-    console.log(`Getting Artifacts from workspace: ${targetWorkspaceName}.`);
+    SystemLogger.info(`Getting Artifacts from workspace: ${targetWorkspaceName}.`);
     let artifacts = new Array<Resource>();
 
     for(let x=0;x<artifactTypesToQuery.length;x++)
@@ -109,7 +110,7 @@ export function getArtifactsToDeleteFromWorkspace(
     artifactsToDeploy: Resource[][],
     typeMap: Map<string, Artifact>): Resource[]
 {
-    console.log("Getting Artifacts which should be deleted from workspace.");
+    SystemLogger.info("Getting Artifacts which should be deleted from workspace.");
     let artifactsToDelete = new Array<Resource>();
     let resourceFound: boolean = true;
 
@@ -150,7 +151,7 @@ export function getArtifactsToDeleteFromWorkspace(
 
             if(!resourceFound)
             {
-                console.log(`Artifact not found in template. deleting ${checkResource.name} of type ${checkResource.type}`);
+                SystemLogger.info(`Artifact not found in template. deleting ${checkResource.name} of type ${checkResource.type}`);
                 artifactsToDelete.push(checkResource);
             }
         }
@@ -190,7 +191,7 @@ function countOfArtifactDependancy(checkArtifact: Resource, selectedListOfResour
 export function getArtifactsToDeleteFromWorkspaceInOrder(
     artifactsToDelete: Resource[]): Resource[][]
 {
-    console.log("Computing dependancies for Artifacts which should be deleted from workspace.");
+    SystemLogger.info("Computing dependancies for Artifacts which should be deleted from workspace.");
 
     let artifactsBatches = new Array<Array<Resource>>();
     let artifactBatch = new Array<Resource>();
@@ -252,7 +253,7 @@ export function getArtifactsToDeleteFromWorkspaceInOrder(
             }
         }
 
-        console.log(`Iteration ${iteration} Figured out deletion order for ${artifactsOrdered.length} / ${artifactsToDelete.length} Artifacts for Dependancies.`);
+        SystemLogger.info(`Iteration ${iteration} Figured out deletion order for ${artifactsOrdered.length} / ${artifactsToDelete.length} Artifacts for Dependancies.`);
         count = artifactsOrdered.length;
     }
 
@@ -262,15 +263,14 @@ export function getArtifactsToDeleteFromWorkspaceInOrder(
 
     if(iteration == MAX_ITERATIONS)
     {
-        console.log();
-        console.log("Could not figure out full dependancy model for these artifact for delete. Check template and target workspace for correctness.");
-        console.log("-----------------------------------------------------------------------------------------------");
+        SystemLogger.info("Could not figure out full dependancy model for these artifact for delete. Check template and target workspace for correctness.");
+        SystemLogger.info("-----------------------------------------------------------------------------------------------");
         for (var res = 0; res < artifactsToDelete.length; res++)
         {
             if(!checkIfArtifactExists(artifactsToDelete[res], artifactsOrdered))
             {
                 // So this artifact's dependancy could not be verified.
-                console.log(`Name: ${artifactsToDelete[res].name}, Type: ${artifactsToDelete[res].type}`);
+                SystemLogger.info(`Name: ${artifactsToDelete[res].name}, Type: ${artifactsToDelete[res].type}`);
             }
         }
 

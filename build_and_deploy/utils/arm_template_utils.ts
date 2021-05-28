@@ -404,7 +404,7 @@ export function getArtifactsFromArmTemplate(armTemplate: string, targetLocation:
                 resource.name = resource.name.replace(key, value);
             });
 
-            console.log(`\tWill be skipped as its a default resource.`);
+            SystemLogger.info(`\tWill be skipped as its a default resource.`);
         }
 
         if (!checkIfArtifactExists(resource, artifacts)) {

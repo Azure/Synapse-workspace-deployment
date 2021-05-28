@@ -169,7 +169,7 @@ export class ArtifactClient {
             return await this.artifactDeploymentTask(baseUrl,
                 `${Artifact.kqlScript.toString()}s`, payload, token);
         } catch (err) {
-            console.log(err);
+            SystemLogger.info(err);
             throw new Error("Credential deployment failed " + JSON.stringify(err));
         }
     }
@@ -287,7 +287,7 @@ export class ArtifactClient {
                             }
                             this.deploymentTrackingRequests.push(deploymentTrackingRequest);
                         } catch (err) {
-                            console.log(`For Artifact: ${payloadObj.name}: Deployment failed with error: ${JSON.stringify(err)}`);
+                            SystemLogger.info(`For Artifact: ${payloadObj.name}: Deployment failed with error: ${JSON.stringify(err)}`);
                             return reject(DeployStatus.failed);
                         }
 
@@ -309,7 +309,7 @@ export class ArtifactClient {
             var url: string = this.buildArtifactUrl(baseUrl, `${resourceType}s`, payloadObj.name);
             this.client.del(url, this.getHeaders(token)).then((res) => {
                 var resStatus = res.message.statusCode;
-                console.log(`For Artifact: ${payloadObj.name}: ArtifactDeletionTask status: ${resStatus}; status message: ${res.message.statusMessage}`);
+                SystemLogger.info(`For Artifact: ${payloadObj.name}: ArtifactDeletionTask status: ${resStatus}; status message: ${res.message.statusMessage}`);
 
                 res.readBody().then((body) => {
                     if (!!body) {
@@ -331,7 +331,7 @@ export class ArtifactClient {
                 }
                 return resolve(DeployStatus.success);
             }, (reason) => {
-                console.log("Artifact Delete failed: " + reason);
+                SystemLogger.info("Artifact Delete failed: " + reason);
                 return reject(DeployStatus.failed);
             });
         });
@@ -351,7 +351,7 @@ export class ArtifactClient {
 
             var res = await this.client.get(url, this.getHeaders(token));
             var resStatus = res.message.statusCode;
-            console.log(`For artifact: ${name}: Checkstatus: ${resStatus}; status message: ${res.message.statusMessage}`);
+            SystemLogger.info(`For artifact: ${name}: Checkstatus: ${resStatus}; status message: ${res.message.statusMessage}`);
             if (resStatus != 200 && resStatus != 201 && resStatus != 202) {
                 throw new Error(`Checkstatus => status: ${resStatus}; status message: ${res.message.statusMessage}`);
             }
@@ -363,7 +363,7 @@ export class ArtifactClient {
             let responseJson = JSON.parse(body);
             var status = responseJson['status'];
             if (!!status && status == 'Failed') {
-                console.log(`For artifact: ${name}: Artifact Deployment status: ${status}`);
+                SystemLogger.info(`For artifact: ${name}: Artifact Deployment status: ${status}`);
                 throw new Error(`Failed to fetch the deployment status ${JSON.stringify(responseJson['error'])}`);
             } else if (!!status && status == 'InProgress') {
                 await this.delay(delayMilliSecs);
@@ -371,7 +371,7 @@ export class ArtifactClient {
             }
             nbName = responseJson['name'];
             if (nbName === name) {
-                console.log(`Artifact ${name} deployed successfully.`);
+                SystemLogger.info(`Artifact ${name} deployed successfully.`);
                 break;
             } else {
                 throw new Error('Artifiact deployment validation failed');
@@ -386,14 +386,14 @@ export class ArtifactClient {
         while (true) {
             var currentTime = new Date().getTime();
             if (timeout < currentTime) {
-                console.log('Current time: ', currentTime);
+                SystemLogger.info(`Current time: ' ${currentTime}`);
                 throw new Error("Timeout error in checkStatus");
             }
             var nbName = '';
 
             var res = await this.client.get(url, this.getHeaders(token));
             var resStatus: number = res.message.statusCode!;
-            console.log(`For Artifact: ${name}: Checkstatus: ${resStatus}; status message: ${res.message.statusMessage}`);
+            SystemLogger.info(`For Artifact: ${name}: Checkstatus: ${resStatus}; status message: ${res.message.statusMessage}`);
             if (resStatus != 200 && resStatus < 203) {
                 await this.delay(delayMilliSecs);
                 continue;

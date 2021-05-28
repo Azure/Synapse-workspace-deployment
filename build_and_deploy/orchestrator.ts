@@ -50,19 +50,19 @@ export class Orchestrator {
             if(this.deleteArtifactsNotInTemplate)
             {
                 // Delete extra artifacts in the workspace
-                console.log("Attempting to delete artifacts from workspace, that were not in the template.");
+                SystemLogger.info("Attempting to delete artifacts from workspace, that were not in the template.");
                 var artifactsInWorkspace = await getArtifactsFromWorkspace(this.targetWorkspace, this.environment);
-                console.log(`Found ${artifactsInWorkspace.length} artifacts in the workspace.`);
+                SystemLogger.info(`Found ${artifactsInWorkspace.length} artifacts in the workspace.`);
                 var artifactsToDeleteInWorkspace = getArtifactsToDeleteFromWorkspace(artifactsInWorkspace, artifactsToDeploy, typeMap);
-                console.log(`Found ${artifactsToDeleteInWorkspace.length} artifacts in the workspace that many need to be deleted.`);
+                SystemLogger.info(`Found ${artifactsToDeleteInWorkspace.length} artifacts in the workspace that many need to be deleted.`);
                 var artifactsToDeleteInWorkspaceInOrder = getArtifactsToDeleteFromWorkspaceInOrder(artifactsToDeleteInWorkspace);
                 await this.deleteResourcesInOrder(this.artifactClient, artifactsToDeleteInWorkspaceInOrder!, this.targetWorkspace, this.environment, armParameterContent);
-                console.log("Completed deleting artifacts from workspace, that were not in the template.");
+                SystemLogger.info("Completed deleting artifacts from workspace, that were not in the template.");
             }
 
-            console.log("Start deploying artifacts from the template.");
+            SystemLogger.info("Start deploying artifacts from the template.");
             await this.deployResourcesInOrder(this.artifactClient, artifactsToDeploy, this.targetWorkspace, this.environment);
-            console.log("Completed deploying artifacts from the template.");
+            SystemLogger.info("Completed deploying artifacts from the template.");
 
         } catch (err) {
             throw new Error(`Orchestrate failed - ${err}`);
@@ -105,7 +105,7 @@ export class Orchestrator {
         for (let resource of artifactsToDeploy) {
 
             if (resource.isDefault) {
-                console.log(`Skipping deployment of ${resource.name} as its a default workspace resource.`);
+                SystemLogger.info(`Skipping deployment of ${resource.name} as its a default workspace resource.`);
                 continue;
             }
 
@@ -147,12 +147,12 @@ export class Orchestrator {
         for (var resource of artifactsToDelete) {
             if(resource.isDefault)
             {
-                console.log(`Skipping deletion of ${resource.name} as its a default workspace resource.`);
+                SystemLogger.info(`Skipping deletion of ${resource.name} as its a default workspace resource.`);
                 continue;
             }
 
             let artifactTypeToDelete: string = typeMap.get(resource.type.toLowerCase())!;
-            console.log(`Deleting ${resource.name} of type ${artifactTypeToDelete}`);
+            SystemLogger.info(`Deleting ${resource.name} of type ${artifactTypeToDelete}`);
 
             var result : string;
             if (artifactTypeToDelete == Artifact.sqlpool ||
@@ -165,7 +165,7 @@ export class Orchestrator {
 
             // Do the artifact deletion
             result = await artifactClient.deleteArtifact(artifactTypeToDelete, resource, targetWorkspace, environment);
-            console.log(`Deletion status : ${result}`);
+            SystemLogger.info(`Deletion status : ${result}`);
             let deletionStatus = {
                 key: resource.type.toLowerCase(),
                 value: `Deployment status : ${result}`
@@ -173,7 +173,7 @@ export class Orchestrator {
 
             if (result != DeployStatus.success) {
                 // If deletion is not a success, its ok. we move forward.
-                console.log("Failure in deployment: " + result);
+                SystemLogger.info("Failure in deployment: " + result);
             }
         }
     }
