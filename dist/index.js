@@ -10053,7 +10053,7 @@ function getArtifactsFromWorkspaceOfType(artifactTypeToQuery, targetWorkspaceNam
         var _this = this;
         return __generator(this, function (_a) {
             switch (_a.label) {
-                case 0: return [4 /*yield*/, deployUtils.getParams()];
+                case 0: return [4 /*yield*/, deployUtils.getParams(true, environment)];
                 case 1:
                     params = _a.sent();
                     token = params.bearer;
