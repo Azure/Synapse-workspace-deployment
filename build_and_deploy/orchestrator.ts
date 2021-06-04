@@ -80,7 +80,7 @@ export class Orchestrator {
 
 
     private async deleteResourcesInOrder(artifactClient: ArtifactClient, artifactsToDelete: Resource[][],
-          targetWorkspace: string, environment: string, armParameterContent: string) {
+        targetWorkspace: string, environment: string, armParameterContent: string) {
         for(let i=0;i<artifactsToDelete.length;i++){
             let batchOfArtifacts = artifactsToDelete[i];
             await this.deleteBatch(artifactClient, batchOfArtifacts,targetWorkspace, environment,armParameterContent);

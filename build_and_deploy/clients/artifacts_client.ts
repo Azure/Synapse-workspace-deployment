@@ -101,7 +101,7 @@ export class ArtifactClient {
     }
 
     public async WaitForAllDeployments(isDelete: boolean){
-        for(let i=0;i<this.deploymentTrackingRequests.length;i++){
+        for(let i=0; i<this.deploymentTrackingRequests.length; i++){
             let deploymentTrackingRequest = this.deploymentTrackingRequests[i];
             if(isDelete) {
                 await this.checkStatusForDelete(deploymentTrackingRequest.url, deploymentTrackingRequest.name, deploymentTrackingRequest.token);
