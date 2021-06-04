@@ -427,6 +427,7 @@ var ArtifactClient = /** @class */ (function () {
                                     res.readBody().then(function (body) {
                                         if (!!body) {
                                             var responseJson = JSON.parse(body);
+                                            logger_1.SystemLogger.info("Deploy artifact failed: " + JSON.stringify(responseJson));
                                         }
                                     });
                                     return reject(deploy_utils_1.DeployStatus.failed);

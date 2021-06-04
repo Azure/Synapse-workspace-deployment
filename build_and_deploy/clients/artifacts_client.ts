@@ -266,6 +266,7 @@ export class ArtifactClient {
                     res.readBody().then((body) => {
                         if (!!body) {
                             let responseJson = JSON.parse(body);
+                            SystemLogger.info("Deploy artifact failed: " + JSON.stringify(responseJson));
                         }
                     });
                     return reject(DeployStatus.failed);
