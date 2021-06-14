@@ -44,6 +44,9 @@ TargetWorkspaceName:
   resourceManagerEndpointUrl:
     description: 'Provide Resource Manager Endpoint.'
     required: true
+  DeleteArtifactsNotInTemplate:
+    description: 'Delete the artifacts which are in the workspace but not in the template.'
+    required: false
 ```
 
 ## Usage

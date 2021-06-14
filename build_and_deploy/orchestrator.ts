@@ -9,20 +9,27 @@ import { Artifact } from "./utils/artifacts_enum";
 import { DeployStatus } from "./utils/deploy_utils";
 import { SystemLogger } from "./utils/logger";
 import { getWorkspaceLocation } from "./utils/service_principal_client_utils";
+import {
+    getArtifactsFromWorkspace,
+    getArtifactsToDeleteFromWorkspace,
+    getArtifactsToDeleteFromWorkspaceInOrder
+} from "./utils/workspace_artifacts_getter";
 
 export class Orchestrator {
     private packageFiles: PackageFile;
     private artifactClient: ArtifactClient;
     private targetWorkspace: string;
     private environment: string;
+    private deleteArtifactsNotInTemplate: boolean
 
     constructor(packageFiles: PackageFile, artifactClient: ArtifactClient,
-        targetWorkspace: string, environment: string) {
+        targetWorkspace: string, environment: string, deleteArtifactsNotInTemplate: boolean) {
 
         this.packageFiles = packageFiles;
         this.artifactClient = artifactClient;
         this.targetWorkspace = targetWorkspace;
         this.environment = environment;
+        this.deleteArtifactsNotInTemplate = deleteArtifactsNotInTemplate;
     }
 
     public async orchestrateFromPublishBranch() {
@@ -40,7 +47,22 @@ export class Orchestrator {
             let artifactsToDeploy: Resource[][] = await getArtifacts(armParameterContent, armTemplateContent, overrideArmParameters,
                 this.targetWorkspace, targetLocation);
 
+            if(this.deleteArtifactsNotInTemplate)
+            {
+                // Delete extra artifacts in the workspace
+                SystemLogger.info("Attempting to delete artifacts from workspace, that were not in the template.");
+                var artifactsInWorkspace = await getArtifactsFromWorkspace(this.targetWorkspace, this.environment);
+                SystemLogger.info(`Found ${artifactsInWorkspace.length} artifacts in the workspace.`);
+                var artifactsToDeleteInWorkspace = getArtifactsToDeleteFromWorkspace(artifactsInWorkspace, artifactsToDeploy, typeMap);
+                SystemLogger.info(`Found ${artifactsToDeleteInWorkspace.length} artifacts in the workspace that many need to be deleted.`);
+                var artifactsToDeleteInWorkspaceInOrder = getArtifactsToDeleteFromWorkspaceInOrder(artifactsToDeleteInWorkspace);
+                await this.deleteResourcesInOrder(this.artifactClient, artifactsToDeleteInWorkspaceInOrder!, this.targetWorkspace, this.environment, armParameterContent);
+                SystemLogger.info("Completed deleting artifacts from workspace, that were not in the template.");
+            }
+
+            SystemLogger.info("Start deploying artifacts from the template.");
             await this.deployResourcesInOrder(this.artifactClient, artifactsToDeploy, this.targetWorkspace, this.environment);
+            SystemLogger.info("Completed deploying artifacts from the template.");
 
         } catch (err) {
             throw new Error(`Orchestrate failed - ${err}`);
@@ -52,7 +74,17 @@ export class Orchestrator {
         for (let i = 0; i < artifactsToDeploy.length; i++) {
             let batchOfArtifacts = artifactsToDeploy[i];
             await this.deployBatch(artifactClient, batchOfArtifacts, targetWorkspace, environment);
-            await artifactClient.WaitForAllDeployments();
+            await artifactClient.WaitForAllDeployments(false);
+        }
+    }
+
+
+    private async deleteResourcesInOrder(artifactClient: ArtifactClient, artifactsToDelete: Resource[][],
+        targetWorkspace: string, environment: string, armParameterContent: string) {
+        for(let i=0;i<artifactsToDelete.length;i++){
+            let batchOfArtifacts = artifactsToDelete[i];
+            await this.deleteBatch(artifactClient, batchOfArtifacts,targetWorkspace, environment,armParameterContent);
+            await artifactClient.WaitForAllDeployments(true);
         }
     }
 
@@ -73,7 +105,7 @@ export class Orchestrator {
         for (let resource of artifactsToDeploy) {
 
             if (resource.isDefault) {
-                SystemLogger.info("Skipping default workspace resource.");
+                SystemLogger.info(`Skipping deployment of ${resource.name} as its a default workspace resource.`);
                 continue;
             }
 
@@ -98,9 +130,51 @@ export class Orchestrator {
             }
             SystemLogger.info(`Deployment status : ${result}`);
             if (result != DeployStatus.success) {
-                throw new Error("Failure in deployment: " + result);
+                throw new Error(`For Artifact ${resource.name}: Failure in deployment: ${result}`);
             }
 
+        }
+    }
+
+    private async deleteBatch(
+        artifactClient: ArtifactClient,
+        artifactsToDelete: Resource[],
+        targetWorkspace: string,
+        environment: string,
+        armParameterContent: string) {
+
+        var error: string = "";
+        for (var resource of artifactsToDelete) {
+            if(resource.isDefault)
+            {
+                SystemLogger.info(`Skipping deletion of ${resource.name} as its a default workspace resource.`);
+                continue;
+            }
+
+            let artifactTypeToDelete: string = typeMap.get(resource.type.toLowerCase())!;
+            SystemLogger.info(`Deleting ${resource.name} of type ${artifactTypeToDelete}`);
+
+            var result : string;
+            if (artifactTypeToDelete == Artifact.sqlpool ||
+                artifactTypeToDelete == Artifact.bigdatapools ||
+                artifactTypeToDelete == Artifact.managedvirtualnetworks ||
+                artifactTypeToDelete == Artifact.managedprivateendpoints) {
+                // Skip this.
+                continue;
+            }
+
+            // Do the artifact deletion
+            result = await artifactClient.deleteArtifact(artifactTypeToDelete, resource, targetWorkspace, environment);
+            SystemLogger.info(`Deletion status : ${result}`);
+            let deletionStatus = {
+                key: resource.type.toLowerCase(),
+                value: `Deployment status : ${result}`
+            };
+
+            if (result != DeployStatus.success) {
+                // If deletion is not a success, its ok. we move forward.
+                SystemLogger.info("Failure in deployment: " + result);
+            }
         }
     }
 }

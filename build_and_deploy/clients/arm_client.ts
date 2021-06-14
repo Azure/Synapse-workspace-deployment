@@ -20,7 +20,6 @@ async function getDeploymentUrl(baseUrl: string, rgName: string, subId: string):
 }
 
 async function checkDeploymentStatus(url: string, headers: httpInterfaces.IHeaders) {
-    SystemLogger.info("Url to track deployment status: " + url);
     let timeout = new Date().getTime() + (60000 * 20); // 20 minutes
     let delayMilliSecs = 30000;
     let status = "";

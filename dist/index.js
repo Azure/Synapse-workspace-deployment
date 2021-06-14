@@ -145,7 +145,24 @@ var ArtifactClient = /** @class */ (function () {
             });
         });
     };
-    ArtifactClient.prototype.WaitForAllDeployments = function () {
+    ArtifactClient.prototype.deleteArtifact = function (resourceType, payload, workspace, environment) {
+        return __awaiter(this, void 0, void 0, function () {
+            var baseUrl, param, token;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        baseUrl = this.getBaseurl(workspace, environment, resourceType);
+                        return [4 /*yield*/, deploy_utils_1.getParams(true, environment)];
+                    case 1:
+                        param = _a.sent();
+                        token = param.bearer;
+                        return [4 /*yield*/, this.artifactDeletionTask(baseUrl, resourceType, payload, token)];
+                    case 2: return [2 /*return*/, _a.sent()];
+                }
+            });
+        });
+    };
+    ArtifactClient.prototype.WaitForAllDeployments = function (isDelete) {
         return __awaiter(this, void 0, void 0, function () {
             var i, deploymentTrackingRequest;
             return __generator(this, function (_a) {
@@ -154,16 +171,21 @@ var ArtifactClient = /** @class */ (function () {
                         i = 0;
                         _a.label = 1;
                     case 1:
-                        if (!(i < this.deploymentTrackingRequests.length)) return [3 /*break*/, 4];
+                        if (!(i < this.deploymentTrackingRequests.length)) return [3 /*break*/, 6];
                         deploymentTrackingRequest = this.deploymentTrackingRequests[i];
-                        return [4 /*yield*/, this.checkStatus(deploymentTrackingRequest.url, deploymentTrackingRequest.name, deploymentTrackingRequest.token)];
+                        if (!isDelete) return [3 /*break*/, 3];
+                        return [4 /*yield*/, this.checkStatusForDelete(deploymentTrackingRequest.url, deploymentTrackingRequest.name, deploymentTrackingRequest.token)];
                     case 2:
                         _a.sent();
-                        _a.label = 3;
-                    case 3:
+                        return [3 /*break*/, 5];
+                    case 3: return [4 /*yield*/, this.checkStatus(deploymentTrackingRequest.url, deploymentTrackingRequest.name, deploymentTrackingRequest.token)];
+                    case 4:
+                        _a.sent();
+                        _a.label = 5;
+                    case 5:
                         i++;
                         return [3 /*break*/, 1];
-                    case 4:
+                    case 6:
                         while (this.deploymentTrackingRequests.length > 0) {
                             this.deploymentTrackingRequests.pop();
                         }
@@ -244,7 +266,7 @@ var ArtifactClient = /** @class */ (function () {
                     case 1: return [2 /*return*/, _a.sent()];
                     case 2:
                         err_3 = _a.sent();
-                        console.log(err_3);
+                        logger_1.SystemLogger.info(err_3);
                         throw new Error("Credential deployment failed " + JSON.stringify(err_3));
                     case 3: return [2 /*return*/];
                 }
@@ -396,11 +418,10 @@ var ArtifactClient = /** @class */ (function () {
                         var _this = this;
                         return __generator(this, function (_a) {
                             url = this.buildArtifactUrl(baseUrl, resourceType, payloadObj.name);
-                            logger_1.SystemLogger.info("Url to deploy artifact: " + url);
                             payload = payloadObj.content;
                             this.client.put(url, payload, this.getHeaders(token)).then(function (res) {
                                 var resStatus = res.message.statusCode;
-                                logger_1.SystemLogger.info("ArtifactDeploymentTask status: " + resStatus + "; status message: " + res.message.statusMessage);
+                                logger_1.SystemLogger.info("For Artifact: " + payloadObj.name + ": ArtifactDeploymentTask status: " + resStatus + "; status message: " + res.message.statusMessage);
                                 if (resStatus != 200 && resStatus != 201 && resStatus != 202) {
                                     // Remove this after testing
                                     res.readBody().then(function (body) {
@@ -430,7 +451,7 @@ var ArtifactClient = /** @class */ (function () {
                                                 this.deploymentTrackingRequests.push(deploymentTrackingRequest);
                                             }
                                             catch (err) {
-                                                logger_1.SystemLogger.info('Deployment failed with error: ' + JSON.stringify(err));
+                                                logger_1.SystemLogger.info("For Artifact: " + payloadObj.name + ": Deployment failed with error: " + JSON.stringify(err));
                                                 return [2 /*return*/, reject(deploy_utils_1.DeployStatus.failed)];
                                             }
                                             return [2 /*return*/, resolve(deploy_utils_1.DeployStatus.success)];
@@ -442,7 +463,45 @@ var ArtifactClient = /** @class */ (function () {
                                     });
                                 }); });
                             }, function (reason) {
-                                logger_1.SystemLogger.info("Artifact Deployment failed: " + reason);
+                                logger_1.SystemLogger.info("For Artifact: " + payloadObj.name + ": Artifact Deployment failed: " + reason);
+                                return reject(deploy_utils_1.DeployStatus.failed);
+                            });
+                            return [2 /*return*/];
+                        });
+                    }); })];
+            });
+        });
+    };
+    ArtifactClient.prototype.artifactDeletionTask = function (baseUrl, resourceType, payloadObj, token) {
+        return __awaiter(this, void 0, void 0, function () {
+            var _this = this;
+            return __generator(this, function (_a) {
+                return [2 /*return*/, new Promise(function (resolve, reject) { return __awaiter(_this, void 0, void 0, function () {
+                        var url;
+                        var _this = this;
+                        return __generator(this, function (_a) {
+                            url = this.buildArtifactUrl(baseUrl, resourceType + "s", payloadObj.name);
+                            this.client.del(url, this.getHeaders(token)).then(function (res) {
+                                var resStatus = res.message.statusCode;
+                                logger_1.SystemLogger.info("For Artifact: " + payloadObj.name + ": ArtifactDeletionTask status: " + resStatus + "; status message: " + res.message.statusMessage);
+                                res.readBody().then(function (body) {
+                                    if (!!body) {
+                                        var responseJson = JSON.parse(body);
+                                    }
+                                });
+                                var location = res.message.headers.location;
+                                var deploymentTrackingRequest = {
+                                    url: location,
+                                    name: payloadObj.name,
+                                    token: token
+                                };
+                                _this.deploymentTrackingRequests.push(deploymentTrackingRequest);
+                                if (resStatus != 200 && resStatus != 201 && resStatus != 202) {
+                                    return reject(deploy_utils_1.DeployStatus.failed);
+                                }
+                                return resolve(deploy_utils_1.DeployStatus.success);
+                            }, function (reason) {
+                                logger_1.SystemLogger.info("Artifact Delete failed: " + reason);
                                 return reject(deploy_utils_1.DeployStatus.failed);
                             });
                             return [2 /*return*/];
@@ -472,7 +531,7 @@ var ArtifactClient = /** @class */ (function () {
                     case 2:
                         res = _a.sent();
                         resStatus = res.message.statusCode;
-                        logger_1.SystemLogger.info("Checkstatus: " + resStatus + "; status message: " + res.message.statusMessage);
+                        logger_1.SystemLogger.info("For artifact: " + name + ": Checkstatus: " + resStatus + "; status message: " + res.message.statusMessage);
                         if (resStatus != 200 && resStatus != 201 && resStatus != 202) {
                             throw new Error("Checkstatus => status: " + resStatus + "; status message: " + res.message.statusMessage);
                         }
@@ -480,7 +539,6 @@ var ArtifactClient = /** @class */ (function () {
                     case 3:
                         body = _a.sent();
                         if (!!body) return [3 /*break*/, 5];
-                        logger_1.SystemLogger.info("No status response for url: " + url);
                         return [4 /*yield*/, this.delay(delayMilliSecs)];
                     case 4:
                         _a.sent();
@@ -489,7 +547,7 @@ var ArtifactClient = /** @class */ (function () {
                         responseJson = JSON.parse(body);
                         status = responseJson['status'];
                         if (!(!!status && status == 'Failed')) return [3 /*break*/, 6];
-                        logger_1.SystemLogger.info("Artifact Deployment status: " + status);
+                        logger_1.SystemLogger.info("For artifact: " + name + ": Artifact Deployment status: " + status);
                         throw new Error("Failed to fetch the deployment status " + JSON.stringify(responseJson['error']));
                     case 6:
                         if (!(!!status && status == 'InProgress')) return [3 /*break*/, 8];
@@ -500,7 +558,7 @@ var ArtifactClient = /** @class */ (function () {
                     case 8:
                         nbName = responseJson['name'];
                         if (nbName === name) {
-                            logger_1.SystemLogger.info("Artifact deployed");
+                            logger_1.SystemLogger.info("Artifact " + name + " deployed successfully.");
                             return [3 /*break*/, 9];
                         }
                         else {
@@ -508,6 +566,39 @@ var ArtifactClient = /** @class */ (function () {
                         }
                         return [3 /*break*/, 1];
                     case 9: return [2 /*return*/];
+                }
+            });
+        });
+    };
+    ArtifactClient.prototype.checkStatusForDelete = function (url, name, token) {
+        return __awaiter(this, void 0, void 0, function () {
+            var timeout, delayMilliSecs, currentTime, nbName, res, resStatus;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        timeout = new Date().getTime() + (60000 * 20);
+                        delayMilliSecs = 30000;
+                        _a.label = 1;
+                    case 1:
+                        if (false) {}
+                        currentTime = new Date().getTime();
+                        if (timeout < currentTime) {
+                            logger_1.SystemLogger.info("Current time: ' " + currentTime);
+                            throw new Error("Timeout error in checkStatus");
+                        }
+                        nbName = '';
+                        return [4 /*yield*/, this.client.get(url, this.getHeaders(token))];
+                    case 2:
+                        res = _a.sent();
+                        resStatus = res.message.statusCode;
+                        logger_1.SystemLogger.info("For Artifact: " + name + ": Checkstatus: " + resStatus + "; status message: " + res.message.statusMessage);
+                        if (!(resStatus != 200 && resStatus < 203)) return [3 /*break*/, 4];
+                        return [4 /*yield*/, this.delay(delayMilliSecs)];
+                    case 3:
+                        _a.sent();
+                        return [3 /*break*/, 1];
+                    case 4: return [2 /*return*/];
+                    case 5: return [2 /*return*/];
                 }
             });
         });
@@ -542,9 +633,9 @@ var ArtifactClient = /** @class */ (function () {
         }
     };
     ArtifactClient.prototype.getBaseurl = function (workspace, environment, resourceType) {
-        return this.getUrlByEnvironment(workspace, environment);
+        return ArtifactClient.getUrlByEnvironment(workspace, environment);
     };
-    ArtifactClient.prototype.getUrlByEnvironment = function (workspace, environment) {
+    ArtifactClient.getUrlByEnvironment = function (workspace, environment) {
         switch (environment) {
             case deploy_utils_1.Env.prod.toString():
                 return "https://" + workspace + ".dev.azuresynapse.net";
@@ -636,7 +727,7 @@ var deploy_utils_1 = __nccwpck_require__(3850);
 var logger_1 = __nccwpck_require__(4659);
 function main() {
     return __awaiter(this, void 0, void 0, function () {
-        var targetWorkspace, templateFile, parametersFile, overrideArmParameters, environment, packageFiles, params, artifactClient, orchestrator, err_1;
+        var targetWorkspace, templateFile, parametersFile, overrideArmParameters, environment, deleteArtifactsNotInTemplate, deleteArtifactsNotInTemplateString, packageFiles, params, artifactClient, orchestrator, err_1;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -645,6 +736,12 @@ function main() {
                     parametersFile = core.getInput("ParametersFile");
                     overrideArmParameters = core.getInput('OverrideArmParameters');
                     environment = core.getInput('Environment');
+                    deleteArtifactsNotInTemplate = false;
+                    deleteArtifactsNotInTemplateString = core.getInput("DeleteArtifactsNotInTemplate");
+                    if (deleteArtifactsNotInTemplateString.toLowerCase() == "true") {
+                        deleteArtifactsNotInTemplate = true;
+                    }
+                    logger_1.SystemLogger.info("DeleteArtifactsNotInTemplate=" + deleteArtifactsNotInTemplate);
                     _a.label = 1;
                 case 1:
                     _a.trys.push([1, 4, , 5]);
@@ -654,7 +751,7 @@ function main() {
                     params = _a.sent();
                     artifactClient = new artifacts_client_1.ArtifactClient(params);
                     logger_1.SystemLogger.setLogger(new logger_1.ActionLogger(true));
-                    orchestrator = new orchestrator_1.Orchestrator(packageFiles, artifactClient, targetWorkspace, environment);
+                    orchestrator = new orchestrator_1.Orchestrator(packageFiles, artifactClient, targetWorkspace, environment, deleteArtifactsNotInTemplate);
                     return [4 /*yield*/, orchestrator.orchestrateFromPublishBranch()];
                 case 3:
                     _a.sent();
@@ -8583,20 +8680,22 @@ var artifacts_enum_1 = __nccwpck_require__(5724);
 var deploy_utils_1 = __nccwpck_require__(3850);
 var logger_1 = __nccwpck_require__(4659);
 var service_principal_client_utils_1 = __nccwpck_require__(6927);
+var workspace_artifacts_getter_1 = __nccwpck_require__(9379);
 var Orchestrator = /** @class */ (function () {
-    function Orchestrator(packageFiles, artifactClient, targetWorkspace, environment) {
+    function Orchestrator(packageFiles, artifactClient, targetWorkspace, environment, deleteArtifactsNotInTemplate) {
         this.packageFiles = packageFiles;
         this.artifactClient = artifactClient;
         this.targetWorkspace = targetWorkspace;
         this.environment = environment;
+        this.deleteArtifactsNotInTemplate = deleteArtifactsNotInTemplate;
     }
     Orchestrator.prototype.orchestrateFromPublishBranch = function () {
         return __awaiter(this, void 0, void 0, function () {
-            var packageFilesContent, armTemplateContent, armParameterContent, overrideArmParameters, targetLocation, artifactsToDeploy, err_1;
+            var packageFilesContent, armTemplateContent, armParameterContent, overrideArmParameters, targetLocation, artifactsToDeploy, artifactsInWorkspace, artifactsToDeleteInWorkspace, artifactsToDeleteInWorkspaceInOrder, err_1;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
-                        _a.trys.push([0, 5, , 6]);
+                        _a.trys.push([0, 8, , 9]);
                         return [4 /*yield*/, this.packageFiles.getPackageFiles()];
                     case 1:
                         packageFilesContent = _a.sent();
@@ -8612,14 +8711,32 @@ var Orchestrator = /** @class */ (function () {
                         return [4 /*yield*/, arm_template_utils_1.getArtifacts(armParameterContent, armTemplateContent, overrideArmParameters, this.targetWorkspace, targetLocation)];
                     case 3:
                         artifactsToDeploy = _a.sent();
-                        return [4 /*yield*/, this.deployResourcesInOrder(this.artifactClient, artifactsToDeploy, this.targetWorkspace, this.environment)];
+                        if (!this.deleteArtifactsNotInTemplate) return [3 /*break*/, 6];
+                        // Delete extra artifacts in the workspace
+                        logger_1.SystemLogger.info("Attempting to delete artifacts from workspace, that were not in the template.");
+                        return [4 /*yield*/, workspace_artifacts_getter_1.getArtifactsFromWorkspace(this.targetWorkspace, this.environment)];
                     case 4:
-                        _a.sent();
-                        return [3 /*break*/, 6];
+                        artifactsInWorkspace = _a.sent();
+                        logger_1.SystemLogger.info("Found " + artifactsInWorkspace.length + " artifacts in the workspace.");
+                        artifactsToDeleteInWorkspace = workspace_artifacts_getter_1.getArtifactsToDeleteFromWorkspace(artifactsInWorkspace, artifactsToDeploy, artifacts_client_1.typeMap);
+                        logger_1.SystemLogger.info("Found " + artifactsToDeleteInWorkspace.length + " artifacts in the workspace that many need to be deleted.");
+                        artifactsToDeleteInWorkspaceInOrder = workspace_artifacts_getter_1.getArtifactsToDeleteFromWorkspaceInOrder(artifactsToDeleteInWorkspace);
+                        return [4 /*yield*/, this.deleteResourcesInOrder(this.artifactClient, artifactsToDeleteInWorkspaceInOrder, this.targetWorkspace, this.environment, armParameterContent)];
                     case 5:
+                        _a.sent();
+                        logger_1.SystemLogger.info("Completed deleting artifacts from workspace, that were not in the template.");
+                        _a.label = 6;
+                    case 6:
+                        logger_1.SystemLogger.info("Start deploying artifacts from the template.");
+                        return [4 /*yield*/, this.deployResourcesInOrder(this.artifactClient, artifactsToDeploy, this.targetWorkspace, this.environment)];
+                    case 7:
+                        _a.sent();
+                        logger_1.SystemLogger.info("Completed deploying artifacts from the template.");
+                        return [3 /*break*/, 9];
+                    case 8:
                         err_1 = _a.sent();
                         throw new Error("Orchestrate failed - " + err_1);
-                    case 6: return [2 /*return*/];
+                    case 9: return [2 /*return*/];
                 }
             });
         });
@@ -8638,7 +8755,33 @@ var Orchestrator = /** @class */ (function () {
                         return [4 /*yield*/, this.deployBatch(artifactClient, batchOfArtifacts, targetWorkspace, environment)];
                     case 2:
                         _a.sent();
-                        return [4 /*yield*/, artifactClient.WaitForAllDeployments()];
+                        return [4 /*yield*/, artifactClient.WaitForAllDeployments(false)];
+                    case 3:
+                        _a.sent();
+                        _a.label = 4;
+                    case 4:
+                        i++;
+                        return [3 /*break*/, 1];
+                    case 5: return [2 /*return*/];
+                }
+            });
+        });
+    };
+    Orchestrator.prototype.deleteResourcesInOrder = function (artifactClient, artifactsToDelete, targetWorkspace, environment, armParameterContent) {
+        return __awaiter(this, void 0, void 0, function () {
+            var i, batchOfArtifacts;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        i = 0;
+                        _a.label = 1;
+                    case 1:
+                        if (!(i < artifactsToDelete.length)) return [3 /*break*/, 5];
+                        batchOfArtifacts = artifactsToDelete[i];
+                        return [4 /*yield*/, this.deleteBatch(artifactClient, batchOfArtifacts, targetWorkspace, environment, armParameterContent)];
+                    case 2:
+                        _a.sent();
+                        return [4 /*yield*/, artifactClient.WaitForAllDeployments(true)];
                     case 3:
                         _a.sent();
                         _a.label = 4;
@@ -8671,7 +8814,7 @@ var Orchestrator = /** @class */ (function () {
                         if (!(_i < artifactsToDeploy_1.length)) return [3 /*break*/, 6];
                         resource = artifactsToDeploy_1[_i];
                         if (resource.isDefault) {
-                            logger_1.SystemLogger.info("Skipping default workspace resource.");
+                            logger_1.SystemLogger.info("Skipping deployment of " + resource.name + " as its a default workspace resource.");
                             return [3 /*break*/, 5];
                         }
                         artifactTypeToDeploy = artifacts_client_1.typeMap.get(resource.type.toLowerCase());
@@ -8694,13 +8837,60 @@ var Orchestrator = /** @class */ (function () {
                     case 4:
                         logger_1.SystemLogger.info("Deployment status : " + result);
                         if (result != deploy_utils_1.DeployStatus.success) {
-                            throw new Error("Failure in deployment: " + result);
+                            throw new Error("For Artifact " + resource.name + ": Failure in deployment: " + result);
                         }
                         _a.label = 5;
                     case 5:
                         _i++;
                         return [3 /*break*/, 1];
                     case 6: return [2 /*return*/];
+                }
+            });
+        });
+    };
+    Orchestrator.prototype.deleteBatch = function (artifactClient, artifactsToDelete, targetWorkspace, environment, armParameterContent) {
+        return __awaiter(this, void 0, void 0, function () {
+            var error, _i, artifactsToDelete_1, resource, artifactTypeToDelete, result, deletionStatus;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        error = "";
+                        _i = 0, artifactsToDelete_1 = artifactsToDelete;
+                        _a.label = 1;
+                    case 1:
+                        if (!(_i < artifactsToDelete_1.length)) return [3 /*break*/, 4];
+                        resource = artifactsToDelete_1[_i];
+                        if (resource.isDefault) {
+                            logger_1.SystemLogger.info("Skipping deletion of " + resource.name + " as its a default workspace resource.");
+                            return [3 /*break*/, 3];
+                        }
+                        artifactTypeToDelete = artifacts_client_1.typeMap.get(resource.type.toLowerCase());
+                        logger_1.SystemLogger.info("Deleting " + resource.name + " of type " + artifactTypeToDelete);
+                        if (artifactTypeToDelete == artifacts_enum_1.Artifact.sqlpool ||
+                            artifactTypeToDelete == artifacts_enum_1.Artifact.bigdatapools ||
+                            artifactTypeToDelete == artifacts_enum_1.Artifact.managedvirtualnetworks ||
+                            artifactTypeToDelete == artifacts_enum_1.Artifact.managedprivateendpoints) {
+                            // Skip this.
+                            return [3 /*break*/, 3];
+                        }
+                        return [4 /*yield*/, artifactClient.deleteArtifact(artifactTypeToDelete, resource, targetWorkspace, environment)];
+                    case 2:
+                        // Do the artifact deletion
+                        result = _a.sent();
+                        logger_1.SystemLogger.info("Deletion status : " + result);
+                        deletionStatus = {
+                            key: resource.type.toLowerCase(),
+                            value: "Deployment status : " + result
+                        };
+                        if (result != deploy_utils_1.DeployStatus.success) {
+                            // If deletion is not a success, its ok. we move forward.
+                            logger_1.SystemLogger.info("Failure in deployment: " + result);
+                        }
+                        _a.label = 3;
+                    case 3:
+                        _i++;
+                        return [3 /*break*/, 1];
+                    case 4: return [2 /*return*/];
                 }
             });
         });
@@ -8825,7 +9015,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.getArtifactsFromArmTemplate = exports.findDefaultArtifacts = exports.replaceBackSlashCode = exports.createArmTemplate = exports.getArtifacts = void 0;
+exports.getDependentsFromArtifact = exports.checkIfArtifactExists = exports.checkIfNameExists = exports.getArtifactsFromArmTemplate = exports.replaceStrByRegex = exports.findDefaultArtifacts = exports.replaceBackSlashCode = exports.createArmTemplate = exports.getArtifacts = void 0;
 var yaml = __importStar(__nccwpck_require__(2096));
 var uuid_1 = __nccwpck_require__(2884);
 var logger_1 = __nccwpck_require__(4659);
@@ -8915,6 +9105,7 @@ function replaceParameters(armParams, armTemplate, overrideArmParameters, target
     // Build parameters
     var armParamValues = getParameterValuesFromArmTemplate(armParams, armTemplate, overrideArmParameters, targetWorkspaceName);
     armParamValues.forEach(function (value, key) {
+        value = value.toString();
         if (value.indexOf("parameters") > -1) {
             armParamValues.forEach(function (valueInside, keyInside) {
                 if (value.indexOf(keyInside) > -1) {
@@ -8927,6 +9118,7 @@ function replaceParameters(armParams, armTemplate, overrideArmParameters, target
         }
     });
     armParamValues.forEach(function (value, key) {
+        value = value.toString();
         if (value.indexOf("concat") > -1) {
             armParamValues.set(key, replaceStrByRegex(value));
         }
@@ -8956,6 +9148,10 @@ function replaceVariables(armTemplate) {
     logger_1.SystemLogger.info("Complete replacement of variables in the template");
     return armTemplate;
 }
+/*
+    This function will replace variables like [concat('Microsoft.Synapse/workspaces/', 'workspaceName')]
+    and convert it into [Microsoft.Synapse/workspaces/workspaceName]
+ */
 function replaceStrByRegex(str) {
     var regexOutside = /\[concat\((.*?)\)\]/g;
     var resultOutside = str.replace(regexOutside, function (matchedStr, strOutside) {
@@ -8972,12 +9168,13 @@ function replaceStrByRegex(str) {
     });
     return resultOutside;
 }
+exports.replaceStrByRegex = replaceStrByRegex;
 function getParameterValuesFromArmTemplate(armParams, armTemplate, overrideArmParameters, targetWorkspaceName) {
     // Parse the parameters and keep a map of these values
     var jsonArmParams = JSON.parse(armParams);
     var armParamValues = new Map();
     for (var value in jsonArmParams.parameters) {
-        armParamValues.set("parameters('" + value + "')", jsonArmParams.parameters[value].value);
+        armParamValues.set("parameters('" + value + "')", jsonArmParams.parameters[value].value.toString());
     }
     // Convert arm template to json, look at the default parameters if any and add missing ones to the map we have
     var jsonArmTemplateParams = JSON.parse(armTemplate);
@@ -9149,7 +9346,7 @@ function getArtifactsFromArmTemplate(armTemplate, targetLocation, defaultArtifac
             defaultArtifacts.forEach(function (value, key) {
                 resource.name = resource.name.replace(key, value);
             });
-            console.log("\tWill be skipped as its a default resource.");
+            logger_1.SystemLogger.info("\tWill be skipped as its a default resource.");
         }
         if (!checkIfArtifactExists(resource, artifacts)) {
             artifacts.push(resource);
@@ -9269,7 +9466,9 @@ function convertIpynb2Payload(payloadObj) {
 }
 // Checks if the name provided is part of the artifacts list already in some form.
 function checkIfNameExists(nameToCheck, selectedListOfResources) {
-    var nameExists = false;
+    if (nameToCheck.indexOf("/") != 0) {
+        nameToCheck = "/" + nameToCheck;
+    }
     if (nameToCheck.toLowerCase().indexOf("/managedvirtualnetworks/") > -1 ||
         nameToCheck.toLowerCase().indexOf("/sqlpools/") > -1 ||
         nameToCheck.toLowerCase().indexOf("/bigdatapools/") > -1 ||
@@ -9284,15 +9483,15 @@ function checkIfNameExists(nameToCheck, selectedListOfResources) {
             restype = restype.substr("Microsoft.Synapse/workspaces/".length);
         }
         // Check if name is same / the last part of the name including workspace etc.
-        if (resName == nameToCheck ||
-            (nameToCheck.indexOf('/' + restype + '/' + resName) != -1 &&
-                nameToCheck.indexOf('/' + restype + '/' + resName) + restype.length + resName.length == nameToCheck.length - 2)) {
-            nameExists = true;
-            break;
+        if (resName.toLowerCase() == nameToCheck.toLowerCase() ||
+            (nameToCheck.toLowerCase().indexOf('/' + restype.toLowerCase() + '/' + resName.toLowerCase()) != -1 &&
+                nameToCheck.toLowerCase().indexOf('/' + restype.toLowerCase() + '/' + resName.toLowerCase()) + restype.length + resName.length == nameToCheck.length - 2)) {
+            return true;
         }
     }
-    return nameExists;
+    return false;
 }
+exports.checkIfNameExists = checkIfNameExists;
 function checkIfArtifactExists(resourceToCheck, selectedListOfResources) {
     for (var res = 0; res < selectedListOfResources.length; res++) {
         var resource = selectedListOfResources[res];
@@ -9302,15 +9501,19 @@ function checkIfArtifactExists(resourceToCheck, selectedListOfResources) {
     }
     return false;
 }
+exports.checkIfArtifactExists = checkIfArtifactExists;
 // Gets the list of artifacts this artifact depends on.
 function getDependentsFromArtifact(artifactContent) {
     var dependants = new Array();
     var artifact = JSON.parse(artifactContent);
-    artifact["dependsOn"].forEach(function (x) {
-        dependants.push(x);
-    });
+    if (artifactContent.indexOf("dependsOn") > -1 && artifact["dependsOn"] != null) {
+        artifact["dependsOn"].forEach(function (x) {
+            dependants.push(x);
+        });
+    }
     return dependants;
 }
+exports.getDependentsFromArtifact = getDependentsFromArtifact;
 //# sourceMappingURL=arm_template_utils.js.map
 
 /***/ }),
@@ -9759,6 +9962,340 @@ function getWorkspaceLocation(params, targetWorkspace) {
 }
 exports.getWorkspaceLocation = getWorkspaceLocation;
 //# sourceMappingURL=service_principal_client_utils.js.map
+
+/***/ }),
+
+/***/ 9379:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+var __generator = (this && this.__generator) || function (thisArg, body) {
+    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
+    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
+    function verb(n) { return function (v) { return step([n, v]); }; }
+    function step(op) {
+        if (f) throw new TypeError("Generator is already executing.");
+        while (_) try {
+            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
+            if (y = 0, t) op = [op[0] & 2, t.value];
+            switch (op[0]) {
+                case 0: case 1: t = op; break;
+                case 4: _.label++; return { value: op[1], done: false };
+                case 5: _.label++; y = op[1]; op = [0]; continue;
+                case 7: op = _.ops.pop(); _.trys.pop(); continue;
+                default:
+                    if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
+                    if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
+                    if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
+                    if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
+                    if (t[2]) _.ops.pop();
+                    _.trys.pop(); continue;
+            }
+            op = body.call(thisArg, _);
+        } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
+        if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
+    }
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.getDependentsFromArtifactFromWorkspace = exports.getArtifactsToDeleteFromWorkspaceInOrder = exports.getArtifactsToDeleteFromWorkspace = exports.getArtifactsFromWorkspace = exports.getArtifactsFromWorkspaceOfType = void 0;
+var artifacts_client_1 = __nccwpck_require__(5131);
+var deployUtils = __importStar(__nccwpck_require__(3850));
+var httpClient = __importStar(__nccwpck_require__(6291));
+var arm_template_utils_1 = __nccwpck_require__(2983);
+var artifacts_enum_1 = __nccwpck_require__(5724);
+var logger_1 = __nccwpck_require__(4659);
+var userAgent = 'synapse-github-cicd-deploy-task';
+var requestOptions = {};
+var client = new httpClient.HttpClient(userAgent, undefined, requestOptions);
+var artifactTypesToQuery = [
+    artifacts_enum_1.Artifact.credential,
+    artifacts_enum_1.Artifact.dataflow,
+    artifacts_enum_1.Artifact.dataset,
+    artifacts_enum_1.Artifact.integrationruntime,
+    artifacts_enum_1.Artifact.linkedservice,
+    artifacts_enum_1.Artifact.notebook,
+    artifacts_enum_1.Artifact.pipeline,
+    artifacts_enum_1.Artifact.sparkjobdefinition,
+    artifacts_enum_1.Artifact.sqlscript,
+    artifacts_enum_1.Artifact.trigger
+];
+function getArtifactsFromWorkspaceOfType(artifactTypeToQuery, targetWorkspaceName, environment) {
+    return __awaiter(this, void 0, void 0, function () {
+        var params, token, headers, artifacts, resourceUrl, resp, resourcesString, resourcesJson, rep, artifactJson, artifactJsonContent, artifactName, resource;
+        var _this = this;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0: return [4 /*yield*/, deployUtils.getParams(true, environment)];
+                case 1:
+                    params = _a.sent();
+                    token = params.bearer;
+                    headers = {
+                        'Authorization': "Bearer " + token,
+                        'Content-Type': 'application/json',
+                        'User-Agent': userAgent
+                    };
+                    artifacts = new Array();
+                    resourceUrl = getResourceFromWorkspaceUrl(targetWorkspaceName, environment, artifactTypeToQuery.toString());
+                    resp = new Promise(function (resolve, reject) {
+                        client.get(resourceUrl, headers).then(function (res) { return __awaiter(_this, void 0, void 0, function () {
+                            var resStatus, body;
+                            return __generator(this, function (_a) {
+                                switch (_a.label) {
+                                    case 0:
+                                        resStatus = res.message.statusCode;
+                                        if (resStatus != 200 && resStatus != 201 && resStatus != 202) {
+                                            logger_1.SystemLogger.info("Failed to fetch workspace info, status: " + resStatus + "; status message: " + res.message.statusMessage);
+                                            return [2 /*return*/, reject("Failed to fetch workspace info " + res.message.statusMessage)];
+                                        }
+                                        return [4 /*yield*/, res.readBody()];
+                                    case 1:
+                                        body = _a.sent();
+                                        if (!body) {
+                                            logger_1.SystemLogger.info("No response body for url: " + resourceUrl);
+                                            return [2 /*return*/, reject("Failed to fetch workspace info response")];
+                                        }
+                                        return [2 /*return*/, resolve(body)];
+                                }
+                            });
+                        }); }, function (reason) {
+                            logger_1.SystemLogger.info('Failed to fetch artifacts from workspace: ' + reason);
+                            return reject(deployUtils.DeployStatus.failed);
+                        });
+                    });
+                    return [4 /*yield*/, resp];
+                case 2:
+                    resourcesString = _a.sent();
+                    resourcesJson = JSON.parse(resourcesString);
+                    for (rep in resourcesJson.value) {
+                        artifactJson = resourcesJson.value[rep];
+                        artifactJsonContent = JSON.stringify(artifactJson);
+                        artifactName = artifactJson.name;
+                        resource = {
+                            type: artifactJson.type,
+                            isDefault: false,
+                            content: artifactJsonContent,
+                            name: artifactName,
+                            dependson: getDependentsFromArtifactFromWorkspace(artifactJsonContent)
+                        };
+                        if (artifactName.toLowerCase().indexOf("workspacedefaultsqlserver") >= 0 ||
+                            artifactName.toLowerCase().indexOf("workspacedefaultstorage") >= 0) {
+                            resource.isDefault = true;
+                        }
+                        artifacts.push(resource);
+                    }
+                    return [2 /*return*/, artifacts];
+            }
+        });
+    });
+}
+exports.getArtifactsFromWorkspaceOfType = getArtifactsFromWorkspaceOfType;
+function getArtifactsFromWorkspace(targetWorkspaceName, environment) {
+    return __awaiter(this, void 0, void 0, function () {
+        var artifacts, x, artifactsOfType;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    logger_1.SystemLogger.info("Getting Artifacts from workspace: " + targetWorkspaceName + ".");
+                    artifacts = new Array();
+                    x = 0;
+                    _a.label = 1;
+                case 1:
+                    if (!(x < artifactTypesToQuery.length)) return [3 /*break*/, 4];
+                    return [4 /*yield*/, getArtifactsFromWorkspaceOfType(artifactTypesToQuery[x], targetWorkspaceName, environment)];
+                case 2:
+                    artifactsOfType = _a.sent();
+                    artifactsOfType.forEach(function (value) {
+                        artifacts.push(value);
+                    });
+                    _a.label = 3;
+                case 3:
+                    x++;
+                    return [3 /*break*/, 1];
+                case 4: return [2 /*return*/, artifacts];
+            }
+        });
+    });
+}
+exports.getArtifactsFromWorkspace = getArtifactsFromWorkspace;
+function getArtifactsToDeleteFromWorkspace(artifactsInWorkspace, artifactsToDeploy, typeMap) {
+    logger_1.SystemLogger.info("Getting Artifacts which should be deleted from workspace.");
+    var artifactsToDelete = new Array();
+    var resourceFound = true;
+    artifactsInWorkspace.forEach(function (checkResource) {
+        resourceFound = false;
+        var checkResourceType = checkResource.type;
+        checkResourceType = checkResourceType.replace(" ", "");
+        checkResourceType = checkResourceType.toLowerCase();
+        var artifactTypeToDeploy = typeMap.get(checkResourceType);
+        if (artifactTypeToDeploy != artifacts_enum_1.Artifact.sqlpool &&
+            artifactTypeToDeploy != artifacts_enum_1.Artifact.bigdatapools &&
+            artifactTypeToDeploy != artifacts_enum_1.Artifact.managedvirtualnetworks &&
+            artifactTypeToDeploy != artifacts_enum_1.Artifact.managedprivateendpoints &&
+            artifactTypeToDeploy != artifacts_enum_1.Artifact.integrationruntime) {
+            for (var i = 0; i < artifactsToDeploy.length; i++) {
+                for (var j = 0; j < artifactsToDeploy[i].length; j++) {
+                    var resouce = artifactsToDeploy[i][j];
+                    if (resouce.name.toLowerCase() == checkResource.name.toLowerCase() &&
+                        resouce.type.toLowerCase() == checkResource.type.toLowerCase()) {
+                        resourceFound = true;
+                        break;
+                    }
+                }
+                if (resourceFound) {
+                    break;
+                }
+            }
+            if (!resourceFound) {
+                logger_1.SystemLogger.info("Artifact not found in template. deleting " + checkResource.name + " of type " + checkResource.type);
+                artifactsToDelete.push(checkResource);
+            }
+        }
+    });
+    return artifactsToDelete;
+}
+exports.getArtifactsToDeleteFromWorkspace = getArtifactsToDeleteFromWorkspace;
+function countOfArtifactDependancy(checkArtifact, selectedListOfResources) {
+    var result = 0;
+    for (var res = 0; res < selectedListOfResources.length; res++) {
+        var resource = selectedListOfResources[res];
+        var resName = checkArtifact.name;
+        var restype = checkArtifact.type;
+        if (restype.indexOf("Microsoft.Synapse/workspaces/") > -1) {
+            restype = restype.substr("Microsoft.Synapse/workspaces/".length);
+        }
+        var nameToCheck = restype + "/" + resName;
+        nameToCheck = nameToCheck.toLowerCase();
+        for (var i = 0; i < resource.dependson.length; i++) {
+            if (resource.dependson[i].toLowerCase() == nameToCheck) {
+                result++;
+                break;
+            }
+        }
+    }
+    return result;
+}
+function getArtifactsToDeleteFromWorkspaceInOrder(artifactsToDelete) {
+    logger_1.SystemLogger.info("Computing dependancies for Artifacts which should be deleted from workspace.");
+    var artifactsBatches = new Array();
+    var artifactBatch = new Array();
+    var artifactsOrdered = new Array();
+    // This will be a diff logic than the deploy one. We only need to check dependancy within the list.
+    // If A is a dependency for B, C when B is in this list and C is not. We will delete A and then B.
+    // This is the max times, we will go through the artifacts to look for dependancies. So this is the max level of dependancies supported.
+    var MAX_ITERATIONS = 500;
+    var MAX_PARALLEL_ARTIFACTS = 20;
+    var count = 0;
+    var iteration = 0;
+    while (count < artifactsToDelete.length && iteration < MAX_ITERATIONS) {
+        iteration++;
+        if (artifactBatch.length > 0) {
+            artifactsBatches.push(artifactBatch);
+            artifactBatch = new Array();
+        }
+        for (var res = 0; res < artifactsToDelete.length; res++) {
+            if (arm_template_utils_1.checkIfArtifactExists(artifactsToDelete[res], artifactsOrdered)) {
+                // So this artifact is already added to the ordered list. Skip.
+                continue;
+            }
+            var allDependencyMet = false;
+            // check if, in all other artifacts being deleted, something depends on this artifact
+            //its ok if not at all or if it is in artifactsOrdered, but not in artifactBatch
+            var dependencyInArtifactsToDelete = countOfArtifactDependancy(artifactsToDelete[res], artifactsToDelete);
+            var dependencyInArtifactsOrdered = countOfArtifactDependancy(artifactsToDelete[res], artifactsOrdered);
+            var dependancyInCurrentBatch = countOfArtifactDependancy(artifactsToDelete[res], artifactBatch);
+            if (dependencyInArtifactsToDelete == 0) {
+                //nothing in the delete list depends on it
+                allDependencyMet = true;
+            }
+            else if (dependancyInCurrentBatch == 0 && dependencyInArtifactsOrdered == dependencyInArtifactsToDelete) {
+                allDependencyMet = true;
+            }
+            if (allDependencyMet) {
+                // Adding to the ordered list as all dependancies are already in the list
+                artifactsOrdered.push(artifactsToDelete[res]);
+                if (artifactBatch.length >= MAX_PARALLEL_ARTIFACTS) {
+                    artifactsBatches.push(artifactBatch);
+                    artifactBatch = new Array();
+                }
+                artifactBatch.push(artifactsToDelete[res]);
+            }
+        }
+        logger_1.SystemLogger.info("Iteration " + iteration + " Figured out deletion order for " + artifactsOrdered.length + " / " + artifactsToDelete.length + " Artifacts for Dependancies.");
+        count = artifactsOrdered.length;
+    }
+    if (artifactBatch.length > 0) {
+        artifactsBatches.push(artifactBatch);
+    }
+    if (iteration == MAX_ITERATIONS) {
+        logger_1.SystemLogger.info("Could not figure out full dependancy model for these artifact for delete. Check template and target workspace for correctness.");
+        logger_1.SystemLogger.info("-----------------------------------------------------------------------------------------------");
+        for (var res = 0; res < artifactsToDelete.length; res++) {
+            if (!arm_template_utils_1.checkIfArtifactExists(artifactsToDelete[res], artifactsOrdered)) {
+                // So this artifact's dependancy could not be verified.
+                logger_1.SystemLogger.info("Name: " + artifactsToDelete[res].name + ", Type: " + artifactsToDelete[res].type);
+            }
+        }
+        throw new Error("Could not figure out full dependancy model for deleting artifacts not in template. For the list above, check the template to see which artifacts depends on them.");
+    }
+    return artifactsBatches;
+}
+exports.getArtifactsToDeleteFromWorkspaceInOrder = getArtifactsToDeleteFromWorkspaceInOrder;
+function getResourceFromWorkspaceUrl(targetWorkspaceName, environment, resourceType) {
+    var url = artifacts_client_1.ArtifactClient.getUrlByEnvironment(targetWorkspaceName, environment);
+    url = url + "/" + resourceType + "s?api-version=2019-06-01-preview";
+    return url;
+}
+// Gets the list of artifacts this artifact depends on.
+function getDependentsFromArtifactFromWorkspace(artifactContent) {
+    var dependants = new Array();
+    var startIndex = 0;
+    while (artifactContent.indexOf("\"referenceName\"", startIndex) > -1 && startIndex < artifactContent.length) {
+        startIndex = artifactContent.indexOf("\"referenceName\"", startIndex);
+        startIndex = artifactContent.indexOf("\"", startIndex + "\"referenceName\"".length + 1);
+        var endIndex = artifactContent.indexOf("\"", startIndex + 1);
+        var depName = artifactContent.substring(startIndex + 1, endIndex);
+        startIndex = endIndex + 1;
+        startIndex = artifactContent.indexOf("\"type\"", startIndex);
+        startIndex = artifactContent.indexOf("\"", startIndex + "\"type\"".length + 1);
+        endIndex = artifactContent.indexOf("\"", startIndex + 1);
+        var depType = artifactContent.substring(startIndex + 1, endIndex);
+        depType = depType.replace("Reference", "s");
+        startIndex = endIndex + 1;
+        dependants.push(depType + "/" + depName);
+    }
+    return dependants;
+}
+exports.getDependentsFromArtifactFromWorkspace = getDependentsFromArtifactFromWorkspace;
+//# sourceMappingURL=workspace_artifacts_getter.js.map
 
 /***/ }),
 
