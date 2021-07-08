@@ -14,7 +14,7 @@ Credit:
 */
 
 import { getInput, setFailed, info, error, debug, ExitCode, isDebug } from "@actions/core";
-import { ILogger, deployArtifactMainAsync, IDeployArtifactMainParameter } from "@azure/synapse-cicd-library";
+import { ILogger, deployArtifactMainAsync, IDeployArtifactMainParameters } from "@azure/synapse-cicd-library";
 import { exit } from "process";
 
 class GithubActionConsole implements ILogger {
