@@ -14,13 +14,7 @@ Credit:
 */
 
 import { getInput, setFailed, info, error, debug, ExitCode, isDebug } from "@actions/core";
-import {
-    ILogger,
-    deployArtifactMainAsync,
-    IDeployArtifactMainParameters,
-    SupportedAzureEnvironments,
-    AuthType,
-} from "@azure/synapse-cicd-library";
+import { ILogger, deployArtifactMainAsync, IDeployArtifactMainParameter } from "@azure/synapse-cicd-library";
 import { exit } from "process";
 
 class GithubActionConsole implements ILogger {
@@ -101,6 +95,11 @@ class DeployArtifactMainParameters implements IDeployArtifactMainParameters {
             throw new Error("Attempting to access bearer token when one does not exist");
         }
         return this._bearer;
+    }
+
+    get DeleteArtifactsNotInTemplate() {
+        let val = <string>getInput("deleteArtifactsNotInTemplate");
+        return val.toLowerCase() == "true";
     }
 
     set bearer(token: string) {
