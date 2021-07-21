@@ -9672,7 +9672,12 @@ function getParams(dataplane, env) {
                 case 2:
                     resourceManagerEndpointUrl = _a.sent();
                     _a.label = 3;
-                case 3: return [4 /*yield*/, service_principal_client_utils_1.getBearer(clientId, clientSecret, subscriptionId, tenantId, resourceManagerEndpointUrl, activeDirectoryEndpointUrl)];
+                case 3: 
+                    if (core.getInput("managedIdentity") == "true") {
+                      return [4 /*yield*/, service_principal_client_utils_1.getManagedIdentityBearer(resourceManagerEndpointUrl)]
+                    }else{
+                      return [4 /*yield*/, service_principal_client_utils_1.getBearer(clientId, clientSecret, subscriptionId, tenantId, resourceManagerEndpointUrl, activeDirectoryEndpointUrl)];
+                    }
                 case 4:
                     bearer = _a.sent();
                     params = {
@@ -9918,6 +9923,49 @@ function getBearer(clientId, clientSecret, subscriptionId, tenantId, resourceMan
     });
 }
 exports.getBearer = getBearer;
+function getManagedIdentityBearer(resourceManagerEndpointUrl) {
+  return __awaiter(this, void 0, void 0, function () {
+    var _this = this;
+    return __generator(this, function (_a) {
+        try {
+            return [2 /*return*/, new Promise(function (resolve, reject) {
+                    var url = "http://169.254.169.254/metadata/identity/oauth2/token" + 
+                              "?api-version=2018-02-01&resource=" + resourceManagerEndpointUrl;
+                    var headers = {
+                        'Metadata': true
+                    };
+                    client.get(url, headers).then(function (res) { return __awaiter(_this, void 0, void 0, function () {
+                        var resStatus, error, body;
+                        return __generator(this, function (_a) {
+                            switch (_a.label) {
+                                case 0:
+                                    resStatus = res.message.statusCode;
+                                    if (!(resStatus != 200 && resStatus != 201 && resStatus != 202)) return [3 /*break*/, 2];
+                                    logger_1.SystemLogger.info("Unable to fetch managed identity bearer token, status: " + resStatus + "; status message: " + res.message.statusMessage);
+                                    return [4 /*yield*/, res.readBody()];
+                                case 1:
+                                    error = _a.sent();
+                                    logger_1.SystemLogger.info(error);
+                                    return [2 /*return*/, reject(deploy_utils_1.DeployStatus.failed)];
+                                case 2:
+                                    logger_1.SystemLogger.info("Able to fetch managed identity bearer token: " + resStatus + "; status message: " + res.message.statusMessage);
+                                    return [4 /*yield*/, res.readBody()];
+                                case 3:
+                                    body = _a.sent();
+                                    return [2 /*return*/, resolve(JSON.parse(body)["access_token"])];
+                            }
+                        });
+                    }); });
+                })];
+        }
+        catch (err) {
+            throw new Error("Unable to fetch the service principal token: " + err.message);
+        }
+        return [2 /*return*/];
+    });
+  });
+}
+exports.getManagedIdentityBearer = getManagedIdentityBearer;
 function getWorkspaceLocation(params, targetWorkspace) {
     return __awaiter(this, void 0, void 0, function () {
         var _this = this;
