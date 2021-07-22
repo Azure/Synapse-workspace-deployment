@@ -1,17 +1,16 @@
 {
-  "name": "synapse_action",
+  "name": "build_and_deploy",
   "version": "1.0.0",
-  "description": "Github action to deploy template and parameter files to Synapse Workspace.",
-  "main": "entrypoint.js",
+  "description": "",
   "scripts": {
-    "test": "mocha",
-    "start": "node entrypoint.js",
-    "build": "tsc"
+    "build": "tsc",
+    "watch": "tsc -w",
+    "prestart": "npm run build",
+    "start": "func start",
+    "test": "echo \"No tests yet...\""
   },
-  "keywords": [],
-  "author": "Aaditya Sharma",
-  "license": "ISC",
   "dependencies": {
+    "durable-functions": "^1.4.6",
     "@actions/core": "^1.2.6",
     "@actions/github": "^4.0.0",
     "@types/chai": "^4.2.14",
@@ -37,6 +36,7 @@
     "uuid": "8.3.0"
   },
   "devDependencies": {
+    "@azure/functions": "^1.2.3",
     "@types/uuid": "^8.3.0",
     "chai": "^4.3.0",
     "mocha": "^8.3.0",
