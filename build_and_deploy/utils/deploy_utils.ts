@@ -3,7 +3,7 @@
 
 
 import * as core from '@actions/core';
-import { getBearer } from './service_principal_client_utils';
+import { getBearer, getManagedIdentityBearer } from './service_principal_client_utils';
 
 export enum DeployStatus {
     success = 'Success',
@@ -24,6 +24,7 @@ export interface Params {
     clientSecret: string;
     subscriptionId: string;
     tenantId: string;
+    managedIdentity: string;
     activeDirectoryEndpointUrl: string;
     resourceManagerEndpointUrl: string;
     bearer: string,
@@ -43,6 +44,7 @@ export async function getParams(dataplane: boolean = false, env: string = ""): P
         var clientSecret = core.getInput("clientSecret");
         var subscriptionId = core.getInput("subscriptionId");
         var tenantId = core.getInput("tenantId");
+        var managedIdentity = core.getInput("managedIdentity");
         var activeDirectoryEndpointUrl = core.getInput("activeDirectoryEndpointUrl");
         var resourceManagerEndpointUrl = core.getInput("resourceManagerEndpointUrl");
 
@@ -55,18 +57,27 @@ export async function getParams(dataplane: boolean = false, env: string = ""): P
             resourceManagerEndpointUrl = await getRMUrl(env);
         }
 
-        let bearer = await getBearer(clientId, clientSecret, subscriptionId, tenantId, resourceManagerEndpointUrl, activeDirectoryEndpointUrl);
+        let bearer: string;
+
+        if(managedIdentity == 'true'){
+            bearer = await getManagedIdentityBearer(resourceManagerEndpointUrl);
+        }else{
+            bearer = await getBearer(clientId, clientSecret, subscriptionId, tenantId, resourceManagerEndpointUrl, activeDirectoryEndpointUrl);
+        }
+
         let params: Params = {
             'clientId': clientId,
             'clientSecret': clientSecret,
             'subscriptionId': subscriptionId,
             'tenantId': tenantId,
+            'managedIdentity': managedIdentity,
             'activeDirectoryEndpointUrl': activeDirectoryEndpointUrl,
             'resourceManagerEndpointUrl': resourceManagerEndpointUrl,
             'bearer': bearer,
             'resourceGroup': resourceGroup
         };
         return params;
+
     } catch (err) {
         throw new Error("Failed to fetch Bearer: " + err.message);
     }
@@ -85,6 +96,5 @@ export async function getRMUrl(env: string): Promise<string> {
             throw new Error('Environment validation failed');
     }
 }
-
 
 
