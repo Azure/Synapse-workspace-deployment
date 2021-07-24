@@ -30,6 +30,7 @@ const httpStart: AzureFunction = async function (context: Context, req: HttpRequ
             context.res = {
                 status: 202,
                 body: JSON.stringify(body),
+                contentType: 'application/json',
                 headers: {
                     'x-ms-usercallbackdata': instanceId,
                     'Content-Type': 'application/json'
@@ -51,7 +52,8 @@ const httpStart: AzureFunction = async function (context: Context, req: HttpRequ
             }
             context.res = {
                 status: 200,
-                body: JSON.stringify(body)
+                body: body,
+                contentType: 'application/json'
             };    
         }
         else if (req.method == "POST" && req.params.method == "cancel")
@@ -64,7 +66,8 @@ const httpStart: AzureFunction = async function (context: Context, req: HttpRequ
             body.State = "canceled";
             context.res = {
                 status: 200,
-                body: JSON.stringify(body)
+                body: body,
+                contentType: 'application/json'
             };  
         }
         else
@@ -74,48 +77,15 @@ const httpStart: AzureFunction = async function (context: Context, req: HttpRequ
             body.Message = "Unknown HTTP method requested";
             context.res = {
                 status: 501,
-                body: JSON.stringify(body)
+                body: body,
+                contentType: 'application/json'
             };    
         }
     } catch (error) {
         context.log("error handling request: " + error.ToString());
         context.res.status(500).send(error);
-    }
-        
-
-    /* const targetWorkspace: string = "";
-    const templateFile: string = "";
-    const parametersFile: string = "";
-    const overrideArmParameters: string = "";
-    const environment: string = "";
-
-    let  deleteArtifactsNotInTemplate: boolean = false;
-    const deleteArtifactsNotInTemplateString = "false";
-    if(deleteArtifactsNotInTemplateString.toLowerCase() == "true")
-    {
-        deleteArtifactsNotInTemplate = true;
-    }
-    SystemLogger.info(`DeleteArtifactsNotInTemplate=${deleteArtifactsNotInTemplate}`);
-
-    try {
-        const packageFiles: PackageFile = new PackageFile(templateFile, parametersFile, overrideArmParameters);
-        const params = await getParams();
-        const artifactClient: ArtifactClient = new ArtifactClient(params);
-        SystemLogger.setLogger(new ActionLogger(true));
-
-        const orchestrator: Orchestrator = new Orchestrator(
-            packageFiles,
-            artifactClient,
-            targetWorkspace,
-            environment,
-            deleteArtifactsNotInTemplate
-        );
-        await orchestrator.orchestrateFromPublishBranch();
-    } catch (err) {
-        throw new Error(err.message);
-    }
- */
-
+    } 
+    
     return context.res;
     //return client.createCheckStatusResponse(context.bindingData.req, instanceId);
 };

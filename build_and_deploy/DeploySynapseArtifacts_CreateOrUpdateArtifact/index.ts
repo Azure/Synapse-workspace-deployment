@@ -12,7 +12,41 @@
 import { AzureFunction, Context } from "@azure/functions"
 
 const activityFunction: AzureFunction = async function (context: Context): Promise<string> {
-    return `Hello ${context.bindings.name}!`;
+    return `Hello ${context.bindings.name.bindingData.input.body['properties']}!`;
+
+     /* const targetWorkspace: string = "";
+    const templateFile: string = "";
+    const parametersFile: string = "";
+    const overrideArmParameters: string = "";
+    const environment: string = "";
+
+    let  deleteArtifactsNotInTemplate: boolean = false;
+    const deleteArtifactsNotInTemplateString = "false";
+    if(deleteArtifactsNotInTemplateString.toLowerCase() == "true")
+    {
+        deleteArtifactsNotInTemplate = true;
+    }
+    SystemLogger.info(`DeleteArtifactsNotInTemplate=${deleteArtifactsNotInTemplate}`);
+
+    try {
+        const packageFiles: PackageFile = new PackageFile(templateFile, parametersFile, overrideArmParameters);
+        const params = await getParams();
+        const artifactClient: ArtifactClient = new ArtifactClient(params);
+        SystemLogger.setLogger(new ActionLogger(true));
+
+        const orchestrator: Orchestrator = new Orchestrator(
+            packageFiles,
+            artifactClient,
+            targetWorkspace,
+            environment,
+            deleteArtifactsNotInTemplate
+        );
+        await orchestrator.orchestrateFromPublishBranch();
+    } catch (err) {
+        throw new Error(err.message);
+    }
+ */
+
 };
 
 export default activityFunction;
