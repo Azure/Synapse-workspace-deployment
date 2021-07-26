@@ -36,3 +36,108 @@ export const PIPELINEPAYLOAD = {
         }
     ]
 }
+
+export const DEFAULTARTIFACTSQL = {
+    "name": "[concat(parameters('workspaceName'), '/test-WorkspaceDefaultSqlServer')]",
+    "type": "Microsoft.Synapse/workspaces/linkedServices",
+    "apiVersion": "2019-06-01-preview",
+    "properties": {
+        "parameters": {
+            "DBName": {
+                "type": "String"
+            }
+        },
+        "annotations": [],
+        "type": "AzureSqlDW",
+        "typeProperties": {
+            "connectionString": "[parameters('dancicdtest-WorkspaceDefaultSqlServer_connectionString')]"
+        },
+        "connectVia": {
+            "referenceName": "AutoResolveIntegrationRuntime",
+            "type": "IntegrationRuntimeReference"
+        }
+    },
+    "dependsOn": [
+        "[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]"
+    ]
+}
+
+export const DEFAULTARTIFACTSTORAGE = {
+    "name": "[concat(parameters('workspaceName'), '/test-WorkspaceDefaultStorage')]",
+    "type": "Microsoft.Synapse/workspaces/linkedServices",
+    "apiVersion": "2019-06-01-preview",
+    "properties": {
+        "annotations": [],
+        "type": "AzureBlobFS",
+        "typeProperties": {
+            "url": "[parameters('dancicdtest-WorkspaceDefaultStorage_properties_typeProperties_url')]"
+        },
+        "connectVia": {
+            "referenceName": "AutoResolveIntegrationRuntime",
+            "type": "IntegrationRuntimeReference"
+        }
+    },
+    "dependsOn": [
+        "[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]"
+    ]
+}
+
+export const DEFAULTARTIFACTFAIl1 = {
+    "name": "[concat(parameters('workspaceName'), '/test-WorkspaceStorage')]",
+    "type": "Microsoft.Synapse/workspaces/linkedServices",
+    "apiVersion": "2019-06-01-preview",
+    "properties": {
+        "annotations": [],
+        "type": "AzureBlobFS",
+        "typeProperties": {
+            "url": "[parameters('dancicdtest-WorkspaceDefaultStorage_properties_typeProperties_url')]"
+        },
+        "connectVia": {
+            "referenceName": "AutoResolveIntegrationRuntime",
+            "type": "IntegrationRuntimeReference"
+        }
+    },
+    "dependsOn": [
+        "[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]"
+    ]
+}
+
+export const DEFAULTARTIFACTFAIl2 = {
+    "name": "[concat(parameters('workspaceName'), '/test-WorkspaceDefaultStorage')]",
+    "type": "Microsoft.Synapse/workspaces/linked",
+    "apiVersion": "2019-06-01-preview",
+    "properties": {
+        "annotations": [],
+        "type": "AzureBlobFS",
+        "typeProperties": {
+            "url": "[parameters('dancicdtest-WorkspaceDefaultStorage_properties_typeProperties_url')]"
+        },
+        "connectVia": {
+            "referenceName": "AutoResolveIntegrationRuntime",
+            "type": "IntegrationRuntimeReference"
+        }
+    },
+    "dependsOn": [
+        "[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]"
+    ]
+}
+
+export const DEFAULTARTIFACTFAIl3 = {
+    "name": "[concat(parameters('workspaceName'), '/test-WorkspaceDefaultStorage')]",
+    "type": "Microsoft.Synapse/workspaces/linkedServices",
+    "apiVersion": "2019-06-01-preview",
+    "properties": {
+        "annotations": [],
+        "type": "SparkPool",
+        "typeProperties": {
+            "url": "[parameters('dancicdtest-WorkspaceDefaultStorage_properties_typeProperties_url')]"
+        },
+        "connectVia": {
+            "referenceName": "AutoResolveIntegrationRuntime",
+            "type": "IntegrationRuntimeReference"
+        }
+    },
+    "dependsOn": [
+        "[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]"
+    ]
+}

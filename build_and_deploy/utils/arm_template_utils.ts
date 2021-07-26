@@ -5,6 +5,7 @@
 import * as yaml from 'js-yaml';
 import { v4 as uuidv4 } from 'uuid';
 import { SystemLogger } from './logger';
+import {isDefaultArtifact} from "./common_utils";
 
 // Just 2 random Guids to replace backslash in parameters file.
 const backslash: string = "7FD5C49AB6444AC1ACCD56B689067FBBAD85B74B0D8943CA887371839DFECF85";
@@ -127,8 +128,7 @@ export function findDefaultArtifacts(armTemplate: string, targetworkspace: strin
     for (let value in jsonArmTemplateParams.resources) {
         let artifactJson = jsonArmTemplateParams.resources[value];
         let artifactName: string = artifactJson.name;
-        if (artifactName.toLowerCase().indexOf("workspacedefaultsqlserver") >= 0 ||
-            artifactName.toLowerCase().indexOf("workspacedefaultstorage") >= 0) {
+        if (isDefaultArtifact(JSON.stringify(artifactJson))) {
             if (artifactName.indexOf("/") > 0) {
                 //example `${targetworkspace}/sourceworkspace-WorkspaceDefaultStorage`;
                 let nametoreplace = artifactName.substr(artifactName.lastIndexOf("/") + 1);
@@ -451,8 +451,7 @@ export function getArtifactsFromArmTemplate(armTemplate: string, targetLocation:
 
         SystemLogger.info(`Found Artifact of type ${artifactType}`);
 
-        if (artifactJson.name.toLowerCase().indexOf("workspacedefaultsqlserver") >= 0 ||
-            artifactJson.name.toLowerCase().indexOf("workspacedefaultstorage") >= 0) {
+        if (isDefaultArtifact(JSON.stringify(artifactJson))) {
             resource.isDefault = true;
             defaultArtifacts.forEach((value, key) => {
                 resource.name = resource.name.replace(key, value);

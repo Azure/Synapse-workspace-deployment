@@ -5,6 +5,7 @@ import * as httpInterfaces from 'typed-rest-client/Interfaces';
 import { checkIfArtifactExists, checkIfNameExists, Resource } from './arm_template_utils';
 import { Artifact } from './artifacts_enum';
 import {SystemLogger} from "./logger";
+import {isDefaultArtifact} from "./common_utils";
 
 const userAgent: string = 'synapse-github-cicd-deploy-task'
 const requestOptions: httpInterfaces.IRequestOptions = {};
@@ -74,9 +75,7 @@ export async function getArtifactsFromWorkspaceOfType(artifactTypeToQuery: Artif
             dependson: getDependentsFromArtifactFromWorkspace(artifactJsonContent)
         };
 
-        if(artifactName.toLowerCase().indexOf("workspacedefaultsqlserver") >= 0 ||
-            artifactName.toLowerCase().indexOf("workspacedefaultstorage") >= 0)
-        {
+        if(isDefaultArtifact(artifactJsonContent)){
             resource.isDefault = true;
         }
 
