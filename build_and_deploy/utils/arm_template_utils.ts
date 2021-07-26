@@ -181,12 +181,28 @@ function replaceParameters(armParams: string, armTemplate: string, overrideArmPa
 
     // Replace parameterValues
     armParamValues.forEach((value, key) => {
-        armTemplate = armTemplate.split(`"[` + key + `]"`).join(`${replaceDoubleQuoteCode(value)}`);
+        if (isJsonValue(replaceDoubleQuoteCode(value))) {
+            armTemplate = armTemplate.split(`"[` + key + `]"`).join(`${replaceDoubleQuoteCode(value)}`);
+        }
+        else {
+            armTemplate = armTemplate.split(`"[` + key + `]"`).join(`"${replaceDoubleQuoteCode(value)}"`);
+        }
+
         armTemplate = armTemplate.split(key).join(`'${replaceDoubleQuoteCode(value)}'`);
     });
 
     SystemLogger.info("Complete replacement of parameters in the template");
     return armTemplate;
+}
+
+function isJsonValue(testString: string): boolean {
+    try {
+        JSON.parse(testString);
+        return true;
+    }
+    catch {
+        return false;
+    }
 }
 
 function replaceVariables(armTemplate: string): string {
@@ -238,7 +254,7 @@ function getParameterValuesFromArmTemplate(armParams: string, armTemplate: strin
     let jsonArmParams = JSON.parse(armParams);
     let armParamValues = new Map<string, string>()
     for (let value in jsonArmParams.parameters) {
-        armParamValues.set(`parameters('${value}')`, replaceDoubleQuote(JSON.stringify(jsonArmParams.parameters[value].value)));
+        armParamValues.set(`parameters('${value}')`, replaceDoubleQuote(sanitize(JSON.stringify(jsonArmParams.parameters[value].value))));
     }
 
     // Convert arm template to json, look at the default parameters if any and add missing ones to the map we have
@@ -299,7 +315,6 @@ function sanitize(paramValue: string): string {
         (paramValue.startsWith("'") && paramValue.endsWith("'"))) {
         paramValue = paramValue.substr(1, paramValue.length - 2);
     }
-    paramValue = `"` + paramValue + `"`;
     return paramValue;
 }
 
