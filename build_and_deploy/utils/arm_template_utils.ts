@@ -9,6 +9,7 @@ import { SystemLogger } from './logger';
 // Just 2 random Guids to replace backslash in parameters file.
 const backslash: string = "7FD5C49AB6444AC1ACCD56B689067FBBAD85B74B0D8943CA887371839DFECF85";
 const quote: string = "48C16896271D483C916DE1C4EC6F24DBC945F900F9AB464B828EC8005364D322";
+const doublequote: string = "4467B65E39AA40998907771187C9B539847A7E801C5E4F0E9513C1D6154BC816";
 
 
 export interface Resource {
@@ -81,6 +82,43 @@ function replaceBackSlash(inputString: string): string {
     return outputString;
 }
 
+export function replaceDoubleQuoteCode(inputString: string): string
+{
+    if(inputString == null)
+    {
+        return "";
+    }
+
+    let outputString: string = inputString;
+
+    while(outputString.indexOf(doublequote)>=0)
+    {
+        outputString = outputString.substr(0, outputString.indexOf(doublequote))
+            + `"`
+            + outputString.substr(outputString.indexOf(doublequote) + doublequote.length);
+    }
+
+    return outputString;
+}
+
+function replaceDoubleQuote(inputString: string): string {
+    if(inputString == null || inputString=="")
+    {
+        return "";
+    }
+
+    let outputString: string = inputString;
+
+    while(outputString.indexOf(`\"`)>=0)
+    {
+        outputString = outputString.substr(0, outputString.indexOf(`\"`)) +
+            doublequote +
+            outputString.substr(outputString.indexOf(`\"`) + 1);
+    }
+
+    return outputString;
+}
+
 export function findDefaultArtifacts(armTemplate: string, targetworkspace: string): Map<string, string> {
     let defaultArtifacts = new Map<string, string>();
 
@@ -143,8 +181,8 @@ function replaceParameters(armParams: string, armTemplate: string, overrideArmPa
 
     // Replace parameterValues
     armParamValues.forEach((value, key) => {
-        armTemplate = armTemplate.split('[' + key + ']').join(`${value}`);
-        armTemplate = armTemplate.split(key).join(`'${value}'`);
+        armTemplate = armTemplate.split(`"[` + key + `]"`).join(`${replaceDoubleQuoteCode(value)}`);
+        armTemplate = armTemplate.split(key).join(`'${replaceDoubleQuoteCode(value)}'`);
     });
 
     SystemLogger.info("Complete replacement of parameters in the template");
@@ -200,14 +238,14 @@ function getParameterValuesFromArmTemplate(armParams: string, armTemplate: strin
     let jsonArmParams = JSON.parse(armParams);
     let armParamValues = new Map<string, string>()
     for (let value in jsonArmParams.parameters) {
-        armParamValues.set(`parameters('${value}')`, jsonArmParams.parameters[value].value.toString());
+        armParamValues.set(`parameters('${value}')`, replaceDoubleQuote(JSON.stringify(jsonArmParams.parameters[value].value)));
     }
 
     // Convert arm template to json, look at the default parameters if any and add missing ones to the map we have
     let jsonArmTemplateParams = JSON.parse(armTemplate);
     let armTemplateParamValues = new Map<string, string>()
     for (let value in jsonArmTemplateParams.parameters) {
-        armTemplateParamValues.set(`parameters('${value}')`, jsonArmTemplateParams.parameters[value].defaultValue);
+        armTemplateParamValues.set(`parameters('${value}')`, replaceDoubleQuote(JSON.stringify(jsonArmTemplateParams.parameters[value].defaultValue)));
     }
 
     armTemplateParamValues.forEach((value, key) => {
@@ -261,6 +299,7 @@ function sanitize(paramValue: string): string {
         (paramValue.startsWith("'") && paramValue.endsWith("'"))) {
         paramValue = paramValue.substr(1, paramValue.length - 2);
     }
+    paramValue = `"` + paramValue + `"`;
     return paramValue;
 }
 
@@ -423,10 +462,11 @@ function createDependancyTree(artifacts: Array<Resource>) {
 
     for (let i = 0; i < artifacts.length; i++) {
         //Replace backslash with \
-        artifacts[i].content = replaceBackSlashCode(artifacts[i].content);
-        artifacts[i].name = replaceBackSlashCode(artifacts[i].name);
-        for (let j = 0; j < artifacts[i].dependson.length; j++) {
-            artifacts[i].dependson[j] = replaceBackSlashCode(artifacts[i].dependson[j]);
+        artifacts[i].content = replaceDoubleQuoteCode(replaceBackSlashCode(artifacts[i].content));
+        artifacts[i].name = replaceDoubleQuoteCode(replaceBackSlashCode(artifacts[i].name));
+        for(let j=0;j< artifacts[i].dependson.length;j++)
+        {
+            artifacts[i].dependson[j] = replaceDoubleQuoteCode(replaceBackSlashCode(artifacts[i].dependson[j]));
         }
     }
 
