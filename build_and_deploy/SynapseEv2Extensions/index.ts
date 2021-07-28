@@ -86,7 +86,7 @@ const httpStart: AzureFunction = async function (context: Context, req: HttpRequ
         context.res.status(500).send(error);
     } 
     
-    return context.res;
+    //return context.res;
     //return client.createCheckStatusResponse(context.bindingData.req, instanceId);
 };
 

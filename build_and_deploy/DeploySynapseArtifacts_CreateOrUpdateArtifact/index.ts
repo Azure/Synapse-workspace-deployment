@@ -10,15 +10,21 @@
  */
 
 import { AzureFunction, Context } from "@azure/functions"
+import { ArtifactClient } from "../clients/artifacts_client";
+import { Orchestrator } from "../orchestrator";
+import { PackageFile } from "../package_file";
+import { Env, getParams, getParamsForEv2 } from "../utils/deploy_utils";
+import { ActionLogger, SystemLogger } from "../utils/logger";
 
-const activityFunction: AzureFunction = async function (context: Context): Promise<string> {
-    return `Hello ${context.bindings.name.bindingData.input.body['properties']}!`;
-
-     /* const targetWorkspace: string = "";
-    const templateFile: string = "";
-    const parametersFile: string = "";
-    const overrideArmParameters: string = "";
-    const environment: string = "";
+const activityFunction: AzureFunction = async function (context: Context): Promise<void> {
+    //return `Hello ${JSON.stringify(context.bindings.name.bindingData.input.body['properties'])}!`;
+    var properties = context.bindings.name.bindingData.input.body['properties'];
+    var headers = context.bindings.name.bindingData.input.headers;
+    const targetWorkspace: string = properties.synapseWorkspaceName['value'];
+    const templateFile: string = properties.templateForWorkspacePath['value'];
+    const parametersFile: string = properties.templateParametersForWorkspacePath['value'];
+    const overrideArmParameters: string = properties.armOverrideParametersForWorkspacePath['value'];
+    var environment = process.env["Environment"];
 
     let  deleteArtifactsNotInTemplate: boolean = false;
     const deleteArtifactsNotInTemplateString = "false";
@@ -26,12 +32,13 @@ const activityFunction: AzureFunction = async function (context: Context): Promi
     {
         deleteArtifactsNotInTemplate = true;
     }
+    
     SystemLogger.info(`DeleteArtifactsNotInTemplate=${deleteArtifactsNotInTemplate}`);
 
     try {
         const packageFiles: PackageFile = new PackageFile(templateFile, parametersFile, overrideArmParameters);
-        const params = await getParams();
-        const artifactClient: ArtifactClient = new ArtifactClient(params);
+        const params = await getParamsForEv2(properties, headers);
+        const artifactClient: ArtifactClient = new ArtifactClient(params, properties, headers);
         SystemLogger.setLogger(new ActionLogger(true));
 
         const orchestrator: Orchestrator = new Orchestrator(
@@ -45,8 +52,6 @@ const activityFunction: AzureFunction = async function (context: Context): Promi
     } catch (err) {
         throw new Error(err.message);
     }
- */
-
 };
 
 export default activityFunction;
