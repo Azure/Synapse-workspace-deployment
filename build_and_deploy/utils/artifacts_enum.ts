@@ -33,3 +33,12 @@ export enum DataFactoryType {
     managedPrivateEndpoints = "Microsoft.Synapse/workspaces/managedVirtualNetworks/managedPrivateEndpoints",
     kqlScript = "Microsoft.Synapse/workspaces/kqlscripts"
 }
+export enum DEFAULT_ARTIFACTS {
+    sqlserver = "workspacedefaultsqlserver",
+    storage = "workspacedefaultstorage"
+}
+
+export enum DEFAULT_ARTIFACTS_TYPE {
+    sqlserver = "AzureSqlDW",
+    storage = "AzureBlobFS"
+}
