@@ -90,7 +90,8 @@ export function findDefaultArtifacts(armTemplate: string, targetworkspace: strin
         let artifactJson = jsonArmTemplateParams.resources[value];
         let artifactName: string = artifactJson.name;
         if (artifactName.toLowerCase().indexOf("workspacedefaultsqlserver") >= 0 ||
-            artifactName.toLowerCase().indexOf("workspacedefaultstorage") >= 0) {
+            artifactName.toLowerCase().indexOf("workspacedefaultstorage") >= 0 ||
+            artifactName.toLowerCase().indexOf("workspacesystemidentity") >= 0) {
             if (artifactName.indexOf("/") > 0) {
                 //example `${targetworkspace}/sourceworkspace-WorkspaceDefaultStorage`;
                 let nametoreplace = artifactName.substr(artifactName.lastIndexOf("/") + 1);

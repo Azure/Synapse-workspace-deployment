@@ -317,6 +317,16 @@ export var armTemplate_complete = "{\n" +
     "        }\n" +
     "      },\n" +
     "      \"dependsOn\": []\n" +
+    "    },\n"+
+    "    {\n" +
+    "      \"name\": \"[concat(parameters('workspaceName'), '/WorkspaceSystemIdentity')]\",\n" +
+    "      \"type\": \"Microsoft.Synapse/workspaces/credentials\",\n" +
+    "      \"apiVersion\": \"2019-06-01-preview\",\n" +
+    "      \"properties\": {\n" +
+    "        \"type\": \"ManagedIdentity\",\n" +
+    "        \"typeProperties\": {}\n" +
+    "      },\n" +
+    "      \"dependsOn\": []\n" +
     "    }\n" +
     "  ]\n" +
     "}";
