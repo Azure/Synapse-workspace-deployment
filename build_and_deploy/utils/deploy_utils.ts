@@ -27,12 +27,12 @@ export interface Params {
     activeDirectoryEndpointUrl: string;
     resourceManagerEndpointUrl: string;
     bearer: string,
-    resourceGroup: string
+    resourceGroup: string,
 }
 
 export type ResourceType = 'credential' | 'sqlPool' | 'bigDataPool' | 'sqlscript' | 'notebook' | 'sparkjobdefinition'
     | 'linkedService' | 'pipeline' | 'dataset' | 'trigger' | 'integrationRuntime' | 'dataflow'
-    | 'managedVirtualNetworks' | 'managedPrivateEndpoints';
+    | 'managedVirtualNetworks' | 'managedPrivateEndpoints' | 'kqlScript';
 
 
 export async function getParams(dataplane: boolean = false, env: string = ""): Promise<Params> {
@@ -50,7 +50,7 @@ export async function getParams(dataplane: boolean = false, env: string = ""): P
         throw new Error("Unable to parse the secret: " + err.message);
     }
 
-    try{
+    try {
         if (dataplane) {
             resourceManagerEndpointUrl = await getRMUrl(env);
         }

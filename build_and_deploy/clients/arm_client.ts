@@ -2,11 +2,11 @@
 // Licensed under the MIT license.
 
 
-import * as deployUtils from '../utils/deploy_utils';
 import * as httpClient from 'typed-rest-client/HttpClient';
 import * as httpInterfaces from 'typed-rest-client/Interfaces';
 import * as uuid from 'uuid';
-import * as core from '@actions/core';
+import * as deployUtils from '../utils/deploy_utils';
+import { SystemLogger } from '../utils/logger';
 
 const userAgent: string = 'synapse-github-cicd-deploy-task';
 let requestOptions: httpInterfaces.IRequestOptions = {};
@@ -20,37 +20,36 @@ async function getDeploymentUrl(baseUrl: string, rgName: string, subId: string):
 }
 
 async function checkDeploymentStatus(url: string, headers: httpInterfaces.IHeaders) {
-    core.info("Url to track deployment status: " + url);
     let timeout = new Date().getTime() + (60000 * 20); // 20 minutes
     let delayMilliSecs = 30000;
     let status = "";
     while (true) {
         let currentTime = new Date().getTime();
         if (timeout < currentTime) {
-            core.info('Current time: ' + currentTime);
+            SystemLogger.info('Current time: ' + currentTime);
             throw new Error("Timeout error in checkDeploymentStatus");
         }
         let res = await client.get(url, headers);
         let resStatus = res.message.statusCode;
-        core.info(`CheckDeploymentStatus: ${resStatus}; status message: ${res.message.statusMessage}`);
+        SystemLogger.info(`CheckDeploymentStatus: ${resStatus}; status message: ${res.message.statusMessage}`);
         if (resStatus != 200 && resStatus != 201 && resStatus != 202) {
             throw new Error(`=> status: ${resStatus}; status message: ${res.message.statusMessage}`);
         }
 
         let body = await res.readBody();
         if (!body) {
-            core.info("No status response for url: " + url);
+            SystemLogger.info("No status response for url: " + url);
             await delay(delayMilliSecs);
             break;
         }
         let responseJson = JSON.parse(body);
-        core.info(JSON.stringify(responseJson));
+        SystemLogger.info(JSON.stringify(responseJson));
         status = responseJson['status'];
 
         if (status == 'Succeeded' || status == 'Failed' || status == 'Canceled') {
             return status;
         } else {
-            core.info("Arm deployment status: " + status);
+            SystemLogger.info("Arm deployment status: " + status);
             await delay(delayMilliSecs);
         }
     }
@@ -65,7 +64,7 @@ export async function deploy(armTemplate: string): Promise<string> {
         let params = await deployUtils.getParams();
         let url: string = await getDeploymentUrl(params.resourceManagerEndpointUrl, params.resourceGroup, params.subscriptionId);
         let token = params.bearer;
-        core.info('Arm resources deployment url: '+ url);
+        SystemLogger.info('Arm resources deployment url: ' + url);
 
         return new Promise<string>((resolve, reject) => {
 
@@ -88,10 +87,10 @@ export async function deploy(armTemplate: string): Promise<string> {
             client.put(url, requestBody, headers).then(async (res) => {
                 var resStatus = res.message.statusCode;
                 if (resStatus != 200 && resStatus != 201 && resStatus != 202) {
-                    core.info(`Arm template deployment failed, status: ${resStatus}; status message: ${res.message.statusMessage}`);
+                    SystemLogger.info(`Arm template deployment failed, status: ${resStatus}; status message: ${res.message.statusMessage}`);
                     return reject(deployUtils.DeployStatus.failed);
                 }
-                core.info(`Arm template deployment status: ${resStatus}; status message: ${res.message.statusMessage}`);
+                SystemLogger.info(`Arm template deployment status: ${resStatus}; status message: ${res.message.statusMessage}`);
                 var statusUrl: string = "";
 
                 var rawHeaders = res.message.rawHeaders;
@@ -103,17 +102,17 @@ export async function deploy(armTemplate: string): Promise<string> {
                         statusUrl = header;
                     }
                 }
-                core.info(`Deployment tracking end point: ${statusUrl}`);
-                if(statusUrl != ""){
+                SystemLogger.info(`Deployment tracking end point: ${statusUrl}`);
+                if (statusUrl != "") {
                     var status = await checkDeploymentStatus(statusUrl, headers);
-                    core.info(`Final arm deployment status: ${status}`);
+                    SystemLogger.info(`Final arm deployment status: ${status}`);
                     if (status == 'Succeeded') {
                         return resolve(deployUtils.DeployStatus.success);
                     }
                     return reject(deployUtils.DeployStatus.failed);
                 }
             }, (reason) => {
-                core.info('Arm Template Deployment Failed: '+ reason);
+                SystemLogger.info('Arm Template Deployment Failed: ' + reason);
                 return reject(deployUtils.DeployStatus.failed);
             });
         });

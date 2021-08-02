@@ -1,0 +1,44 @@
+import chai = require('chai');
+import {isDefaultArtifact, isStrNullOrEmpty} from "../utils/common_utils";
+import {
+    DEFAULTARTIFACTFAIl1,
+    DEFAULTARTIFACTFAIl2, DEFAULTARTIFACTFAIl3,
+    DEFAULTARTIFACTSQL,
+    DEFAULTARTIFACTSTORAGE
+} from "./helpers/test_fixtures";
+
+var chaiAsPromised = require("chai-as-promised");
+
+chai.use(chaiAsPromised);
+var should = chai.should();
+
+describe('CommonUtils', function () {
+    it('Should return a boolean false', function () {
+        let isEmptyString = isStrNullOrEmpty('prod');
+        chai.assert.isFalse(isEmptyString);
+    });
+    it('Should return a boolean true', function () {
+        let isEmptyString = isStrNullOrEmpty('');
+        chai.assert.isTrue(isEmptyString);
+    });
+
+    it('Should consider it as default artifact', function (){
+        chai.assert.isTrue(isDefaultArtifact(JSON.stringify(DEFAULTARTIFACTSQL)));
+    });
+
+    it('Should consider it as default artifact', function (){
+        chai.assert.isTrue(isDefaultArtifact(JSON.stringify(DEFAULTARTIFACTSTORAGE)));
+    });
+
+    it('Should not consider it as default artifact', function (){
+        chai.assert.isFalse(isDefaultArtifact(JSON.stringify(DEFAULTARTIFACTFAIl1)));
+    });
+
+    it('Should not consider it as default artifact', function (){
+        chai.assert.isFalse(isDefaultArtifact(JSON.stringify(DEFAULTARTIFACTFAIl2)));
+    });
+
+    it('Should not consider it as default artifact', function (){
+        chai.assert.isFalse(isDefaultArtifact(JSON.stringify(DEFAULTARTIFACTFAIl3)));
+    });
+});
