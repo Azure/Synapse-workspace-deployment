@@ -10,7 +10,6 @@
     "test": "echo \"No tests yet...\""
   },
   "dependencies": {
-    "durable-functions": "^1.4.6",
     "@actions/core": "^1.2.6",
     "@actions/github": "^4.0.0",
     "@types/chai": "^4.2.14",
@@ -26,7 +25,9 @@
     "azure-pipelines-task-lib": "2.8.0",
     "azure-pipelines-tasks-azure-arm-rest-v2": "1.0.3",
     "chai-as-promised": "^7.1.1",
+    "durable-functions": "^1.4.6",
     "mockery": "^2.1.0",
+    "ncc": "^0.3.6",
     "node-stream-zip": "^1.11.3",
     "nyc": "^15.1.0",
     "sync-request": "^6.1.0",
