@@ -8932,13 +8932,13 @@ var PackageFile = /** @class */ (function () {
     };
     PackageFile.prototype.getPackageFileContent = function (filePath, returnBlank) {
         if (returnBlank === void 0) { returnBlank = false; }
+        if (!this.fs.existsSync(filePath)) {
+            if (returnBlank) {
+                return "";
+            }
+        }
         var fileContent = "";
         if (!this.fs.lstatSync(filePath).isDirectory()) {
-            if (!this.fs.existsSync(filePath)) {
-                if (returnBlank) {
-                    return "";
-                }
-            }
             try {
                 fileContent = this.fs.readFileSync(filePath, 'utf8');
             }
