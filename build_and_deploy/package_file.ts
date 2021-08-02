@@ -29,7 +29,7 @@ export class PackageFile {
     public getPackageFiles() :PackageFilesContent {
         let parametersFileContent = this.getPackageFileContent(this.packageFiles.parametersFile);
         let templateFileContent = this.getPackageFileContent(this.packageFiles.templateFile);
-        let armOverridesContent = this.getPackageFileContent(this.packageFiles.armOverrides);
+        let armOverridesContent = this.getPackageFileContent(this.packageFiles.armOverrides, true);
         return {
             templateFileContent: templateFileContent,
             parametersFileContent: parametersFileContent,
@@ -37,7 +37,12 @@ export class PackageFile {
         };
     }
 
-    private getPackageFileContent(filePath: string) {
+    private getPackageFileContent(filePath: string, returnBlank: boolean = false) {
+        if(!this.fs.existsSync(filePath)){
+            if(returnBlank){
+                return "";
+            }
+        }
         let fileContent = "";
         if (!this.fs.lstatSync(filePath).isDirectory()) {
             try {

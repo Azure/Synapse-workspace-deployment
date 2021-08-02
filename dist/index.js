@@ -8923,14 +8923,20 @@ var PackageFile = /** @class */ (function () {
     PackageFile.prototype.getPackageFiles = function () {
         var parametersFileContent = this.getPackageFileContent(this.packageFiles.parametersFile);
         var templateFileContent = this.getPackageFileContent(this.packageFiles.templateFile);
-        var armOverridesContent = this.getPackageFileContent(this.packageFiles.armOverrides);
+        var armOverridesContent = this.getPackageFileContent(this.packageFiles.armOverrides, true);
         return {
             templateFileContent: templateFileContent,
             parametersFileContent: parametersFileContent,
             armOverridesContent: armOverridesContent
         };
     };
-    PackageFile.prototype.getPackageFileContent = function (filePath) {
+    PackageFile.prototype.getPackageFileContent = function (filePath, returnBlank) {
+        if (returnBlank === void 0) { returnBlank = false; }
+        if (!this.fs.existsSync(filePath)) {
+            if (returnBlank) {
+                return "";
+            }
+        }
         var fileContent = "";
         if (!this.fs.lstatSync(filePath).isDirectory()) {
             try {
