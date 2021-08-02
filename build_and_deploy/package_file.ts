@@ -38,15 +38,13 @@ export class PackageFile {
     }
 
     private getPackageFileContent(filePath: string, returnBlank: boolean = false) {
+        if(!this.fs.existsSync(filePath)){
+            if(returnBlank){
+                return "";
+            }
+        }
         let fileContent = "";
         if (!this.fs.lstatSync(filePath).isDirectory()) {
-
-            if(!this.fs.existsSync(filePath)){
-                if(returnBlank){
-                    return "";
-                }
-            }
-
             try {
                 fileContent = this.fs.readFileSync(filePath, 'utf8');
             }
