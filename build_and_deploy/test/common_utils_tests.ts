@@ -23,15 +23,15 @@ describe('CommonUtils', function () {
         chai.assert.isTrue(isEmptyString);
     });
 
-    it('Should consider it as default artifact', function (){
+    it('Should consider it as default artifact - SQL', function (){
         chai.assert.isTrue(isDefaultArtifact(JSON.stringify(DEFAULTARTIFACTSQL)));
     });
 
-    it('Should consider it as default artifact', function (){
+    it('Should consider it as default artifact - Storage', function (){
         chai.assert.isTrue(isDefaultArtifact(JSON.stringify(DEFAULTARTIFACTSTORAGE)));
     });
 
-    it('Should consider it as default artifact', function (){
+    it('Should consider it as default artifact - Credentials', function (){
         chai.assert.isTrue(isDefaultArtifact(JSON.stringify(DEFAULTARTIFACTCREDENTAILS)));
     });
 

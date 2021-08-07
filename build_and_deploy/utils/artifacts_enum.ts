@@ -36,7 +36,7 @@ export enum DataFactoryType {
 export enum DEFAULT_ARTIFACTS {
     sqlserver = "workspacedefaultsqlserver",
     storage = "workspacedefaultstorage",
-    credentials = "WorkspaceSystemIdentity"
+    credentials = "workspacesystemidentity"
 }
 
 export enum DEFAULT_ARTIFACTS_TYPE {
