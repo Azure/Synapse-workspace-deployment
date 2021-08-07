@@ -1,6 +1,7 @@
 import chai = require('chai');
 import {isDefaultArtifact, isStrNullOrEmpty} from "../utils/common_utils";
 import {
+    DEFAULTARTIFACTCREDENTAILS,
     DEFAULTARTIFACTFAIl1,
     DEFAULTARTIFACTFAIl2, DEFAULTARTIFACTFAIl3,
     DEFAULTARTIFACTSQL,
@@ -28,6 +29,10 @@ describe('CommonUtils', function () {
 
     it('Should consider it as default artifact', function (){
         chai.assert.isTrue(isDefaultArtifact(JSON.stringify(DEFAULTARTIFACTSTORAGE)));
+    });
+
+    it('Should consider it as default artifact', function (){
+        chai.assert.isTrue(isDefaultArtifact(JSON.stringify(DEFAULTARTIFACTCREDENTAILS)));
     });
 
     it('Should not consider it as default artifact', function (){

@@ -82,6 +82,17 @@ export const DEFAULTARTIFACTSTORAGE = {
     ]
 }
 
+export const DEFAULTARTIFACTCREDENTAILS = {
+    "name": "[concat(parameters('workspaceName'), '/WorkspaceSystemIdentity')]",
+    "type": "Microsoft.Synapse/workspaces/credentials",
+    "apiVersion": "2019-06-01-preview",
+    "properties": {
+        "type": "ManagedIdentity",
+        "typeProperties": {}
+    },
+    "dependsOn": []
+}
+
 export const DEFAULTARTIFACTFAIl1 = {
     "name": "[concat(parameters('workspaceName'), '/test-WorkspaceStorage')]",
     "type": "Microsoft.Synapse/workspaces/linkedServices",
@@ -141,3 +152,4 @@ export const DEFAULTARTIFACTFAIl3 = {
         "[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]"
     ]
 }
+
