@@ -1,6 +1,7 @@
 import chai = require('chai');
 import {isDefaultArtifact, isStrNullOrEmpty} from "../utils/common_utils";
 import {
+    DEFAULTARTIFACT4,
     DEFAULTARTIFACTCREDENTAILS,
     DEFAULTARTIFACTFAIl1,
     DEFAULTARTIFACTFAIl2, DEFAULTARTIFACTFAIl3,
@@ -45,5 +46,9 @@ describe('CommonUtils', function () {
 
     it('Should not consider it as default artifact', function (){
         chai.assert.isFalse(isDefaultArtifact(JSON.stringify(DEFAULTARTIFACTFAIl3)));
+    });
+
+    it('Should not consider it as default artifact', function (){
+        chai.assert.isFalse(isDefaultArtifact(JSON.stringify(DEFAULTARTIFACT4)));
     });
 });
