@@ -9610,11 +9610,13 @@ var DEFAULT_ARTIFACTS;
 (function (DEFAULT_ARTIFACTS) {
     DEFAULT_ARTIFACTS["sqlserver"] = "workspacedefaultsqlserver";
     DEFAULT_ARTIFACTS["storage"] = "workspacedefaultstorage";
+    DEFAULT_ARTIFACTS["credentials"] = "workspacesystemidentity";
 })(DEFAULT_ARTIFACTS = exports.DEFAULT_ARTIFACTS || (exports.DEFAULT_ARTIFACTS = {}));
 var DEFAULT_ARTIFACTS_TYPE;
 (function (DEFAULT_ARTIFACTS_TYPE) {
     DEFAULT_ARTIFACTS_TYPE["sqlserver"] = "AzureSqlDW";
     DEFAULT_ARTIFACTS_TYPE["storage"] = "AzureBlobFS";
+    DEFAULT_ARTIFACTS_TYPE["credentials"] = "ManagedIdentity";
 })(DEFAULT_ARTIFACTS_TYPE = exports.DEFAULT_ARTIFACTS_TYPE || (exports.DEFAULT_ARTIFACTS_TYPE = {}));
 //# sourceMappingURL=artifacts_enum.js.map
 
@@ -9641,7 +9643,7 @@ function isDefaultArtifact(artifact) {
     var artifactJson = JSON.parse(artifact);
     for (var key in artifacts_enum_1.DEFAULT_ARTIFACTS) {
         if (artifactJson.name.toLowerCase().indexOf(artifacts_enum_1.DEFAULT_ARTIFACTS[key]) != -1 &&
-            artifactJson.type === artifacts_enum_1.DataFactoryType.linkedservice &&
+            (artifactJson.type === artifacts_enum_1.DataFactoryType.linkedservice || artifactJson.type === artifacts_enum_1.DataFactoryType.credential) &&
             artifactJson.properties.type === artifacts_enum_1.DEFAULT_ARTIFACTS_TYPE[key])
             return true;
     }
