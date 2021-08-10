@@ -36,19 +36,19 @@ describe('CommonUtils', function () {
         chai.assert.isTrue(isDefaultArtifact(JSON.stringify(DEFAULTARTIFACTCREDENTAILS)));
     });
 
-    it('Should not consider it as default artifact', function (){
+    it('Should not consider it as default artifact - Storage', function (){
         chai.assert.isFalse(isDefaultArtifact(JSON.stringify(DEFAULTARTIFACTFAIl1)));
     });
 
-    it('Should not consider it as default artifact', function (){
+    it('Should not consider it as default artifact - Storage', function (){
         chai.assert.isFalse(isDefaultArtifact(JSON.stringify(DEFAULTARTIFACTFAIl2)));
     });
 
-    it('Should not consider it as default artifact', function (){
+    it('Should not consider it as default artifact - SQL', function (){
         chai.assert.isFalse(isDefaultArtifact(JSON.stringify(DEFAULTARTIFACTFAIl3)));
     });
 
-    it('Should not consider it as default artifact', function (){
+    it('Should not consider it as default artifact - Credentials', function (){
         chai.assert.isFalse(isDefaultArtifact(JSON.stringify(DEFAULTARTIFACT4)));
     });
 });
