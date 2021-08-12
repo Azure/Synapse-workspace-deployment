@@ -1,0 +1,38 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "paths": [
+        {
+            "parameterReference": "deploymentZippedFunction"
+        }
+    ],
+    "parameters": {
+      "serviceName": {
+        "value": "SynapseExtensions-__ENV.NAME__-__REGION.SHORT.UPPER__-Ts"
+      },
+      "storageName": {
+        "value": "synapseextensions__ENV.NAME.LOWER____REGION.SHORT.LOWER__"
+      },
+      "hostingPlanName": {
+        "value": "ASP-SynapseExtensions-Dev-WUS2-Ts-a0cd"
+      },
+      "deploymentZippedFunction": {
+        "value": "bin\\SynapseExtensions.zip"
+      },
+      "azureCloudInstance": {
+        "value": "__CLOUD.INSTANCE__"
+      },
+      "synapseJwtAudience": {
+        "value": "__SYNAPSE.JWT.AUD__"
+      },
+      "armJwtAudience": {
+        "value": "__ARM.JWT.AUD__"
+      },
+      "environment": {
+        "value": "__ENV.NAME.LOWER__"
+      },
+      "certificateSubjectName": {
+        "value": "__CERT.SUBJECTNAME__"
+      }
+    }
+}

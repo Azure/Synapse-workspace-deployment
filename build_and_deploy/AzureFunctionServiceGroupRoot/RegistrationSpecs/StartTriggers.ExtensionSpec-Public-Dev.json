@@ -1,0 +1,23 @@
+{
+    "$schema": "https://ev2schema.azure.net/schemas/2020-01-01/extensionSpecification.json",
+    "ContentVersion": "1.0.0.0",
+    "Extension": {
+        "Namespace": "Microsoft.Azure.ASC",
+        "Type": "StartTriggers",
+        "ServiceIdentifier": "746de784-6763-44d9-bc6c-e54b6bd62944",
+        "Description": "EV2 extension to start ADF trigger in Synapse workspace",
+        "Endpoints": [
+            "https://synapseextensions-dev-cus.azurewebsites.net/api/SynapseExtensions"
+        ],
+        "Enabled": "true",
+        "OwnerGroupObjectId": "bd95ea14-5481-4f15-b464-715982d42280", // Object id of the security group which is permitted to manage the extension (TM-ASC-TEAM-e549)
+        "IncidentEscalationAlias": "romeengdeploy@microsoft.com", // Support email address
+        "AsyncPollInterval": "PT1M", // Time interval to query the Extension result in ISO 8601 format
+        "authentications": [
+            {
+                "type": "SystemCertificateAuthentication"
+            }
+        ],
+        "SystemVersion": "2016-11-01" // Ev2's extension version supporting only start, query, cancel operations
+    }
+}

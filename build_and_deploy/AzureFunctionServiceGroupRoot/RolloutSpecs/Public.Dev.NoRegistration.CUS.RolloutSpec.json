@@ -1,0 +1,23 @@
+﻿{
+    "$schema": "http://schema.express.azure.com/schemas/2015-01-01-alpha/RolloutSpec.json",
+    "ContentVersion": "1.0.0.0",
+    "RolloutMetadata": {
+        "ServiceModelPath": "ServiceModels\\Public.Dev.CUS.ServiceModel.json",
+        "ScopeBindingsPath": "ScopeBindings\\Public.ScopeBindings.json",
+        "Name": "SynapseExtensions-Dev-CUS",
+        "RolloutType": "Major",
+        "BuildSource": {
+            "Parameters": {
+                "VersionFile": "buildver.txt"
+            }
+        }
+    },
+    "orchestratedSteps": [
+        {
+            "name": "AzureFunctionDeployment",
+            "targetType": "ServiceResource",
+            "targetName": "SynapseExtensionsFunction",
+            "actions": [ "Deploy" ]
+        }
+    ]
+}

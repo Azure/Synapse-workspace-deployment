@@ -1,0 +1,59 @@
+{
+    "$schema": "https://ev2schema.azure.net/schemas/2020-01-01/scopeBindings.json",
+    "contentVersion": "1.0.0.0",
+  "scopeBindings": [
+    {
+      "scopeTagName": "Tenant.Microsoft",
+      "bindings": [
+        {
+          "find": "__TENANT.ID__",
+          "replaceWith": "72f988bf-86f1-41af-91ab-2d7cd011db47"
+        }
+      ]
+    },
+    {
+      "scopeTagName": "Tenant.AME",
+      "bindings": [
+        {
+          "find": "__TENANT.ID__",
+          "replaceWith": "33e01921-4d64-4f8c-a055-5bdaffd5e33d"
+        }
+      ]
+    },
+    {
+      "scopeTagName": "Environment.Dev",
+      "bindings": [
+        {
+          "find": "__DEPLOYMENT.CLIENT.SECRET.ID__",
+          "replaceWith": "https://v-samalytestkv.vault.azure.net/secrets/synapsecicdev2"
+        },
+        {
+          "find": "__DEPLOYMENT.APPLICATION.ID__",
+          "replaceWith": "9b128934-1de2-4ea4-838e-4fd19c669cf1"
+        }
+      ]
+    },
+    {
+      "scopeTagName": "EnvironmentRegion.DevWestUS2",
+      "bindings": [
+        {
+          "find": "__SYNAPSE.WORKSPACE.NAME__",
+          "replaceWith": "testcicdws550"
+        }
+      ]
+    },
+    {
+      "scopeTagName": "DynamicBindings.MyResource",
+      "bindings": [
+        {
+          "find": "__STORAGE_ACCOUNT_CONN_STRING__",
+          "replaceWith": "$(AzureBlobStorage1_connectionString)"
+        },
+        {
+          "find": "__STORAGE_ACCOUNT_CONN_STRING1__",
+          "replaceWith": "$(AzureBlobStorage1124_connectionString)"
+        }
+      ]
+    }
+  ]
+}

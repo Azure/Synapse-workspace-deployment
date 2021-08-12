@@ -1,0 +1,109 @@
+{
+    "$schema": "https://ev2schema.azure.net/schemas/2020-01-01/scopeBindings.json",
+    "contentVersion": "1.0.0.0",
+  "scopeBindings": [
+    {
+      "scopeTagName": "Region.CentralUS",
+      "bindings": [
+        {
+          "find": "__REGION.SHORT.UPPER__",
+          "replaceWith": "CUS"
+        },
+        {
+          "find": "__REGION.SHORT.LOWER__",
+          "replaceWith": "cus"
+        },
+        {
+          "find": "__LOCATION__",
+          "replaceWith": "Central US"
+        }
+      ]
+    },
+    {
+      "scopeTagName": "Region.WestUS2",
+      "bindings": [
+        {
+          "find": "__REGION.SHORT.UPPER__",
+          "replaceWith": "WUS2"
+        },
+        {
+          "find": "__REGION.SHORT.LOWER__",
+          "replaceWith": "wus2"
+        },
+        {
+          "find": "__LOCATION__",
+          "replaceWith": "West US 2"
+        }
+      ]
+    },
+    {
+      "scopeTagName": "Cloud.PublicAzure",
+      "bindings": [
+        {
+          "find": "__CLOUD.INSTANCE__",
+          "replaceWith": "AzurePublic"
+        },
+        {
+          "find": "__SYNAPSE.JWT.AUD__",
+          "replaceWith": "https://dev.azuresynapse.net/"
+        },
+        {
+          "find": "__ARM.JWT.AUD__",
+          "replaceWith": "https://management.core.windows.net/"
+        }
+      ]
+    },
+    {
+      "scopeTagName": "Tenant.Microsoft",
+      "bindings": [
+        {
+          "find": "__TENANT.ID__",
+          "replaceWith": "72f988bf-86f1-41af-91ab-2d7cd011db47"
+        }
+      ]
+    },
+    {
+      "scopeTagName": "Tenant.AME",
+      "bindings": [
+        {
+          "find": "__TENANT.ID__",
+          "replaceWith": "33e01921-4d64-4f8c-a055-5bdaffd5e33d"
+        }
+      ]
+    },
+    {
+      "scopeTagName": "Environment.Dev",
+      "bindings": [
+        {
+          "find": "__ENV.NAME__",
+          "replaceWith": "Dev"
+        },
+        {
+          "find": "__ENV.NAME.LOWER__",
+          "replaceWith": "dev"
+        },
+        {
+          "find": "__CERT.SUBJECTNAME__",
+          "replaceWith": "CN=extension.test.azureservicedeploy.msft.net"
+        }
+      ]
+    },
+    {
+      "scopeTagName": "Environment.Prod",
+      "bindings": [
+        {
+          "find": "__ENV.NAME__",
+          "replaceWith": "Prod"
+        },
+        {
+          "find": "__ENV.NAME.LOWER__",
+          "replaceWith": "prod"
+        },
+        {
+          "find": "__CERT.SUBJECTNAME__",
+          "replaceWith": "CN=extension.prod.azureservicedeploy.msft.net"
+        }
+      ]
+    }
+  ]
+}

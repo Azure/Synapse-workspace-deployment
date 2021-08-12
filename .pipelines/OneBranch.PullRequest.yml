@@ -1,0 +1,158 @@
+################################################################################
+#                               OneBranch Pipelines                             #
+# This pipeline was created by EasyStart from a sample located at:              #
+#   https://aka.ms/obpipelines/easystart/samples                                #
+# Documentation:  https://aka.ms/obpipelines                                    #
+# Yaml Schema:    https://aka.ms/obpipelines/yaml/schema                        #
+# Retail Tasks:   https://aka.ms/obpipelines/tasks                              #
+# Support:        https://aka.ms/onebranchsup                                   #
+#################################################################################
+
+trigger: none
+
+variables:
+  CDP_DEFINITION_BUILD_COUNT: $[counter('', 0)] # needed for onebranch.pipeline.version task https://aka.ms/obpipelines/versioning
+  #LinuxContainerImage: 'centos:centos7' # Docker image which is used to build the project https://aka.ms/obpipelines/containers
+  LinuxContainerImage: 'cdpxlinux.azurecr.io/user/bigdata/elite-ubuntu-1804:latest'
+  DEBIAN_FRONTEND: noninteractive
+  WorkingDirectory: '$(Build.SourcesDirectory)/build_and_deploy'
+
+resources:
+  repositories: 
+    - repository: templates
+      type: git
+      name: OneBranch.Pipelines/GovernedTemplates
+      ref: refs/heads/main
+
+extends:
+  template: v2/OneBranch.NonOfficial.CrossPlat.yml@templates # https://aka.ms/obpipelines/templates
+  parameters:
+    globalSdl: # https://aka.ms/obpipelines/sdl
+      # tsa:
+      #  enabled: true # SDL results of non-official builds aren't uploaded to TSA by default.
+      # credscan:
+      #   suppressionsFile: $(Build.SourcesDirectory)\.config\CredScanSuppressions.json
+      policheck:
+        break: true # always break the build on policheck issues. You can disable it by setting to 'false'
+      # suppression:
+      #   suppressionFile: $(Build.SourcesDirectory)\.gdn\global.gdnsuppress
+
+    stages:
+    - stage: Build_stage
+      jobs:
+      - job: linux_job
+        pool:
+          type: linux
+        variables: # More settings at https://aka.ms/obpipelines/yaml/jobs
+          ob_outputDirectory: '$(Build.SourcesDirectory)/out' # this directory is uploaded to pipeline artifacts, reddog and cloudvault. More info at https://aka.ms/obpipelines/artifacts
+
+        steps: # These steps will be run in unrestricted container's network
+          - task: onebranch.pipeline.version@1
+            displayName: 'Setup BuildNumber'
+            inputs:
+              system: 'RevisionCounter'
+              major: '1'
+              minor: '0'
+              exclude_commit: true
+          - task: NodeTool@0
+            inputs:
+              versionSpec: '15.x'
+              displayName: 'Install Node.js'
+
+          - task: Npm@1
+            displayName: 'Installing tfx-cli'
+            inputs:
+              command: 'custom'
+              customCommand: 'install -g tfx-cli'
+              workingDir: $(WorkingDirectory)
+          
+          - task: Npm@1
+            displayName: 'Installing mocha'
+            inputs:
+              command: 'custom'
+              customCommand: 'install mocha --save-dev'
+              workingDir: $(WorkingDirectory)
+
+          - task: Npm@1
+            displayName: 'Installing TypeScript Compiler'
+            inputs:
+              command: 'custom'
+              customCommand: 'install typescript --save-dev'
+              workingDir: $(WorkingDirectory)
+
+          - task: Npm@1
+            displayName: 'Npm'
+            inputs:
+              verbose: true
+              command: 'install'
+              workingDir: $(WorkingDirectory)
+
+          - task: Bash@3
+            displayName: 'Build and Test TS'
+            inputs:
+              targetType: "inline"
+              script: |
+                echo "Starting the build process"             
+                echo "----------------------"
+                $(WorkingDirectory)/node_modules/typescript/bin/tsc --build  $(WorkingDirectory)/tsconfig.json
+
+
+          #- task: Npm@1
+            #displayName: 'Npm'
+            #inputs:
+              #verbose: true
+              #customCommand: 'run build'
+              #workingDir: $(WorkingDirectory)
+          
+          #- task: Npm@1
+            #displayName: 'Npm'
+            #inputs:
+              #verbose: true
+              #customCommand: 'run test'
+              #workingDir: $(WorkingDirectory)
+
+          - task: ArchiveFiles@2
+            displayName: Zip and publish Dist folder
+            inputs:
+              rootFolderOrFile: '$(WorkingDirectory)/dist/'
+              includeRootFolder: false
+              archiveType: 'zip'
+              archiveFile: '$(WorkingDirectory)/ServiceGroupRoot/bin/SynapseExtensions.zip'
+              replaceExistingArchive: true
+              verbose: true
+
+          - task: Bash@3
+            displayName: 'Folders list'
+            inputs:
+              targetType: "inline"
+              script: |
+                ls -R -Inode_modules
+                tree 
+
+          - task: CopyFiles@2
+            displayName: 'Copy Artifacts to Output Directory: $(ob_outputDirectory)'
+            inputs:
+              Contents: |
+                $(WorkingDirectory)/**/*.js
+                $(WorkingDirectory)/**/*.js.map
+                $(WorkingDirectory)/AzureFunctionServiceGroupRoot/**/*.json
+                $(WorkingDirectory)/AzureFunctionServiceGroupRoot/*.txt
+                $(WorkingDirectory)/WorkspaceArtifactsDeployment/**/*.json
+                $(WorkingDirectory)/WorkspaceArtifactsDeployment/**/*.txt
+                $(WorkingDirectory)/AzureFunctionServiceGroupRoot/bin/SynapseExtensions.zip
+              TargetFolder: '$(ob_outputDirectory)'
+              CleanTargetFolder: true
+              OverWrite: true
+              preserveTimestamp: true
+
+          - task: PowerShell@2
+            displayName: 'Overwrite artifactignore on failure'
+            condition: always()
+            continueOnError: true
+            inputs:
+              targetType: 'inline'
+              script: |
+                $path = "$(ob_outputDirectory)"
+                New-Item -Path $path -Force -ItemType Directory
+                # create empty file in the root of output 
+                "" | Out-File -FilePath "$path\.artifactignore" -Encoding ascii

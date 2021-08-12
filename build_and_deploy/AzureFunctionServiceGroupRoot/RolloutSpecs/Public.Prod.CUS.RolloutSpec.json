@@ -1,0 +1,91 @@
+﻿{
+    "$schema": "http://schema.express.azure.com/schemas/2015-01-01-alpha/RolloutSpec.json",
+    "ContentVersion": "1.0.0.0",
+    "RolloutMetadata": {
+        "ServiceModelPath": "ServiceModels\\Public.Prod.CUS.ServiceModel.json",
+        "ScopeBindingsPath": "ScopeBindings\\Public.ScopeBindings.json",
+        "Name": "SynapseExtensions-Prod-CUS",
+        "RolloutType": "Major",
+        "BuildSource": {
+            "Parameters": {
+                "VersionFile": "buildver.txt"
+            }
+        },
+        "Notification": {
+            "EMail": {
+                "To": "RomeDetectionDeploy@microsoft.com"
+            }
+        }
+    },
+    "orchestratedSteps": [
+        {
+            "name": "AzureFunctionDeployment",
+            "targetType": "ServiceResource",
+            "targetName": "SynapseExtensionsFunction",
+            "actions": [ "Deploy" ]
+        },
+        {
+            "name": "RegisterUpdateLibraries",
+            "targetType": "ServiceResource",
+            "targetName": "RegisterExtension",
+            "actions": [ "register/RegisterUpdateLibraries" ],
+            "dependsOn": [ "AzureFunctionDeployment" ]
+        },
+        {
+            "name": "RegisterConnectStorageAccounts",
+            "targetType": "ServiceResource",
+            "targetName": "RegisterExtension",
+            "actions": [ "register/RegisterConnectStorageAccounts" ],
+            "dependsOn": [ "AzureFunctionDeployment" ]
+        },
+        {
+            "name": "RegisterDeployADF",
+            "targetType": "ServiceResource",
+            "targetName": "RegisterExtension",
+            "actions": [ "register/RegisterDeployADF" ],
+            "dependsOn": [ "AzureFunctionDeployment" ]
+        },
+        {
+            "name": "RegisterStopTriggers",
+            "targetType": "ServiceResource",
+            "targetName": "RegisterExtension",
+            "actions": [ "register/RegisterStopTriggers" ],
+            "dependsOn": [ "AzureFunctionDeployment" ]
+        },
+        {
+          "name": "RegisterStartTriggers",
+          "targetType": "ServiceResource",
+          "targetName": "RegisterExtension",
+          "actions": [ "register/RegisterStartTriggers" ],
+          "dependsOn": [ "AzureFunctionDeployment" ]
+        },
+        {
+          "name": "RegisterDeployNotebook",
+          "targetType": "ServiceResource",
+          "targetName": "RegisterExtension",
+          "actions": [ "register/RegisterDeployNotebook" ],
+          "dependsOn": [ "AzureFunctionDeployment" ]
+        },
+        {
+          "name": "RegisterDeployTemplate",
+          "targetType": "ServiceResource",
+          "targetName": "RegisterExtension",
+          "actions": [ "register/RegisterDeployTemplate" ],
+          "dependsOn": [ "AzureFunctionDeployment" ]
+        },
+        {
+          "name": "RegisterSetRoleAssignment",
+          "targetType": "ServiceResource",
+          "targetName": "RegisterExtension",
+          "actions": [ "register/RegisterSetRoleAssignment" ],
+          "dependsOn": [ "AzureFunctionDeployment" ]
+        },
+        {
+          "name": "RegisterRestartPools",
+          "targetType": "ServiceResource",
+          "targetName": "RegisterExtension",
+          "actions": [ "register/RegisterRestartPools" ],
+          "dependsOn": [ "AzureFunctionDeployment" ]
+        }
+    ]
+}

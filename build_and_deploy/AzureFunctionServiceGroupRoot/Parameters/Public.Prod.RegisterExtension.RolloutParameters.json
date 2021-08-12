@@ -1,0 +1,87 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json",
+    "contentVersion": "1.0.0.0",
+    "registrations": [
+        {
+            "name": "RegisterUpdateLibraries",
+            "specification": {
+                "reference": {
+                    "path": "RegistrationSpecs\\UpdateLibraries.ExtensionSpec-Public-Prod.json",
+                    "enableScopeTagBindings": "false"
+                }
+            }
+        },
+        {
+            "name": "RegisterConnectStorageAccounts",
+            "specification": {
+                "reference": {
+                    "path": "RegistrationSpecs\\ConnectStorageAccounts.ExtensionSpec-Public-Prod.json",
+                    "enableScopeTagBindings": "false"
+                }
+            }
+        },
+        {
+            "name": "RegisterDeployADF",
+            "specification": {
+                "reference": {
+                    "path": "RegistrationSpecs\\DeployADF.ExtensionSpec-Public-Prod.json",
+                    "enableScopeTagBindings": "false"
+                }
+            }
+        },
+        {
+            "name": "RegisterStopTriggers",
+            "specification": {
+                "reference": {
+                    "path": "RegistrationSpecs\\StopTriggers.ExtensionSpec-Public-Prod.json",
+                    "enableScopeTagBindings": "false"
+                }
+            }
+        },
+        {
+          "name": "RegisterStartTriggers",
+          "specification": {
+            "reference": {
+              "path": "RegistrationSpecs\\StartTriggers.ExtensionSpec-Public-Prod.json",
+              "enableScopeTagBindings": "false"
+            }
+          }
+        },
+        {
+          "name": "RegisterDeployNotebook",
+          "specification": {
+            "reference": {
+              "path": "RegistrationSpecs\\DeployNotebook.ExtensionSpec-Public-Prod.json",
+              "enableScopeTagBindings": "false"
+            }
+          }
+        },
+        {
+          "name": "RegisterDeployTemplate",
+          "specification": {
+            "reference": {
+              "path": "RegistrationSpecs\\DeployTemplate.ExtensionSpec-Public-Prod.json",
+              "enableScopeTagBindings": "false"
+            }
+          }
+        },
+        {
+          "name": "RegisterSetRoleAssignment",
+          "specification": {
+            "reference": {
+              "path": "RegistrationSpecs\\SetRoleAssignment.ExtensionSpec-Public-Prod.json",
+              "enableScopeTagBindings": "false"
+            }
+          }
+        },
+        {
+          "name": "RegisterRestartPools",
+          "specification": {
+            "reference": {
+              "path": "RegistrationSpecs\\RestartPools.ExtensionSpec-Public-Prod.json",
+              "enableScopeTagBindings": "false"
+            }
+          }
+        }
+    ]
+}
