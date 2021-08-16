@@ -5,6 +5,7 @@ import * as httpInterfaces from 'typed-rest-client/Interfaces';
 import { checkIfArtifactExists, checkIfNameExists, Resource } from './arm_template_utils';
 import { Artifact } from './artifacts_enum';
 import {SystemLogger} from "./logger";
+import {isDefaultArtifact} from "./common_utils";
 
 const userAgent: string = 'synapse-github-cicd-deploy-task'
 const requestOptions: httpInterfaces.IRequestOptions = {};
@@ -74,9 +75,7 @@ export async function getArtifactsFromWorkspaceOfType(artifactTypeToQuery: Artif
             dependson: getDependentsFromArtifactFromWorkspace(artifactJsonContent)
         };
 
-        if(artifactName.toLowerCase().indexOf("workspacedefaultsqlserver") >= 0 ||
-            artifactName.toLowerCase().indexOf("workspacedefaultstorage") >= 0)
-        {
+        if(isDefaultArtifact(artifactJsonContent)){
             resource.isDefault = true;
         }
 
@@ -284,24 +283,32 @@ function getResourceFromWorkspaceUrl(targetWorkspaceName: string, environment: s
 
 // Gets the list of artifacts this artifact depends on.
 export function getDependentsFromArtifactFromWorkspace(artifactContent: string): string[] {
-    let dependants = new Array<string>();
-    let startIndex = 0;
-    while (artifactContent.indexOf(`"referenceName"`, startIndex) > -1 && startIndex < artifactContent.length) {
-        startIndex = artifactContent.indexOf(`"referenceName"`, startIndex);
-        startIndex = artifactContent.indexOf(`"`, startIndex + `"referenceName"`.length + 1);
-        let endIndex = artifactContent.indexOf(`"`, startIndex + 1);
-        let depName = artifactContent.substring(startIndex + 1, endIndex);
-        startIndex = endIndex + 1;
+    let dependants = new Array<string> ();
+    crawlArtifacts(JSON.parse(artifactContent), dependants, "referenceName");
+    return dependants;
+}
 
-        startIndex = artifactContent.indexOf(`"type"`, startIndex);
-        startIndex = artifactContent.indexOf(`"`, startIndex + `"type"`.length + 1);
-        endIndex = artifactContent.indexOf(`"`, startIndex + 1);
-        let depType = artifactContent.substring(startIndex + 1, endIndex);
-        depType = depType.replace("Reference", "s");
-        startIndex = endIndex + 1;
+function crawlArtifacts(artifactContent: object, dependants: string[], key: string): boolean {
 
-        dependants.push(`${depType}/${depName}`);
+    if (!artifactContent || typeof artifactContent !== "object") {
+        return false;
     }
 
-    return dependants;
+    const keys = Object.keys(artifactContent);
+    for(let i = 0; i < keys.length; i++) {
+        if (keys[i] === key ) {
+            // @ts-ignore
+            let depType = artifactContent["type"];
+            // @ts-ignore
+            let depName = artifactContent["referenceName"];
+            dependants.push(`${depType}/${depName}`);
+        }
+
+        // @ts-ignore
+        const path = crawlArtifacts(artifactContent[keys[i]], dependants, key);
+        if (path) {
+            return true;
+        }
+    }
+    return false;
 }
