@@ -781,27 +781,14 @@ main()
 
 "use strict";
 
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
 var __importStar = (this && this.__importStar) || function (mod) {
     if (mod && mod.__esModule) return mod;
     var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
+    if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
+    result["default"] = mod;
     return result;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.issue = exports.issueCommand = void 0;
 const os = __importStar(__nccwpck_require__(2087));
 const utils_1 = __nccwpck_require__(2277);
 /**
@@ -880,25 +867,6 @@ function escapeProperty(s) {
 
 "use strict";
 
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -908,8 +876,14 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
+    result["default"] = mod;
+    return result;
+};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.getState = exports.saveState = exports.group = exports.endGroup = exports.startGroup = exports.info = exports.warning = exports.error = exports.debug = exports.isDebug = exports.setFailed = exports.setCommandEcho = exports.setOutput = exports.getBooleanInput = exports.getMultilineInput = exports.getInput = exports.addPath = exports.setSecret = exports.exportVariable = exports.ExitCode = void 0;
 const command_1 = __nccwpck_require__(4994);
 const file_command_1 = __nccwpck_require__(511);
 const utils_1 = __nccwpck_require__(2277);
@@ -976,9 +950,7 @@ function addPath(inputPath) {
 }
 exports.addPath = addPath;
 /**
- * Gets the value of an input.
- * Unless trimWhitespace is set to false in InputOptions, the value is also trimmed.
- * Returns an empty string if the value is not defined.
+ * Gets the value of an input.  The value is also trimmed.
  *
  * @param     name     name of the input to get
  * @param     options  optional. See InputOptions.
@@ -989,49 +961,9 @@ function getInput(name, options) {
     if (options && options.required && !val) {
         throw new Error(`Input required and not supplied: ${name}`);
     }
-    if (options && options.trimWhitespace === false) {
-        return val;
-    }
     return val.trim();
 }
 exports.getInput = getInput;
-/**
- * Gets the values of an multiline input.  Each value is also trimmed.
- *
- * @param     name     name of the input to get
- * @param     options  optional. See InputOptions.
- * @returns   string[]
- *
- */
-function getMultilineInput(name, options) {
-    const inputs = getInput(name, options)
-        .split('\n')
-        .filter(x => x !== '');
-    return inputs;
-}
-exports.getMultilineInput = getMultilineInput;
-/**
- * Gets the input value of the boolean type in the YAML 1.2 "core schema" specification.
- * Support boolean input list: `true | True | TRUE | false | False | FALSE` .
- * The return value is also in boolean type.
- * ref: https://yaml.org/spec/1.2/spec.html#id2804923
- *
- * @param     name     name of the input to get
- * @param     options  optional. See InputOptions.
- * @returns   boolean
- */
-function getBooleanInput(name, options) {
-    const trueValue = ['true', 'True', 'TRUE'];
-    const falseValue = ['false', 'False', 'FALSE'];
-    const val = getInput(name, options);
-    if (trueValue.includes(val))
-        return true;
-    if (falseValue.includes(val))
-        return false;
-    throw new TypeError(`Input does not meet YAML 1.2 "Core Schema" specification: ${name}\n` +
-        `Support boolean input list: \`true | True | TRUE | false | False | FALSE\``);
-}
-exports.getBooleanInput = getBooleanInput;
 /**
  * Sets the value of an output.
  *
@@ -1040,7 +972,6 @@ exports.getBooleanInput = getBooleanInput;
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function setOutput(name, value) {
-    process.stdout.write(os.EOL);
     command_1.issueCommand('set-output', { name }, value);
 }
 exports.setOutput = setOutput;
@@ -1182,27 +1113,14 @@ exports.getState = getState;
 "use strict";
 
 // For internal use, subject to change.
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
 var __importStar = (this && this.__importStar) || function (mod) {
     if (mod && mod.__esModule) return mod;
     var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
+    if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
+    result["default"] = mod;
     return result;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.issueCommand = void 0;
 // We use any as a valid input type
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const fs = __importStar(__nccwpck_require__(5747));
@@ -1233,7 +1151,6 @@ exports.issueCommand = issueCommand;
 // We use any as a valid input type
 /* eslint-disable @typescript-eslint/no-explicit-any */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.toCommandValue = void 0;
 /**
  * Sanitizes an input into a string so it can be passed into issueCommand safely
  * @param input input to sanitize into a string
@@ -9286,14 +9203,20 @@ var PackageFile = /** @class */ (function () {
     PackageFile.prototype.getPackageFiles = function () {
         var parametersFileContent = this.getPackageFileContent(this.packageFiles.parametersFile);
         var templateFileContent = this.getPackageFileContent(this.packageFiles.templateFile);
-        var armOverridesContent = this.getPackageFileContent(this.packageFiles.armOverrides);
+        var armOverridesContent = this.getPackageFileContent(this.packageFiles.armOverrides, true);
         return {
             templateFileContent: templateFileContent,
             parametersFileContent: parametersFileContent,
             armOverridesContent: armOverridesContent
         };
     };
-    PackageFile.prototype.getPackageFileContent = function (filePath) {
+    PackageFile.prototype.getPackageFileContent = function (filePath, returnBlank) {
+        if (returnBlank === void 0) { returnBlank = false; }
+        if (!this.fs.existsSync(filePath)) {
+            if (returnBlank) {
+                return "";
+            }
+        }
         var fileContent = "";
         if (!this.fs.lstatSync(filePath).isDirectory()) {
             try {
@@ -9378,13 +9301,15 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.getDependentsFromArtifact = exports.checkIfArtifactExists = exports.checkIfNameExists = exports.getArtifactsFromArmTemplate = exports.replaceStrByRegex = exports.findDefaultArtifacts = exports.replaceBackSlashCode = exports.createArmTemplate = exports.getArtifacts = void 0;
+exports.getDependentsFromArtifact = exports.checkIfArtifactExists = exports.checkIfNameExists = exports.getArtifactsFromArmTemplate = exports.replaceStrByRegex = exports.findDefaultArtifacts = exports.replaceDoubleQuoteCode = exports.replaceBackSlashCode = exports.createArmTemplate = exports.getArtifacts = void 0;
 var yaml = __importStar(__nccwpck_require__(7345));
 var uuid_1 = __nccwpck_require__(4269);
 var logger_1 = __nccwpck_require__(4931);
+var common_utils_1 = __nccwpck_require__(4270);
 // Just 2 random Guids to replace backslash in parameters file.
 var backslash = "7FD5C49AB6444AC1ACCD56B689067FBBAD85B74B0D8943CA887371839DFECF85";
 var quote = "48C16896271D483C916DE1C4EC6F24DBC945F900F9AB464B828EC8005364D322";
+var doublequote = "4467B65E39AA40998907771187C9B539847A7E801C5E4F0E9513C1D6154BC816";
 function getArtifacts(armParams, armTemplate, overrideArmParameters, targetWorkspaceName, targetLocation) {
     return __awaiter(this, void 0, void 0, function () {
         var defaultArtifacts;
@@ -9437,14 +9362,38 @@ function replaceBackSlash(inputString) {
     }
     return outputString;
 }
+function replaceDoubleQuoteCode(inputString) {
+    if (inputString == null) {
+        return "";
+    }
+    var outputString = inputString;
+    while (outputString.indexOf(doublequote) >= 0) {
+        outputString = outputString.substr(0, outputString.indexOf(doublequote))
+            + "\""
+            + outputString.substr(outputString.indexOf(doublequote) + doublequote.length);
+    }
+    return outputString;
+}
+exports.replaceDoubleQuoteCode = replaceDoubleQuoteCode;
+function replaceDoubleQuote(inputString) {
+    if (inputString == null || inputString == "") {
+        return "";
+    }
+    var outputString = inputString;
+    while (outputString.indexOf("\"") >= 0) {
+        outputString = outputString.substr(0, outputString.indexOf("\"")) +
+            doublequote +
+            outputString.substr(outputString.indexOf("\"") + 1);
+    }
+    return outputString;
+}
 function findDefaultArtifacts(armTemplate, targetworkspace) {
     var defaultArtifacts = new Map();
     var jsonArmTemplateParams = JSON.parse(armTemplate);
     for (var value in jsonArmTemplateParams.resources) {
         var artifactJson = jsonArmTemplateParams.resources[value];
         var artifactName = artifactJson.name;
-        if (artifactName.toLowerCase().indexOf("workspacedefaultsqlserver") >= 0 ||
-            artifactName.toLowerCase().indexOf("workspacedefaultstorage") >= 0) {
+        if (common_utils_1.isDefaultArtifact(JSON.stringify(artifactJson))) {
             if (artifactName.indexOf("/") > 0) {
                 //example `${targetworkspace}/sourceworkspace-WorkspaceDefaultStorage`;
                 var nametoreplace = artifactName.substr(artifactName.lastIndexOf("/") + 1);
@@ -9488,11 +9437,25 @@ function replaceParameters(armParams, armTemplate, overrideArmParameters, target
     });
     // Replace parameterValues
     armParamValues.forEach(function (value, key) {
-        armTemplate = armTemplate.split('[' + key + ']').join("" + value);
-        armTemplate = armTemplate.split(key).join("'" + value + "'");
+        if (isJsonValue(replaceDoubleQuoteCode(value))) {
+            armTemplate = armTemplate.split("\"[" + key + "]\"").join("" + replaceDoubleQuoteCode(value));
+        }
+        else {
+            armTemplate = armTemplate.split("\"[" + key + "]\"").join("\"" + replaceDoubleQuoteCode(value) + "\"");
+        }
+        armTemplate = armTemplate.split(key).join("'" + replaceDoubleQuoteCode(value) + "'");
     });
     logger_1.SystemLogger.info("Complete replacement of parameters in the template");
     return armTemplate;
+}
+function isJsonValue(testString) {
+    try {
+        JSON.parse(testString);
+        return true;
+    }
+    catch (_a) {
+        return false;
+    }
 }
 function replaceVariables(armTemplate) {
     // Build variables
@@ -9537,13 +9500,13 @@ function getParameterValuesFromArmTemplate(armParams, armTemplate, overrideArmPa
     var jsonArmParams = JSON.parse(armParams);
     var armParamValues = new Map();
     for (var value in jsonArmParams.parameters) {
-        armParamValues.set("parameters('" + value + "')", jsonArmParams.parameters[value].value.toString());
+        armParamValues.set("parameters('" + value + "')", replaceDoubleQuote(sanitize(JSON.stringify(jsonArmParams.parameters[value].value))));
     }
     // Convert arm template to json, look at the default parameters if any and add missing ones to the map we have
     var jsonArmTemplateParams = JSON.parse(armTemplate);
     var armTemplateParamValues = new Map();
     for (var value in jsonArmTemplateParams.parameters) {
-        armTemplateParamValues.set("parameters('" + value + "')", jsonArmTemplateParams.parameters[value].defaultValue);
+        armTemplateParamValues.set("parameters('" + value + "')", replaceDoubleQuote(JSON.stringify(jsonArmTemplateParams.parameters[value].defaultValue)));
     }
     armTemplateParamValues.forEach(function (value, key) {
         if (!armParamValues.has(key)) {
@@ -9703,8 +9666,7 @@ function getArtifactsFromArmTemplate(armTemplate, targetLocation, defaultArtifac
             }
         }
         logger_1.SystemLogger.info("Found Artifact of type " + artifactType);
-        if (artifactJson.name.toLowerCase().indexOf("workspacedefaultsqlserver") >= 0 ||
-            artifactJson.name.toLowerCase().indexOf("workspacedefaultstorage") >= 0) {
+        if (common_utils_1.isDefaultArtifact(JSON.stringify(artifactJson))) {
             resource.isDefault = true;
             defaultArtifacts.forEach(function (value, key) {
                 resource.name = resource.name.replace(key, value);
@@ -9728,10 +9690,10 @@ function createDependancyTree(artifacts) {
     var iteration = 0;
     for (var i = 0; i < artifacts.length; i++) {
         //Replace backslash with \
-        artifacts[i].content = replaceBackSlashCode(artifacts[i].content);
-        artifacts[i].name = replaceBackSlashCode(artifacts[i].name);
+        artifacts[i].content = replaceDoubleQuoteCode(replaceBackSlashCode(artifacts[i].content));
+        artifacts[i].name = replaceDoubleQuoteCode(replaceBackSlashCode(artifacts[i].name));
         for (var j = 0; j < artifacts[i].dependson.length; j++) {
-            artifacts[i].dependson[j] = replaceBackSlashCode(artifacts[i].dependson[j]);
+            artifacts[i].dependson[j] = replaceDoubleQuoteCode(replaceBackSlashCode(artifacts[i].dependson[j]));
         }
     }
     // This is the max times, we will go through the artifacts to look for dependancies. So this is the max level of dependancies supported.
@@ -9887,7 +9849,7 @@ exports.getDependentsFromArtifact = getDependentsFromArtifact;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.DataFactoryType = exports.Artifact = void 0;
+exports.DEFAULT_ARTIFACTS_TYPE = exports.DEFAULT_ARTIFACTS = exports.DataFactoryType = exports.Artifact = void 0;
 var Artifact;
 (function (Artifact) {
     Artifact["notebook"] = "notebook";
@@ -9924,7 +9886,50 @@ var DataFactoryType;
     DataFactoryType["managedPrivateEndpoints"] = "Microsoft.Synapse/workspaces/managedVirtualNetworks/managedPrivateEndpoints";
     DataFactoryType["kqlScript"] = "Microsoft.Synapse/workspaces/kqlscripts";
 })(DataFactoryType = exports.DataFactoryType || (exports.DataFactoryType = {}));
+var DEFAULT_ARTIFACTS;
+(function (DEFAULT_ARTIFACTS) {
+    DEFAULT_ARTIFACTS["sqlserver"] = "workspacedefaultsqlserver";
+    DEFAULT_ARTIFACTS["storage"] = "workspacedefaultstorage";
+})(DEFAULT_ARTIFACTS = exports.DEFAULT_ARTIFACTS || (exports.DEFAULT_ARTIFACTS = {}));
+var DEFAULT_ARTIFACTS_TYPE;
+(function (DEFAULT_ARTIFACTS_TYPE) {
+    DEFAULT_ARTIFACTS_TYPE["sqlserver"] = "AzureSqlDW";
+    DEFAULT_ARTIFACTS_TYPE["storage"] = "AzureBlobFS";
+})(DEFAULT_ARTIFACTS_TYPE = exports.DEFAULT_ARTIFACTS_TYPE || (exports.DEFAULT_ARTIFACTS_TYPE = {}));
 //# sourceMappingURL=artifacts_enum.js.map
+
+/***/ }),
+
+/***/ 4270:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.isDefaultArtifact = exports.isStrNullOrEmpty = void 0;
+var artifacts_enum_1 = __nccwpck_require__(6181);
+function isStrNullOrEmpty(val) {
+    if (val === undefined || val === null || val.trim() === '') {
+        return true;
+    }
+    return false;
+}
+exports.isStrNullOrEmpty = isStrNullOrEmpty;
+function isDefaultArtifact(artifact) {
+    var artifactJson = JSON.parse(artifact);
+    for (var key in artifacts_enum_1.DEFAULT_ARTIFACTS) {
+        if (artifactJson.name.toLowerCase().indexOf(artifacts_enum_1.DEFAULT_ARTIFACTS[key]) != -1 &&
+            artifactJson.type === artifacts_enum_1.DataFactoryType.linkedservice &&
+            artifactJson.properties.type === artifacts_enum_1.DEFAULT_ARTIFACTS_TYPE[key])
+            return true;
+    }
+    ;
+    return false;
+}
+exports.isDefaultArtifact = isDefaultArtifact;
+//# sourceMappingURL=common_utils.js.map
 
 /***/ }),
 
@@ -10449,6 +10454,7 @@ var httpClient = __importStar(__nccwpck_require__(8592));
 var arm_template_utils_1 = __nccwpck_require__(8138);
 var artifacts_enum_1 = __nccwpck_require__(6181);
 var logger_1 = __nccwpck_require__(4931);
+var common_utils_1 = __nccwpck_require__(4270);
 var userAgent = 'synapse-github-cicd-deploy-task';
 var requestOptions = {};
 var client = new httpClient.HttpClient(userAgent, undefined, requestOptions);
@@ -10522,8 +10528,7 @@ function getArtifactsFromWorkspaceOfType(artifactTypeToQuery, targetWorkspaceNam
                             name: artifactName,
                             dependson: getDependentsFromArtifactFromWorkspace(artifactJsonContent)
                         };
-                        if (artifactName.toLowerCase().indexOf("workspacedefaultsqlserver") >= 0 ||
-                            artifactName.toLowerCase().indexOf("workspacedefaultstorage") >= 0) {
+                        if (common_utils_1.isDefaultArtifact(artifactJsonContent)) {
                             resource.isDefault = true;
                         }
                         artifacts.push(resource);
@@ -10693,24 +10698,31 @@ function getResourceFromWorkspaceUrl(targetWorkspaceName, environment, resourceT
 // Gets the list of artifacts this artifact depends on.
 function getDependentsFromArtifactFromWorkspace(artifactContent) {
     var dependants = new Array();
-    var startIndex = 0;
-    while (artifactContent.indexOf("\"referenceName\"", startIndex) > -1 && startIndex < artifactContent.length) {
-        startIndex = artifactContent.indexOf("\"referenceName\"", startIndex);
-        startIndex = artifactContent.indexOf("\"", startIndex + "\"referenceName\"".length + 1);
-        var endIndex = artifactContent.indexOf("\"", startIndex + 1);
-        var depName = artifactContent.substring(startIndex + 1, endIndex);
-        startIndex = endIndex + 1;
-        startIndex = artifactContent.indexOf("\"type\"", startIndex);
-        startIndex = artifactContent.indexOf("\"", startIndex + "\"type\"".length + 1);
-        endIndex = artifactContent.indexOf("\"", startIndex + 1);
-        var depType = artifactContent.substring(startIndex + 1, endIndex);
-        depType = depType.replace("Reference", "s");
-        startIndex = endIndex + 1;
-        dependants.push(depType + "/" + depName);
-    }
+    crawlArtifacts(JSON.parse(artifactContent), dependants, "referenceName");
     return dependants;
 }
 exports.getDependentsFromArtifactFromWorkspace = getDependentsFromArtifactFromWorkspace;
+function crawlArtifacts(artifactContent, dependants, key) {
+    if (!artifactContent || typeof artifactContent !== "object") {
+        return false;
+    }
+    var keys = Object.keys(artifactContent);
+    for (var i = 0; i < keys.length; i++) {
+        if (keys[i] === key) {
+            // @ts-ignore
+            var depType = artifactContent["type"];
+            // @ts-ignore
+            var depName = artifactContent["referenceName"];
+            dependants.push(depType + "/" + depName);
+        }
+        // @ts-ignore
+        var path = crawlArtifacts(artifactContent[keys[i]], dependants, key);
+        if (path) {
+            return true;
+        }
+    }
+    return false;
+}
 //# sourceMappingURL=workspace_artifacts_getter.js.map
 
 /***/ }),
