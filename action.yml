@@ -42,7 +42,7 @@ inputs:
     description: 'Delete the artifacts which are in the workspace but not in the template.'
     required: false
   managedIdentity:
-    description: 'Use managed identity to generate the bearer token?'
+    description: 'Use managed identity to generate the bearer token'
     required: false
 runs:
   using: 'node12'

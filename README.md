@@ -7,46 +7,50 @@ A GitHub Action to deploy Synapse artifacts using templates. With this action yo
 
 ## Inputs
 ```yaml
+
 TargetWorkspaceName:
-    description: 'Provide the Synapse workspace name where you want to deploy the artifacts.'
-    required: true
-  TemplateFile:
-    description: 'Specify the path to the workspace artifacts template.'
-    required: true
-  ParametersFile:
-    description: 'Specify the path to the template parameter file.'
-    required: true
-  OverrideArmParameters:
-    description: 'Specify the path to deployment parameter values.'
-    default: ''
-    required: false
-  Environment:
-    description: 'Provide the type of cloud environment. Valid values are: Azure Public, Azure China, Azure US Government, Azure Germany'
-    required: true
-  resourceGroup:
-    description: 'Provide the resource group of the target Synapse workspace.'
-    required: true
-  clientId:
-    description: 'Provide client id of service principal.'
-    required: true
-  clientSecret:
-    description: 'Provide client secret of the service principal.'
-    required: true
-  subscriptionId:
-    description: 'Provide subscription id.'
-    required: true
-  tenantId:
-    description: 'Provide tenant id.'
-    required: true
-  activeDirectoryEndpointUrl:
-    description: 'Provide Active Directory Endpoint.'
-    required: true
-  resourceManagerEndpointUrl:
-    description: 'Provide Resource Manager Endpoint.'
-    required: true
-  DeleteArtifactsNotInTemplate:
-    description: 'Delete the artifacts which are in the workspace but not in the template.'
-    required: false
+  description: 'Provide the Synapse workspace name where you want to deploy the artifacts.'
+  required: true
+TemplateFile:
+  description: 'Specify the path to the workspace artifacts template.'
+  required: true
+ParametersFile:
+  description: 'Specify the path to the template parameter file.'
+  required: true
+OverrideArmParameters:
+  description: 'Specify deployment parameter values.'
+  default: ''
+  required: false
+Environment:
+  description: 'Provide the type of cloud environment. Valid values are: Azure Public, Azure China, Azure US Government, Azure Germany'
+  required: true
+resourceGroup:
+  description: 'Provide the resource group of the target Synapse workspace.'
+  required: true
+clientId:
+  description: 'Provide client id of service principal.'
+  required: false
+clientSecret:
+  description: 'Provide client secret of the service principal.'
+  required: false
+subscriptionId:
+  description: 'Provide subscription id.'
+  required: true
+tenantId:
+  description: 'Provide tenant id.'
+  required: false
+activeDirectoryEndpointUrl:
+  description: 'Provide Active Directory Endpoint.'
+  required: true
+resourceManagerEndpointUrl:
+  description: 'Provide Resource Manager Endpoint.'
+  required: true
+DeleteArtifactsNotInTemplate:
+  description: 'Delete the artifacts which are in the workspace but not in the template.'
+  required: false
+managedIdentity:
+  description: 'Use managed identity to generate the bearer token'
+  required: false
 ```
 
 ## Usage
@@ -63,6 +67,24 @@ uses: Azure/synapse-workspace-deployment
           clientSecret: ${{ secrets.CLIENTSECRET }}
           subscriptionId: ${{ secrets.SUBID }}
           tenantId: ${{ secrets.TENANTID }}
+          activeDirectoryEndpointUrl: ${{ secrets.ADE }}
+          resourceManagerEndpointUrl: ${{ secrets.RME }}
+```
+
+#### Using managed identity
+MSI is only supported with self hosted VMs on Azure. Please set the runner as [self-hosted](https://docs.github.com/en/actions/hosting-your-own-runners/adding-self-hosted-runners).
+Enabled the system assigned managed identity for your VM and add it to your Synapse studio as Synapse Admin.
+
+```yaml
+uses: Azure/synapse-workspace-deployment
+        with:
+          TargetWorkspaceName: 'targetworkspace'
+          TemplateFile: './TemplateForWorkspace.json'
+          ParametersFile: './TemplateParametersForWorkspace.json'
+          environment: 'prod'
+          resourceGroup: 'myresourcegroup'
+          subscriptionId: ${{ secrets.SUBID }}
+          managedIdentity: true
           activeDirectoryEndpointUrl: ${{ secrets.ADE }}
           resourceManagerEndpointUrl: ${{ secrets.RME }}
 ```
