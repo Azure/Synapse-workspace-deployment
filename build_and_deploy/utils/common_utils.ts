@@ -14,8 +14,8 @@ export function isDefaultArtifact(artifact: string): boolean{
     let artifactJson = JSON.parse(artifact);
     for(let key in DEFAULT_ARTIFACTS){
         if(artifactJson.name.toLowerCase().indexOf(DEFAULT_ARTIFACTS[key as keyof typeof DEFAULT_ARTIFACTS]) != -1 &&
-            artifactJson.type === DataFactoryType.linkedservice &&
-            artifactJson.properties.type === DEFAULT_ARTIFACTS_TYPE[key as keyof typeof DEFAULT_ARTIFACTS_TYPE]
+            [DataFactoryType.linkedservice.toLowerCase(), DataFactoryType.credential.toLowerCase()].indexOf(artifactJson.type.toLowerCase()) != -1 &&
+            artifactJson.properties.type.toLowerCase() === DEFAULT_ARTIFACTS_TYPE[key as keyof typeof DEFAULT_ARTIFACTS_TYPE].toLowerCase()
         )
             return true;
     };
