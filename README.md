@@ -54,7 +54,7 @@ uses: Azure/synapse-workspace-deployment
           TargetWorkspaceName: 'targetworkspace'
           TemplateFile: './TemplateForWorkspace.json'
           ParametersFile: './TemplateParametersForWorkspace.json'
-          environment: 'prod'
+          environment: 'Azure Public'
           resourceGroup: 'myresourcegroup'
           clientId: ${{ secrets.CLIENTID }}
           clientSecret: ${{ secrets.CLIENTSECRET }}
@@ -71,7 +71,7 @@ uses: Azure/synapse-workspace-deployment
           TargetWorkspaceName: 'targetworkspace'
           TemplateFile: './TemplateForWorkspace.json'
           ParametersFile: './TemplateParametersForWorkspace.json'
-          environment: 'prod'
+          environment: 'Azure Public'
           resourceGroup: 'myresourcegroup'
           subscriptionId: ${{ secrets.SUBID }}
           managedIdentity: true
