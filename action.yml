@@ -32,12 +32,6 @@ inputs:
   tenantId:
     description: 'Provide tenant id.'
     required: false
-  activeDirectoryEndpointUrl:
-    description: 'Provide Active Directory Endpoint.'
-    required: true
-  resourceManagerEndpointUrl:
-    description: 'Provide Resource Manager Endpoint.'
-    required: true
   DeleteArtifactsNotInTemplate:
     description: 'Delete the artifacts which are in the workspace but not in the template.'
     required: false

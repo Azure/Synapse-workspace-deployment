@@ -424,7 +424,6 @@ export class ArtifactClient {
                 return `https://dev.azuresynapse.azure.cn`;
             case Env.usnat.toString():
                 return `https://dev.azuresynapse.usgovcloudapi.net`;
-            case Env.blackforest.toString():
             default:
                 throw new Error('Environment validation failed');
         }
@@ -442,7 +441,6 @@ export class ArtifactClient {
                 return `https://${workspace}.dev.azuresynapse.azure.cn`;
             case Env.usnat.toString():
                 return `https://${workspace}.dev.azuresynapse.usgovcloudapi.net`;
-            case Env.blackforest.toString():
             default:
                 throw new Error('Environment validation failed');
         }
