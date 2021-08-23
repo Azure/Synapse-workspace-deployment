@@ -9735,19 +9735,20 @@ function getParams(dataplane, env) {
     if (dataplane === void 0) { dataplane = false; }
     if (env === void 0) { env = ""; }
     return __awaiter(this, void 0, void 0, function () {
-        var resourceGroup, clientId, clientSecret, subscriptionId, tenantId, managedIdentity, activeDirectoryEndpointUrl, resourceManagerEndpointUrl, bearer, params, err_1;
+        var env_1, resourceGroup, clientId, clientSecret, subscriptionId, tenantId, managedIdentity, activeDirectoryEndpointUrl, resourceManagerEndpointUrl, bearer, params, err_1;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
                     try {
+                        env_1 = core.getInput('Environment');
                         resourceGroup = core.getInput("resourceGroup");
                         clientId = core.getInput("clientId");
                         clientSecret = core.getInput("clientSecret");
                         subscriptionId = core.getInput("subscriptionId");
                         tenantId = core.getInput("tenantId");
                         managedIdentity = core.getInput("managedIdentity");
-                        activeDirectoryEndpointUrl = getAdEndpointUrl(env);
-                        resourceManagerEndpointUrl = getRmEndpointUrl(env);
+                        activeDirectoryEndpointUrl = getAdEndpointUrl(env_1);
+                        resourceManagerEndpointUrl = getRmEndpointUrl(env_1);
                     }
                     catch (err) {
                         throw new Error("Unable to parse the secret: " + err.message);

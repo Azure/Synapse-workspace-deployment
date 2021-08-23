@@ -37,6 +37,7 @@ export type ResourceType = 'credential' | 'sqlPool' | 'bigDataPool' | 'sqlscript
 export async function getParams(dataplane: boolean = false, env: string = ""): Promise<Params> {
     try {
 
+        const env: string = core.getInput('Environment');
         var resourceGroup = core.getInput("resourceGroup");
         var clientId = core.getInput("clientId");
         var clientSecret = core.getInput("clientSecret");

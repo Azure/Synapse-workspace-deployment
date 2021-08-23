@@ -19,14 +19,14 @@ describe("Test deploy utils", () => {
 
     it('should fetch params', async () => {
         let stubbedGetBearer = sinon.stub(pcu, "getBearer").callsFake(() => { return "bearer" });
-        let stubbedSPAttributes = sinon.stub(core, "getInput").callsFake((x: any) => { return x });
+        let stubbedSPAttributes = sinon.stub(core, "getInput").callsFake((x: any) => { return x === "Environment" ? "Azure Public" : x });
         let params = await getParams();
         expect(params.clientId).to.be.equal('clientId');
         expect(params.clientSecret).to.be.equal('clientSecret');
         expect(params.subscriptionId).to.be.equal('subscriptionId');
         expect(params.tenantId).to.be.equal('tenantId');
-        expect(params.activeDirectoryEndpointUrl).to.be.equal('activeDirectoryEndpointUrl');
-        expect(params.resourceManagerEndpointUrl).to.be.equal('resourceManagerEndpointUrl');
+        expect(params.activeDirectoryEndpointUrl).to.be.equal('https://login.microsoftonline.com/');
+        expect(params.resourceManagerEndpointUrl).to.be.equal('https://management.azure.com/');
         expect(params.bearer).to.be.equal('bearer');
         expect(params.resourceGroup).to.be.equal('resourceGroup');
     });
