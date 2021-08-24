@@ -628,7 +628,7 @@ var ArtifactClient = /** @class */ (function () {
             case deploy_utils_1.Env.usnat.toString():
                 return "https://dev.azuresynapse.usgovcloudapi.net";
             default:
-                throw new Error('Environment validation failed');
+                throw new Error('Environment validation failed. Valid choice are Azure Public, Azure China and Azure US Government');
         }
     };
     ArtifactClient.prototype.getBaseurl = function (workspace, environment, resourceType) {
@@ -643,7 +643,7 @@ var ArtifactClient = /** @class */ (function () {
             case deploy_utils_1.Env.usnat.toString():
                 return "https://" + workspace + ".dev.azuresynapse.usgovcloudapi.net";
             default:
-                throw new Error('Environment validation failed');
+                throw new Error('Environment validation failed. Valid choice are Azure Public, Azure China and Azure US Government');
         }
     };
     return ArtifactClient;

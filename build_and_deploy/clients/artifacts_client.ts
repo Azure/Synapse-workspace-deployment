@@ -425,7 +425,7 @@ export class ArtifactClient {
             case Env.usnat.toString():
                 return `https://dev.azuresynapse.usgovcloudapi.net`;
             default:
-                throw new Error('Environment validation failed');
+                throw new Error('Environment validation failed. Valid choice are Azure Public, Azure China and Azure US Government');
         }
     }
 
@@ -442,7 +442,7 @@ export class ArtifactClient {
             case Env.usnat.toString():
                 return `https://${workspace}.dev.azuresynapse.usgovcloudapi.net`;
             default:
-                throw new Error('Environment validation failed');
+                throw new Error('Environment validation failed. Valid choice are Azure Public, Azure China and Azure US Government');
         }
     }
 }
