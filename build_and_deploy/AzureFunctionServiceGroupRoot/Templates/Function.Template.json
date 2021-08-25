@@ -1,0 +1,156 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+      "serviceName": {
+        "type": "string"
+      },
+      "storageName": {
+        "type": "string"
+      },
+      "hostingPlanName": {
+        "type": "string"
+      },
+      "deploymentZippedFunction": {
+        "type": "securestring"
+      },
+      "azureCloudInstance": {
+        "type": "string"
+      },
+      "synapseJwtAudience": {
+        "type": "string"
+      },
+      "armJwtAudience": {
+        "type": "string"
+      },
+      "environment": {
+        "type": "string"
+      },
+      "certificateSubjectName": {
+        "type": "string"
+      }
+  },
+    "resources": [
+        {
+            "apiVersion": "2019-06-01",
+            "type": "Microsoft.Storage/storageAccounts",
+            "name": "[parameters('storageName')]",
+            "location": "[resourcegroup().location]",
+            "sku": {
+                "name": "Standard_LRS",
+                "tier": "Standard"
+            },
+            "kind": "Storage",
+            "properties": {
+                "supportsHttpsTrafficOnly": true
+            }
+        },
+        {
+            "type": "Microsoft.Web/serverfarms",
+            "apiVersion": "2015-04-01",
+            "name": "[parameters('hostingPlanName')]",
+            "location": "[resourcegroup().location]",
+            "properties": {
+                "name": "[parameters('hostingPlanName')]"
+            },
+            "sku": {
+                "Tier": "sku",
+                "Name": "Y1"
+            }
+        },
+        {
+            "apiVersion": "2015-05-01",
+            "name": "[parameters('serviceName')]",
+            "type": "microsoft.insights/components",
+            "location": "[resourcegroup().location]",
+            "properties": {
+                "ApplicationId": "[parameters('serviceName')]",
+                "Request_Source": "IbizaWebAppExtensionCreate"
+            }
+        },
+        {
+            "type": "Microsoft.Web/sites",
+            "name": "[parameters('serviceName')]",
+            "apiVersion": "2018-11-01",
+            "properties": {
+                "name": "[parameters('serviceName')]",
+                "siteConfig": {
+                    "appSettings": [
+                      {
+                        "name": "AzureWebJobsStorage",
+                        "value": "[concat('DefaultEndpointsProtocol=https;AccountName=',parameters('storageName'),';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageName')), '2015-06-15').key1, ';EndpointSuffix=', environment().suffixes.storage)]"
+                      },
+                      {
+                        "name": "FUNCTIONS_EXTENSION_VERSION",
+                        "value": "~3"
+                      },
+                      {
+                        "name": "WEBSITE_NODE_DEFAULT_VERSION",
+                        "value": "6.5.0"
+                      },
+                      {
+                        "name": "AzureCloudInstance",
+                        "value": "[parameters('azureCloudInstance')]"
+                      },
+                      {
+                        "name": "ArmJwtAudience",
+                        "value": "[parameters('armJwtAudience')]"
+                      },
+                      {
+                        "name": "SynapseJwtAudience",
+                        "value": "[parameters('synapseJwtAudience')]"
+                      },
+                      {
+                        "name": "Environment",
+                        "value": "[parameters('environment')]"
+                      },
+                      {
+                        "name": "CertificateSubjectName",
+                        "value": "[parameters('certificateSubjectName')]"
+                      },
+                      {
+                        "name": "ArmEndpoint",
+                        "value": "[environment().resourceManager]"
+                      },
+                      {
+                        "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
+                        "value": "[reference(concat('microsoft.insights/components/', parameters('serviceName')), '2015-05-01').InstrumentationKey]"
+                      },
+                      {
+                        "name": "APPLICATIONINSIGHTS_CONNECTION_STRING",
+                        "value": "[reference(concat('microsoft.insights/components/', parameters('serviceName')), '2015-05-01').ConnectionString]"
+                      },
+                      {
+                        "name": "WEBSITE_RUN_FROM_PACKAGE",
+                        "value": "1"
+                      }
+                    ]
+                },
+                "clientAffinityEnabled": true,
+                "clientCertEnabled": true,
+                "httpsOnly": true,
+                "hostNamesDisabled": false,
+                "serverFarmId": "[concat(resourcegroup().id, '/providers/Microsoft.Web/serverfarms/', parameters('hostingPlanName'))]"
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageName'))]",
+                "[resourceId('Microsoft.Web/serverfarms', parameters('hostingPlanName'))]"
+            ],
+            "resources": [
+                {
+                    "name": "ZipDeploy",
+                    "type": "Extensions",
+                    "apiVersion": "2015-08-01",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Web/Sites', parameters('serviceName'))]"
+                    ],
+                    "properties": {
+                        "packageUri": "[parameters('deploymentZippedFunction')]"
+                    }
+                }
+            ],
+            "location": "[resourcegroup().location]",
+            "kind": "functionapp"
+        }
+    ]
+}

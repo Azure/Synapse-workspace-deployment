@@ -1,0 +1,52 @@
+{
+    "$schema": "http://schema.express.azure.com/schemas/2015-01-01-alpha/RolloutParameters.json",
+    "contentVersion": "1.0.0.0",
+    "extensions": [
+      {
+        "Name": "DeploySynapseArtifacts",
+        "Type": "Microsoft.Azure.Synapse/DeploySynapseArtifacts",
+        "Version": "2016-11-01",
+        "ConnectionProperties": {
+          "MaxExecutionTime": "PT1H",
+          "Authentication": {
+            "Type": "SystemCertificateAuthentication"
+          }
+        },
+        "Payloadproperties": {
+          "ClientKey": {
+            "reference": {
+              "parameters": {
+                "secretId": "__DEPLOYMENT.CLIENT.SECRET.ID__"
+              },
+              "provider": "AzureKeyVault"
+            }
+          },
+          "ApplicationId": {
+            "Value": "__DEPLOYMENT.APPLICATION.ID__"
+          },
+          "TenantId": {
+            "Value": "__TENANT.ID__"
+          },
+          "SynapseWorkspaceName": {
+            "Value": "__SYNAPSE.WORKSPACE.NAME__"
+          },
+          "AzureBlobStorage1_connectionString": {
+            "Value": "__STORAGE_ACCOUNT_CONN_STRING__"
+          },
+          "AzureBlobStorage1124_connectionString": {
+            "Value": "__STORAGE_ACCOUNT_CONN_STRING1__"
+          },
+          "TemplateForWorkspacePath": {
+            "reference": {
+              "path": "Synapse/Templates/TemplateForWorkspace2.json"
+            }
+          },
+          "TemplateParametersForWorkspacePath": {
+            "reference": {
+              "path": "Synapse/Templates/TemplateParametersForWorkspace2.json"
+            }
+          }
+        }
+      }
+    ]
+}

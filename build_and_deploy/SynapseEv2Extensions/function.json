@@ -1,0 +1,27 @@
+{
+  "bindings": [
+    {
+      "authLevel": "function",
+      "name": "req",
+      "type": "httpTrigger",
+      "direction": "in",
+      "route": "SynapseExtensions/Rollout/{rolloutid}/Step/{stepname}/Extension/{extensionnamespace}/{extensiontype}/{actionname}/{method=start}",
+      "methods": [
+        "post",
+        "put",
+        "get"
+      ]
+    },
+    {
+      "name": "res",
+      "type": "http",
+      "direction": "out"
+    },
+    {
+      "name": "starter",
+      "type": "orchestrationClient",
+      "direction": "in"
+    }
+  ],
+  "scriptFile": "../dist/SynapseEv2Extensions/index.js"
+}

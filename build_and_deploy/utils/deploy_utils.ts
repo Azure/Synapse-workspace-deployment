@@ -12,6 +12,7 @@ export enum DeployStatus {
 }
 
 export enum Env {
+    dev = 'Azure Test',
     prod = 'Azure Public',
     mooncake = 'Azure China',
     usnat = 'Azure US Government',
@@ -82,8 +83,47 @@ export async function getParams(dataplane: boolean = false, env: string = ""): P
     }
 }
 
+export async function getParamsForEv2(properties: object, headers: object, dataplane: boolean = false, env: string = ""): Promise<Params> {
+    try {
+
+        var resourceGroup = headers['x-ms-resource-group'];
+        var clientId = properties['applicationId']['value'];
+        var clientSecret = properties['clientKey']['value'];
+        var subscriptionId = headers['x-ms-subscription-id'];
+        var tenantId = properties['tenantId']['value'];
+        var activeDirectoryEndpointUrl = process.env["ActiveDirectoryEndpointUrl"];
+        var resourceManagerEndpointUrl = process.env["ResourceManagerEndpointUrl"];
+
+    } catch (err) {
+        throw new Error("Unable to parse the secret: " + err.message);
+    }
+
+    try {
+        if (dataplane) {
+            resourceManagerEndpointUrl = await getRMUrl(env);
+        }
+
+        let bearer = await getBearer(clientId, clientSecret, subscriptionId, tenantId, resourceManagerEndpointUrl, activeDirectoryEndpointUrl);
+        let params: Params = {
+            'clientId': clientId,
+            'clientSecret': clientSecret,
+            'subscriptionId': subscriptionId,
+            'tenantId': tenantId,
+            'activeDirectoryEndpointUrl': activeDirectoryEndpointUrl,
+            'resourceManagerEndpointUrl': resourceManagerEndpointUrl,
+            'bearer': bearer,
+            'resourceGroup': resourceGroup
+        };
+        return params;
+    } catch (err) {
+        throw new Error("Failed to fetch Bearer: " + err.message);
+    }
+}
+
 export async function getRMUrl(env: string): Promise<string> {
     switch (env) {
+        case Env.dev.toString():
+            return `https://dev.azuresynapse.net`;
         case Env.prod.toString():
             return `https://dev.azuresynapse.net`;
         case Env.mooncake.toString():

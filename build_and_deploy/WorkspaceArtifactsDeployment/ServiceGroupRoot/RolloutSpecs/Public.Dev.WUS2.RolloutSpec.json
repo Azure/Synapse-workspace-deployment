@@ -1,0 +1,23 @@
+﻿{
+  "$schema": "http://schema.express.azure.com/schemas/2015-01-01-alpha/RolloutSpec.json",
+  "ContentVersion": "1.0.0.0",
+  "RolloutMetadata": {
+    "ServiceModelPath": "ServiceModels\\Public.Dev.ServiceModel.json",
+    "ScopeBindingsPath": "ScopeBindings\\Public.ScopeBindings.json",
+    "Name": "SRTHATIP-Dev-WUS2",
+    "RolloutType": "Major",
+    "BuildSource": {
+      "Parameters": {
+        "VersionFile": "buildver.txt"
+      }
+    }
+  },
+  "orchestratedSteps": [
+    {
+      "Name": "DeploySynapseArtifacts",
+      "TargetType": "ServiceResource",
+      "TargetName": "SynapseExtension",
+      "Actions": [ "Extension/DeploySynapseArtifacts" ]
+    }
+  ]
+}

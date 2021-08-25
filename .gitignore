@@ -1,4 +1,6 @@
 build_and_deploy/node_modules
 .idea
+.vscode
 build_and_deploy/**/*.js
 build_and_deploy/**/*.js.map
+node_modules/**/*.ts

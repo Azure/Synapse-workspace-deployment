@@ -7,7 +7,7 @@ import * as httpClient from 'typed-rest-client/HttpClient';
 import * as httpInterfaces from 'typed-rest-client/Interfaces';
 import { Resource } from '../utils/arm_template_utils';
 import { Artifact, DataFactoryType } from "../utils/artifacts_enum";
-import { DeployStatus, Env, getParams, Params } from '../utils/deploy_utils';
+import { DeployStatus, Env, getParams, getParamsForEv2, Params } from '../utils/deploy_utils';
 import { SystemLogger } from '../utils/logger';
 
 
@@ -37,14 +37,18 @@ export interface DeploymentTrackingRequest {
 
 export class ArtifactClient {
     private params: Params;
+    private properties: object;
+    private headers: object;
     private client: httpClient.HttpClient;
     private requestOptions: httpInterfaces.IRequestOptions = {};
     private apiVersion = 'api-version=2019-06-01-preview';
     private nameTag = 'name';
     private deploymentTrackingRequests: Array<DeploymentTrackingRequest>;
 
-    constructor(params: Params) {
+    constructor(params: Params, properties: object = null, headers: object = null,) {
         this.params = params;
+        this.properties = properties;
+        this.headers = headers;
         this.requestOptions.ignoreSslError = true;
         this.client = new httpClient.HttpClient(
             'synapse-git-cicd-deploy-task',
@@ -60,9 +64,17 @@ export class ArtifactClient {
 
     public async deployArtifact(resourceType: string, payload: Resource, workspace: string, environment: string): Promise<string> {
         const baseUrl: string = this.getBaseurl(workspace, environment, resourceType);
-        let param: Params = await getParams(true, environment);
+        let param: Params = null;
+        if(this.properties == null && this.headers == null)
+        {
+            param = await getParams(true, environment);
+        }
+        else
+        {
+            param = await getParamsForEv2(this.properties, this.headers, true, environment);
+        }
         let token = param.bearer;
-        let base_url = param.activeDirectoryEndpointUrl;
+        let base_url = param.resourceManagerEndpointUrl;
         base_url = base_url.substr(0, base_url.length - 2);
 
         switch (resourceType) {
@@ -95,7 +107,16 @@ export class ArtifactClient {
 
     public async deleteArtifact(resourceType: string, payload: Resource, workspace: string, environment: string): Promise<string> {
         const baseUrl: string = this.getBaseurl(workspace, environment, resourceType);
-        let param: Params = await getParams(true, environment);
+        let param: Params = null;
+        if(this.properties == null && this.headers == null)
+        {
+            param = await getParams(true, environment);
+        }
+        else
+        {
+            param = await getParamsForEv2(this.properties, this.headers, true, environment);
+        }
+
         let token = param.bearer;
         return await this.artifactDeletionTask(baseUrl, resourceType, payload, token);
     }
@@ -129,10 +150,21 @@ export class ArtifactClient {
     }
 
     private getCommonPath(baseUrl: string, artifactype: string): string {
+        let targetWorkspace: string = "";
         let url;
-        if (artifactype === `${Artifact.integrationruntime}s`) {
+        if (artifactype === `${Artifact.integrationruntime}s`) 
+        {
+            if(this.properties == null)
+            {
+                targetWorkspace = core.getInput('TargetWorkspaceName');
+            }
+            else
+            {
+                targetWorkspace = this.properties["synapseWorkspaceName"]['value'];
+            }
+
             url = `${baseUrl}/subscriptions/${this.params.subscriptionId}/resourceGroups/${this.params.resourceGroup}`;
-            url = url + `/providers/Microsoft.Synapse/workspaces/${core.getInput('TargetWorkspaceName')}`;
+            url = url + `/providers/Microsoft.Synapse/workspaces/${targetWorkspace}`;
         } else {
             url = `${baseUrl}`;
         }
@@ -152,7 +184,16 @@ export class ArtifactClient {
     private async deployIntegrationruntime(baseUrl: string, payload: Resource, token: string): Promise<string> {
         try {
             // Use token with audience `management.azure.com`
-            let params: Params = await getParams();
+            let params: Params = null;
+            if(this.properties == null && this.headers == null)
+            {
+                params = await getParams();
+            }
+            else
+            {
+                params = await getParamsForEv2(this.properties, this.headers);
+            }
+
             token = params.bearer;
             let base_url = params.resourceManagerEndpointUrl;
             base_url = base_url.substr(0, base_url.length - 1);
@@ -418,6 +459,8 @@ export class ArtifactClient {
 
     private getAudienceUrl(env: string): string {
         switch (env) {
+            case Env.dev.toString():
+                return `https://dev.azuresynapse.net`;
             case Env.prod.toString():
                 return `https://dev.azuresynapse.net`;
             case Env.mooncake.toString():
@@ -435,6 +478,8 @@ export class ArtifactClient {
 
     public static getUrlByEnvironment(workspace: string, environment: string): string {
         switch (environment) {
+            case Env.dev.toString():
+                return `https://${workspace}.dev.azuresynapse-dogfood.net`;
             case Env.prod.toString():
                 return `https://${workspace}.dev.azuresynapse.net`;
             case Env.mooncake.toString():

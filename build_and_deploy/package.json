@@ -1,16 +1,14 @@
 {
-  "name": "synapse_action",
+  "name": "build_and_deploy",
   "version": "1.0.0",
-  "description": "Github action to deploy template and parameter files to Synapse Workspace.",
-  "main": "entrypoint.js",
+  "description": "",
   "scripts": {
-    "test": "mocha",
-    "start": "node entrypoint.js",
-    "build": "tsc"
+    "build": "tsc",
+    "watch": "tsc -w",
+    "prestart": "npm run build",
+    "start": "func start",
+    "test": "echo \"No tests yet...\""
   },
-  "keywords": [],
-  "author": "Aaditya Sharma",
-  "license": "ISC",
   "dependencies": {
     "@actions/core": "^1.2.6",
     "@actions/github": "^4.0.0",
@@ -25,9 +23,11 @@
     "actions-secret-parser": "^1.0.2",
     "adm-zip": "^0.4.16",
     "azure-pipelines-task-lib": "2.8.0",
-    "azure-pipelines-tasks-azure-arm-rest-v2": "1.0.3",
+    "azure-pipelines-tasks-azure-arm-rest-v2": "^2.0.4",
     "chai-as-promised": "^7.1.1",
+    "durable-functions": "^1.4.6",
     "mockery": "^2.1.0",
+    "ncc": "^0.3.6",
     "node-stream-zip": "^1.11.3",
     "nyc": "^15.1.0",
     "sync-request": "^6.1.0",
@@ -37,6 +37,7 @@
     "uuid": "8.3.0"
   },
   "devDependencies": {
+    "@azure/functions": "^1.2.3",
     "@types/uuid": "^8.3.0",
     "chai": "^4.3.0",
     "mocha": "^8.3.0",
@@ -44,5 +45,11 @@
     "sinon": "^9.2.4",
     "ts-node": "^9.1.1",
     "typescript": "^4.1.3"
+  },
+  "resolutions": {
+    "glob-parent": "5.1.2",
+    "underscore": "1.8.3",
+    "ws": "2.3.1",
+    "static-eval": "2.1.0"
   }
 }

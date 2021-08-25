@@ -1,0 +1,83 @@
+{
+    "$schema": "https://ev2schema.azure.net/schemas/2020-01-01/serviceModel.json",
+    "ContentVersion": "1.0.0.0",
+    "serviceMetadata": {
+        "serviceGroup": "SynapseExtensions",
+        "environment": "Dev"
+    },
+    "serviceResourceGroupDefinitions": [
+        {
+            "name": "SynapseExtensionsDeployment",
+            "serviceResourceDefinitions": [
+                {
+                    "name": "SynapseExtensionsFunction",
+                    "composedOf": {
+                        "arm": {
+                            "templatePath": "Templates\\Function.Template.json",
+                            "parametersPath": "Parameters\\Function.Parameters.json"
+                        }
+                    }
+                },
+                {
+                    "name": "registerExtension",
+                    "composedOf": {
+                        "extension": {
+                            "rolloutParametersPath": "Parameters\\Public.Dev.RegisterExtension.RolloutParameters.json",
+                          "allowedTypes": [
+                            {
+                              "type": "Microsoft.Azure.Synapse/DeploySynapseArtifacts"
+                            },
+                            {
+                              "type": "Microsoft.Azure.ASC/UpdateLibraries"
+                            },
+                            {
+                              "type": "Microsoft.Azure.ASC/ConnectStorageAccounts"
+                            },
+                            {
+                              "type": "Microsoft.Azure.ASC/DeployADF"
+                            },
+                            {
+                              "type": "Microsoft.Azure.ASC/StopTriggers"
+                            },
+                            {
+                              "type": "Microsoft.Azure.ASC/StartTriggers"
+                            },
+                            {
+                              "type": "Microsoft.Azure.ASC/DeployNotebook"
+                            },
+                            {
+                              "type": "Microsoft.Azure.ASC/DeployTemplate"
+                            },
+                            {
+                              "type": "Microsoft.Azure.ASC/SetRoleAssignment"
+                            },
+                            {
+                              "type": "Microsoft.Azure.ASC/RestartPools"
+                            }
+                          ]
+                        }
+                    }
+                }
+            ]
+        }
+    ],
+    "serviceResourceGroups": [
+        {
+            "azureResourceGroupName": "SynapseExtensions-Dev-CUS",
+            "location": "Central US",
+            "instanceOf": "SynapseExtensionsDeployment",
+            "azureSubscriptionId": "4d2210e9-a151-47fe-bb51-75ccdac22b0f",
+            "ScopeTags": [{ "Name": "Region.CentralUS" }, { "Name": "Tenant.Microsoft" }, { "Name": "Environment.Dev" }, { "Name": "Cloud.PublicAzure" }],
+            "serviceResources": [
+                {
+                    "name": "SynapseExtensionsFunction",
+                    "instanceOf": "SynapseExtensionsFunction"
+                },
+                {
+                    "name": "registerExtension",
+                    "instanceOf": "registerExtension"
+                }
+            ]
+        }
+    ]
+}

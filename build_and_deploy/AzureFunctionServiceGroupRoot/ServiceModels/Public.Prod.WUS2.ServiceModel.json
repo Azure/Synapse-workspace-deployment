@@ -1,0 +1,61 @@
+{
+  "$schema": "https://ev2schema.azure.net/schemas/2020-01-01/serviceModel.json",
+  "ContentVersion": "1.0.0.0",
+  "serviceMetadata": {
+    "serviceGroup": "SynapseExtensions",
+    "environment": "Prod"
+  },
+  "serviceResourceGroupDefinitions": [
+    {
+      "name": "SynapseExtensionsDeployment",
+      "serviceResourceDefinitions": [
+        {
+          "name": "SynapseExtensionsFunction",
+          "composedOf": {
+            "arm": {
+              "templatePath": "Templates\\Function.Template.json",
+              "parametersPath": "Parameters\\Function.Parameters.json"
+            }
+          }
+        },
+        {
+          "name": "registerExtension",
+          "composedOf": {
+            "extension": {
+              "rolloutParametersPath": "Parameters\\Public.Prod.RegisterSynapseExtension.RolloutParameters.json",
+              "allowedTypes": [
+                {
+                  "type": "Microsoft.Azure.Synapse/DeploySynapseArtifacts"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "serviceResourceGroups": [
+    {
+      "azureResourceGroupName": "SynapseExtensions-Prod-WUS2",
+      "location": "West US 2",
+      "instanceOf": "SynapseExtensionsDeployment",
+      "azureSubscriptionId": "6a76b799-766a-417e-be5b-573ebe737497",
+      "ScopeTags": [
+        { "Name": "Region.WestUS2" },
+        { "Name": "Tenant.AME" },
+        { "Name": "Environment.Prod" },
+        { "Name": "Cloud.PublicAzure" }
+      ],
+      "serviceResources": [
+        {
+          "name": "SynapseExtensionsFunction",
+          "instanceOf": "SynapseExtensionsFunction"
+        },
+        {
+          "name": "registerExtension",
+          "instanceOf": "registerExtension"
+        }
+      ]
+    }
+  ]
+}

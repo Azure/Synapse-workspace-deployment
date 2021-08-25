@@ -1,0 +1,23 @@
+{
+  "$schema": "https://ev2schema.azure.net/schemas/2020-01-01/extensionSpecification.json",
+  "ContentVersion": "1.0.0.0",
+  "Extension": {
+    "Namespace": "Microsoft.Azure.Synapse",
+    "Type": "DeploySynapseArtifacts",
+    "ServiceIdentifier": "c0ee70d5-102d-438c-8858-795b92dc0f99",
+    "Description": "EV2 extension to deploy Synapse artifacts to Synapse workspace",
+    "Endpoints": [
+      "https://synapseextensions-dev-wus2.azurewebsites.net/api/SynapseExtensions"
+    ],
+    "Enabled": "true",
+    "OwnerGroupObjectId": "529f945c-949c-47af-9524-77330e2b7939", // Object id of the security group which is permitted to manage the extension (TM-SynPlatSvc-RW-8794)
+    "IncidentEscalationAlias": "srthatip@microsoft.com", // Support email address
+    "AsyncPollInterval": "PT3M", // Time interval to query the Extension result in ISO 8601 format
+    "authentications": [
+      {
+        "type": "SystemCertificateAuthentication"
+      }
+    ],
+    "SystemVersion": "2016-11-01" // Ev2's extension version supporting only start, query, cancel operations
+  }
+}

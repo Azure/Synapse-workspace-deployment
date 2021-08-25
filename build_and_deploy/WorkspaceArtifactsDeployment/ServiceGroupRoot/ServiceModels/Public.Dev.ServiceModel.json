@@ -1,0 +1,46 @@
+{
+    "$schema": "https://ev2schema.azure.net/schemas/2020-01-01/serviceModel.json",
+    "ContentVersion": "1.0.0.0",
+    "ServiceMetadata": {
+        "ServiceGroup": "SRTHATIP",
+        "Environment": "Dev"
+    },
+    "ServiceResourceGroupDefinitions": [
+      {
+        "Name": "local-ci-tests-donot-delete",
+        "ServiceResourceDefinitions": [
+          {
+            "Name": "SynapseExtension",
+            "ComposedOf": {
+              "extension": {
+                "RolloutParametersPath": "Parameters\\HttpExtensions\\Synapse.HttpExtensions.Parameters.json",
+                "allowedTypes": [
+                  { "Type": "Microsoft.Azure.Synapse/DeploySynapseArtifacts" }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "ServiceResourceGroups": [
+      {
+        "AzureResourceGroupName": "local-ci-tests-donot-delete",
+        "Location": "West US 2",
+        "InstanceOf": "local-ci-tests-donot-delete",
+        "AzureSubscriptionId": "b64d7b94-73e7-4d36-94b2-7764ea3fd74a",
+        "ScopeTags": [
+          { "Name": "Tenant.Microsoft" },
+          { "Name": "Environment.Dev" },
+          { "Name": "EnvironmentRegion.DevWestUS2" },
+          { "Name": "DynamicBindings.MyResource" }
+        ],
+        "ServiceResources": [
+          {
+            "Name": "SynapseExtension",
+            "InstanceOf": "SynapseExtension"
+          }
+        ]
+      }
+    ]
+}

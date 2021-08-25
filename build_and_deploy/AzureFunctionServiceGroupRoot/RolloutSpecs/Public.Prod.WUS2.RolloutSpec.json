@@ -1,0 +1,30 @@
+{
+  "$schema": "http://schema.express.azure.com/schemas/2015-01-01-alpha/RolloutSpec.json",
+  "ContentVersion": "1.0.0.0",
+  "RolloutMetadata": {
+    "ServiceModelPath": "ServiceModels\\Public.Prod.WUS2.ServiceModel.json",
+    "ScopeBindingsPath": "ScopeBindings\\Public.ScopeBindings.json",
+    "Name": "SynapseExtensions-Prod-WUS2",
+    "RolloutType": "Major",
+    "BuildSource": {
+      "Parameters": {
+        "VersionFile": "buildver.txt"
+      }
+    }
+  },
+  "orchestratedSteps": [
+    {
+      "name": "AzureFunctionDeployment",
+      "targetType": "ServiceResource",
+      "targetName": "SynapseExtensionsFunction",
+      "actions": [ "Deploy" ]
+    },
+    {
+      "name": "RegisterDeploySynapseArtifacts",
+      "targetType": "ServiceResource",
+      "targetName": "RegisterExtension",
+      "actions": [ "register/RegisterDeploySynapseArtifacts" ],
+      "dependsOn": [ "AzureFunctionDeployment" ]
+    }
+  ]
+}
