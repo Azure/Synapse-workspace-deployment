@@ -36,11 +36,13 @@ export enum DataFactoryType {
 export enum DEFAULT_ARTIFACTS {
     sqlserver = "workspacedefaultsqlserver",
     storage = "workspacedefaultstorage",
-    credentials = "workspacesystemidentity"
+    credentials = "workspacesystemidentity",
+    integrationruntime = "autoresolveintegrationruntime"
 }
 
 export enum DEFAULT_ARTIFACTS_TYPE {
     sqlserver = "AzureSqlDW",
     storage = "AzureBlobFS",
-    credentials = "ManagedIdentity"
+    credentials = "ManagedIdentity",
+    integrationruntime = "Managed"
 }
