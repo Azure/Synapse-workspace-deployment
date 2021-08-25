@@ -627,9 +627,8 @@ var ArtifactClient = /** @class */ (function () {
                 return "https://dev.azuresynapse.azure.cn";
             case deploy_utils_1.Env.usnat.toString():
                 return "https://dev.azuresynapse.usgovcloudapi.net";
-            case deploy_utils_1.Env.blackforest.toString():
             default:
-                throw new Error('Environment validation failed');
+                throw new Error('Environment validation failed. Valid choice are Azure Public, Azure China and Azure US Government');
         }
     };
     ArtifactClient.prototype.getBaseurl = function (workspace, environment, resourceType) {
@@ -643,9 +642,8 @@ var ArtifactClient = /** @class */ (function () {
                 return "https://" + workspace + ".dev.azuresynapse.azure.cn";
             case deploy_utils_1.Env.usnat.toString():
                 return "https://" + workspace + ".dev.azuresynapse.usgovcloudapi.net";
-            case deploy_utils_1.Env.blackforest.toString():
             default:
-                throw new Error('Environment validation failed');
+                throw new Error('Environment validation failed. Valid choice are Azure Public, Azure China and Azure US Government');
         }
     };
     return ArtifactClient;
@@ -9718,7 +9716,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.getRMUrl = exports.getParams = exports.Env = exports.DeployStatus = void 0;
+exports.getRmEndpointUrl = exports.getAdEndpointUrl = exports.getRMUrl = exports.getParams = exports.Env = exports.DeployStatus = void 0;
 var core = __importStar(__nccwpck_require__(4120));
 var service_principal_client_utils_1 = __nccwpck_require__(6927);
 var DeployStatus;
@@ -9732,25 +9730,25 @@ var Env;
     Env["prod"] = "Azure Public";
     Env["mooncake"] = "Azure China";
     Env["usnat"] = "Azure US Government";
-    Env["blackforest"] = "Azure Germany";
 })(Env = exports.Env || (exports.Env = {}));
 function getParams(dataplane, env) {
     if (dataplane === void 0) { dataplane = false; }
     if (env === void 0) { env = ""; }
     return __awaiter(this, void 0, void 0, function () {
-        var resourceGroup, clientId, clientSecret, subscriptionId, tenantId, managedIdentity, activeDirectoryEndpointUrl, resourceManagerEndpointUrl, bearer, params, err_1;
+        var env_1, resourceGroup, clientId, clientSecret, subscriptionId, tenantId, managedIdentity, activeDirectoryEndpointUrl, resourceManagerEndpointUrl, bearer, params, err_1;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
                     try {
+                        env_1 = core.getInput('Environment');
                         resourceGroup = core.getInput("resourceGroup");
                         clientId = core.getInput("clientId");
                         clientSecret = core.getInput("clientSecret");
                         subscriptionId = core.getInput("subscriptionId");
                         tenantId = core.getInput("tenantId");
                         managedIdentity = core.getInput("managedIdentity");
-                        activeDirectoryEndpointUrl = core.getInput("activeDirectoryEndpointUrl");
-                        resourceManagerEndpointUrl = core.getInput("resourceManagerEndpointUrl");
+                        activeDirectoryEndpointUrl = getAdEndpointUrl(env_1);
+                        resourceManagerEndpointUrl = getRmEndpointUrl(env_1);
                     }
                     catch (err) {
                         throw new Error("Unable to parse the secret: " + err.message);
@@ -9806,7 +9804,6 @@ function getRMUrl(env) {
                     return [2 /*return*/, "https://dev.azuresynapse.azure.cn"];
                 case Env.usnat.toString():
                     return [2 /*return*/, "https://dev.azuresynapse.usgovcloudapi.net"];
-                case Env.blackforest.toString():
                 default:
                     throw new Error('Environment validation failed');
             }
@@ -9815,6 +9812,32 @@ function getRMUrl(env) {
     });
 }
 exports.getRMUrl = getRMUrl;
+function getAdEndpointUrl(env) {
+    switch (env) {
+        case Env.prod.toString():
+            return "https://login.microsoftonline.com/";
+        case Env.mooncake.toString():
+            return "https://login.chinacloudapi.cn/";
+        case Env.usnat.toString():
+            return "https://login.microsoftonline.us/";
+        default:
+            throw new Error('Environment validation failed');
+    }
+}
+exports.getAdEndpointUrl = getAdEndpointUrl;
+function getRmEndpointUrl(env) {
+    switch (env) {
+        case Env.prod.toString():
+            return "https://management.azure.com/";
+        case Env.mooncake.toString():
+            return "https://management.chinacloudapi.cn/";
+        case Env.usnat.toString():
+            return "https://management.usgovcloudapi.net/";
+        default:
+            throw new Error('Environment validation failed');
+    }
+}
+exports.getRmEndpointUrl = getRmEndpointUrl;
 //# sourceMappingURL=deploy_utils.js.map
 
 /***/ }),
