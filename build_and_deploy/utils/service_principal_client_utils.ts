@@ -4,8 +4,8 @@
 
 import * as httpClient from 'typed-rest-client/HttpClient';
 import * as httpInterfaces from 'typed-rest-client/Interfaces';
-import { Params, DeployStatus } from './deploy_utils';
-import * as core from '@actions/core';
+import { DeployStatus, Params } from './deploy_utils';
+import { SystemLogger } from './logger';
 
 const userAgent: string = 'synapse-github-cicd-deploy-task'
 const requestOptions: httpInterfaces.IRequestOptions = {};
@@ -35,13 +35,13 @@ export async function getBearer(
             client.post(url, requestBody, headers).then(async (res) => {
                 var resStatus = res.message.statusCode;
                 if (resStatus != 200 && resStatus != 201 && resStatus != 202) {
-                    core.info(`Unable to fetch service principal token, status: ${resStatus}; status message: ${res.message.statusMessage}`);
+                    SystemLogger.info(`Unable to fetch service principal token, status: ${resStatus}; status message: ${res.message.statusMessage}`);
                     let error = await res.readBody();
-                    core.info(error);
+                    SystemLogger.info(error);
                     return reject(DeployStatus.failed);
                 }
 
-                core.info(`Able to fetch service principal token: ${resStatus}; status message: ${res.message.statusMessage}`);
+                SystemLogger.info(`Able to fetch service principal token: ${resStatus}; status message: ${res.message.statusMessage}`);
                 let body = await res.readBody();
                 return resolve(JSON.parse(body)["access_token"]);
             });
@@ -50,6 +50,42 @@ export async function getBearer(
 
     } catch (err) {
         throw new Error("Unable to fetch the service principal token: " + err.message);
+    }
+}
+
+
+export async function getManagedIdentityBearer(
+    resourceManagerEndpointUrl: string
+): Promise<string> {
+
+    try {
+
+        return new Promise<string>((resolve, reject) => {
+
+            var url = `http://169.254.169.254/metadata/identity/oauth2/token?api-version=2018-02-01&resource=${resourceManagerEndpointUrl}`;
+
+            var headers: httpInterfaces.IHeaders = {
+                'Metadata': 'true'
+            }
+
+            client.get(url, headers).then(async (res) => {
+                var resStatus = res.message.statusCode;
+                if (resStatus != 200 && resStatus != 201 && resStatus != 202) {
+                    SystemLogger.info(`Unable to fetch managed identity bearer token, status: ${resStatus}; status message: ${res.message.statusMessage}`);
+                    let error = await res.readBody();
+                    SystemLogger.info(error);
+                    return reject(DeployStatus.failed);
+                }
+
+                SystemLogger.info(`Able to fetch managed identity bearer token: ${resStatus}; status message: ${res.message.statusMessage}`);
+                let body = await res.readBody();
+                return resolve(JSON.parse(body)["access_token"]);
+            });
+
+        });
+
+    } catch (err) {
+        throw new Error("Unable to fetch the managed identity bearer token: " + err.message);
     }
 }
 
@@ -74,11 +110,11 @@ export async function getWorkspaceLocation(params: Params, targetWorkspace: stri
             client.get(url, headers).then(async (res) => {
                 let resStatus = res.message.statusCode;
                 if (resStatus != 200 && resStatus != 201 && resStatus != 202) {
-                    core.info(`Unable to fetch location of workspace, status: ${resStatus}; status message: ${res.message.statusMessage}`);
+                    SystemLogger.info(`Unable to fetch location of workspace, status: ${resStatus}; status message: ${res.message.statusMessage}`);
                     return reject(DeployStatus.failed);
                 }
 
-                core.info(`Able to fetch location of workspace: ${resStatus}; status message: ${res.message.statusMessage}`);
+                SystemLogger.info(`Able to fetch location of workspace: ${resStatus}; status message: ${res.message.statusMessage}`);
                 let body = await res.readBody();
                 return resolve(JSON.parse(body)['location']);
             })

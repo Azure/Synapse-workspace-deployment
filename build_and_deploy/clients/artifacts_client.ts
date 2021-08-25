@@ -2,12 +2,13 @@
 // Licensed under the MIT license.
 
 
-import {Params, DeployStatus, Env, getParams} from '../utils/deploy_utils';
+import * as core from '@actions/core';
 import * as httpClient from 'typed-rest-client/HttpClient';
 import * as httpInterfaces from 'typed-rest-client/Interfaces';
-import * as core from '@actions/core';
 import { Resource } from '../utils/arm_template_utils';
-import {Artifact, DataFactoryType} from "../utils/artifacts_enum";
+import { Artifact, DataFactoryType } from "../utils/artifacts_enum";
+import { DeployStatus, Env, getParams, Params } from '../utils/deploy_utils';
+import { SystemLogger } from '../utils/logger';
 
 
 export var typeMap = new Map<string, Artifact>([
@@ -24,8 +25,8 @@ export var typeMap = new Map<string, Artifact>([
     [DataFactoryType.sqlscript.toLowerCase(), Artifact.sqlscript],
     [DataFactoryType.trigger.toLowerCase(), Artifact.trigger],
     [DataFactoryType.managedVirtualNetworks.toLowerCase(), Artifact.managedvirtualnetworks],
-    [DataFactoryType.managedPrivateEndpoints.toLowerCase(), Artifact.managedprivateendpoints]
-
+    [DataFactoryType.managedPrivateEndpoints.toLowerCase(), Artifact.managedprivateendpoints],
+    [DataFactoryType.kqlScript.toLowerCase(), Artifact.kqlScript]
 ]);
 
 export interface DeploymentTrackingRequest {
@@ -53,7 +54,7 @@ export class ArtifactClient {
         this.deploymentTrackingRequests = new Array<DeploymentTrackingRequest>();
     }
 
-    public getParams(): Params{
+    public getParams(): Params {
         return this.params;
     }
 
@@ -85,18 +86,30 @@ export class ArtifactClient {
                 return this.deployIntegrationruntime(base_url, payload, token);
             case Artifact.credential:
                 return this.deployCredential(baseUrl, payload, token);
+            case Artifact.kqlScript:
+                return this.deployKqlScript(baseUrl, payload, token);
             default:
                 return DeployStatus.skipped;
         }
     }
 
+    public async deleteArtifact(resourceType: string, payload: Resource, workspace: string, environment: string): Promise<string> {
+        const baseUrl: string = this.getBaseurl(workspace, environment, resourceType);
+        let param: Params = await getParams(true, environment);
+        let token = param.bearer;
+        return await this.artifactDeletionTask(baseUrl, resourceType, payload, token);
+    }
 
-    public async WaitForAllDeployments(){
-        for(let i=0;i<this.deploymentTrackingRequests.length;i++){
+    public async WaitForAllDeployments(isDelete: boolean){
+        for(let i=0; i<this.deploymentTrackingRequests.length; i++){
             let deploymentTrackingRequest = this.deploymentTrackingRequests[i];
-            await this.checkStatus(deploymentTrackingRequest.url, deploymentTrackingRequest.name, deploymentTrackingRequest.token);
+            if(isDelete) {
+                await this.checkStatusForDelete(deploymentTrackingRequest.url, deploymentTrackingRequest.name, deploymentTrackingRequest.token);
+            }
+            else {
+                await this.checkStatus(deploymentTrackingRequest.url, deploymentTrackingRequest.name, deploymentTrackingRequest.token);
+            }
         }
-
         while(this.deploymentTrackingRequests.length>0){
             this.deploymentTrackingRequests.pop();
         }
@@ -151,6 +164,16 @@ export class ArtifactClient {
         }
     }
 
+    public async deployKqlScript(baseUrl: string, payload: Resource, token: string): Promise<string> {
+        try {
+            return await this.artifactDeploymentTask(baseUrl,
+                `${Artifact.kqlScript.toString()}s`, payload, token);
+        } catch (err) {
+            SystemLogger.info(err);
+            throw new Error("Credential deployment failed " + JSON.stringify(err));
+        }
+    }
+
     private async deployLinkedservice(baseUrl: string, payload: Resource, token: string): Promise<string> {
         try {
             return await this.artifactDeploymentTask(baseUrl,
@@ -196,7 +219,7 @@ export class ArtifactClient {
         }
     }
 
-    private async deploySqlScript(baseUrl: string, payload: Resource, token: string) :Promise<string> {
+    private async deploySqlScript(baseUrl: string, payload: Resource, token: string): Promise<string> {
         try {
             return await this.artifactDeploymentTask(baseUrl,
                 `${Artifact.sqlscript.toString()}s`, payload, token);
@@ -226,37 +249,35 @@ export class ArtifactClient {
     }
 
     private async artifactDeploymentTask(baseUrl: string, resourceType: string, payloadObj: Resource,
-                                         token: string) : Promise<string> {
+        token: string): Promise<string> {
 
         return new Promise<string>(async (resolve, reject) => {
 
             let url: string = this.buildArtifactUrl(baseUrl, resourceType, payloadObj.name);
-            core.info("Url to deploy artifact: "+ url);
-
             let payload: string = payloadObj.content;
 
             this.client.put(url, payload, this.getHeaders(token)).then((res) => {
 
                 let resStatus = res.message.statusCode;
-                core.info(`ArtifactDeploymentTask status: ${resStatus}; status message: ${res.message.statusMessage}`);
+                SystemLogger.info(`For Artifact: ${payloadObj.name}: ArtifactDeploymentTask status: ${resStatus}; status message: ${res.message.statusMessage}`);
 
                 if (resStatus != 200 && resStatus != 201 && resStatus != 202) {
                     // Remove this after testing
                     res.readBody().then((body) => {
                         if (!!body) {
                             let responseJson = JSON.parse(body);
-                            core.info("Deploy artifact failed: "+ JSON.stringify(responseJson));
+                            SystemLogger.info("Deploy artifact failed: " + JSON.stringify(responseJson));
                         }
                     });
                     return reject(DeployStatus.failed);
                 }
 
-                let location :string = res.message.headers.location!;
+                let location: string = res.message.headers.location!;
                 res.readBody().then(async (body) => {
                     let responseJson = JSON.parse(body);
                     let operationId = responseJson['operationId'];
                     if (!!operationId) {
-                        try{
+                        try {
                             if (!location) {
                                 location = this.getStatusUrl(baseUrl, resourceType, operationId);
                             }
@@ -266,8 +287,8 @@ export class ArtifactClient {
                                 token: token
                             }
                             this.deploymentTrackingRequests.push(deploymentTrackingRequest);
-                        } catch(err) {
-                            core.info('Deployment failed with error: ' + JSON.stringify(err));
+                        } catch (err) {
+                            SystemLogger.info(`For Artifact: ${payloadObj.name}: Deployment failed with error: ${JSON.stringify(err)}`);
                             return reject(DeployStatus.failed);
                         }
 
@@ -277,41 +298,73 @@ export class ArtifactClient {
                     }
                 });
             }, (reason) => {
-                core.info("Artifact Deployment failed: " + reason);
+                SystemLogger.info(`For Artifact: ${payloadObj.name}: Artifact Deployment failed: ${reason}`);
+                return reject(DeployStatus.failed);
+            });
+        });
+    }
+
+    private async artifactDeletionTask(baseUrl: string, resourceType: string, payloadObj: Resource,
+                                       token: string) : Promise<string> {
+        return new Promise<string>(async (resolve, reject) => {
+            var url: string = this.buildArtifactUrl(baseUrl, `${resourceType}s`, payloadObj.name);
+            this.client.del(url, this.getHeaders(token)).then((res) => {
+                var resStatus = res.message.statusCode;
+                SystemLogger.info(`For Artifact: ${payloadObj.name}: ArtifactDeletionTask status: ${resStatus}; status message: ${res.message.statusMessage}`);
+
+                res.readBody().then((body) => {
+                    if (!!body) {
+                        let responseJson = JSON.parse(body);
+                    }
+                });
+
+                var location :string = res.message.headers.location!;
+
+                let deploymentTrackingRequest: DeploymentTrackingRequest = {
+                    url: location,
+                    name: payloadObj.name,
+                    token: token
+                }
+                this.deploymentTrackingRequests.push(deploymentTrackingRequest);
+
+                if (resStatus != 200 && resStatus != 201 && resStatus != 202) {
+                    return reject(DeployStatus.failed);
+                }
+                return resolve(DeployStatus.success);
+            }, (reason) => {
+                SystemLogger.info("Artifact Delete failed: " + reason);
                 return reject(DeployStatus.failed);
             });
         });
     }
 
     private async checkStatus(url: string, name: string, token: string) {
-        core.info("Url to track artifact deployment status: "+ url);
         var timeout = new Date().getTime() + (60000 * 20); // 20 Minutes
         var delayMilliSecs = 30000; // 0.5 minute
 
         while (true) {
             var currentTime = new Date().getTime();
             if (timeout < currentTime) {
-                core.info('Current time: '+ currentTime);
+                SystemLogger.info('Current time: ' + currentTime);
                 throw new Error("Timeout error in checkStatus");
             }
             var nbName = '';
 
             var res = await this.client.get(url, this.getHeaders(token));
             var resStatus = res.message.statusCode;
-            core.info(`Checkstatus: ${resStatus}; status message: ${res.message.statusMessage}`);
+            SystemLogger.info(`For artifact: ${name}: Checkstatus: ${resStatus}; status message: ${res.message.statusMessage}`);
             if (resStatus != 200 && resStatus != 201 && resStatus != 202) {
                 throw new Error(`Checkstatus => status: ${resStatus}; status message: ${res.message.statusMessage}`);
             }
             var body = await res.readBody();
             if (!body) {
-                core.info("No status response for url: "+ url);
                 await this.delay(delayMilliSecs);
                 continue;
             }
             let responseJson = JSON.parse(body);
             var status = responseJson['status'];
             if (!!status && status == 'Failed') {
-                core.info("Artifact Deployment status: "+ status);
+                SystemLogger.info(`For artifact: ${name}: Artifact Deployment status: ${status}`);
                 throw new Error(`Failed to fetch the deployment status ${JSON.stringify(responseJson['error'])}`);
             } else if (!!status && status == 'InProgress') {
                 await this.delay(delayMilliSecs);
@@ -319,11 +372,34 @@ export class ArtifactClient {
             }
             nbName = responseJson['name'];
             if (nbName === name) {
-                core.info("Artifact deployed");
+                SystemLogger.info(`Artifact ${name} deployed successfully.`);
                 break;
             } else {
                 throw new Error('Artifiact deployment validation failed');
             }
+        }
+    }
+
+    private async checkStatusForDelete(url: string, name: string, token: string) {
+        var timeout = new Date().getTime() + (60000 * 20); // 20 Minutes
+        var delayMilliSecs = 30000; // 0.5 minute
+
+        while (true) {
+            var currentTime = new Date().getTime();
+            if (timeout < currentTime) {
+                SystemLogger.info(`Current time: ' ${currentTime}`);
+                throw new Error("Timeout error in checkStatus");
+            }
+            var nbName = '';
+
+            var res = await this.client.get(url, this.getHeaders(token));
+            var resStatus: number = res.message.statusCode!;
+            SystemLogger.info(`For Artifact: ${name}: Checkstatus: ${resStatus}; status message: ${res.message.statusMessage}`);
+            if (resStatus != 200 && resStatus < 203) {
+                await this.delay(delayMilliSecs);
+                continue;
+            }
+            return;
         }
     }
 
@@ -340,7 +416,7 @@ export class ArtifactClient {
         return headers;
     }
 
-    private getAudienceUrl(env : string): string {
+    private getAudienceUrl(env: string): string {
         switch (env) {
             case Env.prod.toString():
                 return `https://dev.azuresynapse.net`;
@@ -348,17 +424,16 @@ export class ArtifactClient {
                 return `https://dev.azuresynapse.azure.cn`;
             case Env.usnat.toString():
                 return `https://dev.azuresynapse.usgovcloudapi.net`;
-            case Env.blackforest.toString():
             default:
-                throw new Error('Environment validation failed');
+                throw new Error('Environment validation failed. Valid choice are Azure Public, Azure China and Azure US Government');
         }
     }
 
     private getBaseurl(workspace: string, environment: string, resourceType: string) {
-        return this.getUrlByEnvironment(workspace, environment);
+        return ArtifactClient.getUrlByEnvironment(workspace, environment);
     }
 
-    private getUrlByEnvironment(workspace: string, environment: string): string {
+    public static getUrlByEnvironment(workspace: string, environment: string): string {
         switch (environment) {
             case Env.prod.toString():
                 return `https://${workspace}.dev.azuresynapse.net`;
@@ -366,9 +441,8 @@ export class ArtifactClient {
                 return `https://${workspace}.dev.azuresynapse.azure.cn`;
             case Env.usnat.toString():
                 return `https://${workspace}.dev.azuresynapse.usgovcloudapi.net`;
-            case Env.blackforest.toString():
             default:
-                throw new Error('Environment validation failed');
+                throw new Error('Environment validation failed. Valid choice are Azure Public, Azure China and Azure US Government');
         }
     }
 }

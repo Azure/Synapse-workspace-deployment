@@ -38,12 +38,12 @@ TargetWorkspaceName:
   tenantId:
     description: 'Provide tenant id.'
     required: true
-  activeDirectoryEndpointUrl:
-    description: 'Provide Active Directory Endpoint.'
-    required: true
-  resourceManagerEndpointUrl:
-    description: 'Provide Resource Manager Endpoint.'
-    required: true
+  DeleteArtifactsNotInTemplate:
+    description: 'Delete the artifacts which are in the workspace but not in the template.'
+    required: false
+  managedIdentity:
+    description: 'Use managed identity to generate the bearer token'
+    required: false
 ```
 
 ## Usage
@@ -54,20 +54,31 @@ uses: Azure/synapse-workspace-deployment
           TargetWorkspaceName: 'targetworkspace'
           TemplateFile: './TemplateForWorkspace.json'
           ParametersFile: './TemplateParametersForWorkspace.json'
-          environment: 'prod'
+          environment: 'Azure Public'
           resourceGroup: 'myresourcegroup'
           clientId: ${{ secrets.CLIENTID }}
           clientSecret: ${{ secrets.CLIENTSECRET }}
           subscriptionId: ${{ secrets.SUBID }}
           tenantId: ${{ secrets.TENANTID }}
-          activeDirectoryEndpointUrl: ${{ secrets.ADE }}
-          resourceManagerEndpointUrl: ${{ secrets.RME }}
+```
+#### Using managed identity
+MSI is only supported with self hosted VMs on Azure. Please set the runner as [self-hosted](https://docs.github.com/en/actions/hosting-your-own-runners/adding-self-hosted-runners).
+Enabled the system assigned managed identity for your VM and add it to your Synapse studio as Synapse Admin.
+
+```yaml
+uses: Azure/synapse-workspace-deployment
+        with:
+          TargetWorkspaceName: 'targetworkspace'
+          TemplateFile: './TemplateForWorkspace.json'
+          ParametersFile: './TemplateParametersForWorkspace.json'
+          environment: 'Azure Public'
+          resourceGroup: 'myresourcegroup'
+          subscriptionId: ${{ secrets.SUBID }}
+          managedIdentity: true
 ```
 
-
 #### Secrets
-`clientId`, `clientSecret`, `subscriptionId`, `tenantId`, `activeDirectoryEndpointUrl`, `resourceManagerEndpointUrl`
-can be obtained by `Service Principal`. These are sensitive details and must be stored in GitHub secrets.
+`clientSecret` is a sensitive detail and must be stored in GitHub secrets.
 
 #### Environment
 * Azure Public - https://dev.azuresynapse.net
