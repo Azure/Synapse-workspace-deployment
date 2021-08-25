@@ -28,16 +28,16 @@ TargetWorkspaceName:
     required: true
   clientId:
     description: 'Provide client id of service principal.'
-    required: true
+    required: false
   clientSecret:
     description: 'Provide client secret of the service principal.'
-    required: true
+    required: false
   subscriptionId:
     description: 'Provide subscription id.'
     required: true
   tenantId:
     description: 'Provide tenant id.'
-    required: true
+    required: false
   DeleteArtifactsNotInTemplate:
     description: 'Delete the artifacts which are in the workspace but not in the template.'
     required: false
