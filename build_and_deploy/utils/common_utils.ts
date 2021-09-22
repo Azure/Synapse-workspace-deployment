@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import {DataFactoryType, DEFAULT_ARTIFACTS, DEFAULT_ARTIFACTS_TYPE} from "./artifacts_enum";
+import {DefaultArtifact} from "./default_artifacts";
 
 export function isStrNullOrEmpty(val: string): boolean {
     if (val === undefined || val === null || val.trim() === '') {
@@ -12,12 +12,5 @@ export function isStrNullOrEmpty(val: string): boolean {
 
 export function isDefaultArtifact(artifact: string): boolean{
     let artifactJson = JSON.parse(artifact);
-    for(let key in DEFAULT_ARTIFACTS){
-        if(artifactJson.name.toLowerCase().indexOf(DEFAULT_ARTIFACTS[key as keyof typeof DEFAULT_ARTIFACTS]) != -1 &&
-            [DataFactoryType.linkedservice.toLowerCase(), DataFactoryType.credential.toLowerCase()].indexOf(artifactJson.type.toLowerCase()) != -1 &&
-            artifactJson.properties.type.toLowerCase() === DEFAULT_ARTIFACTS_TYPE[key as keyof typeof DEFAULT_ARTIFACTS_TYPE].toLowerCase()
-        )
-            return true;
-    };
-    return false;
+    return DefaultArtifact.LIST.some((e: DefaultArtifact) => e.matches(artifactJson.name, artifactJson.properties.type, artifactJson.type));
 }

@@ -37,7 +37,7 @@ export const PIPELINEPAYLOAD = {
     ]
 }
 
-export const DEFAULTARTIFACTSQL = {
+export const DEFAULT_ARTIFACT_SQL = {
     "name": "[concat(parameters('workspaceName'), '/test-WorkspaceDefaultSqlServer')]",
     "type": "Microsoft.Synapse/workspaces/linkedServices",
     "apiVersion": "2019-06-01-preview",
@@ -62,7 +62,7 @@ export const DEFAULTARTIFACTSQL = {
     ]
 }
 
-export const DEFAULTARTIFACTSTORAGE = {
+export const DEFAULT_ARTIFACT_STORAGE = {
     "name": "[concat(parameters('workspaceName'), '/test-WorkspaceDefaultStorage')]",
     "type": "Microsoft.Synapse/workspaces/linkedServices",
     "apiVersion": "2019-06-01-preview",
@@ -82,7 +82,7 @@ export const DEFAULTARTIFACTSTORAGE = {
     ]
 }
 
-export const DEFAULTARTIFACTCREDENTAILS = {
+export const DEFAULT_ARTIFACT_CREDENTAILS = {
     "name": "[concat(parameters('workspaceName'), '/WorkspaceSystemIdentity')]",
     "type": "Microsoft.Synapse/workspaces/credentials",
     "apiVersion": "2019-06-01-preview",
@@ -93,7 +93,27 @@ export const DEFAULTARTIFACTCREDENTAILS = {
     "dependsOn": []
 }
 
-export const DEFAULTARTIFACTFAIl1 = {
+export const DEFAULT_ARTIFACT_INTEGRATION_RUNTIMES = {
+    "name": "[concat(parameters('workspaceName'), '/AutoResolveIntegrationRuntime')]",
+    "type": "Microsoft.Synapse/workspaces/integrationRuntimes",
+    "apiVersion": "2019-06-01-preview",
+    "properties": {
+        "type": "Managed",
+        "typeProperties": {
+            "computeProperties": {
+                "location": "AutoResolve",
+                "dataFlowProperties": {
+                    "computeType": "General",
+                    "coreCount": 8,
+                    "timeToLive": 0
+                }
+            }
+        }
+    },
+    "dependsOn": []
+}
+
+export const CUSTOM_ARTIFACT_STORAGE = {
     "name": "[concat(parameters('workspaceName'), '/test-WorkspaceStorage')]",
     "type": "Microsoft.Synapse/workspaces/linkedServices",
     "apiVersion": "2019-06-01-preview",
@@ -113,7 +133,7 @@ export const DEFAULTARTIFACTFAIl1 = {
     ]
 }
 
-export const DEFAULTARTIFACTFAIl2 = {
+export const MALFORED_ARTIFACT_STORAGE = {
     "name": "[concat(parameters('workspaceName'), '/test-WorkspaceDefaultStorage')]",
     "type": "Microsoft.Synapse/workspaces/linked",
     "apiVersion": "2019-06-01-preview",
@@ -133,7 +153,7 @@ export const DEFAULTARTIFACTFAIl2 = {
     ]
 }
 
-export const DEFAULTARTIFACTFAIl3 = {
+export const CUSTOM_ARTIFACT_SQL = {
     "name": "[concat(parameters('workspaceName'), '/test-WorkspaceDefaultStorage')]",
     "type": "Microsoft.Synapse/workspaces/linkedServices",
     "apiVersion": "2019-06-01-preview",
@@ -153,7 +173,7 @@ export const DEFAULTARTIFACTFAIl3 = {
     ]
 }
 
-export const DEFAULTARTIFACT4 = {
+export const CUSTOM_ARTIFACT_CREDENTIALS = {
     "name": "[concat(parameters('workspaceName'), '/Credential2')]",
     "type": "Microsoft.Synapse/workspaces/credentials",
     "apiVersion": "2019-06-01-preview",
@@ -168,5 +188,16 @@ export const DEFAULTARTIFACT4 = {
     "dependsOn": [
         "[concat(variables('workspaceId'), '/linkedServices/AzureKeyVault1')]"
     ]
+}
+
+export const CUSTOM_ARTIFACT_INTEGRATION_RUNTIMES = {
+    "name": "[concat(parameters('workspaceName'), '/IntegrationRuntime1')]",
+    "type": "Microsoft.Synapse/workspaces/integrationRuntimes",
+    "apiVersion": "2019-06-01-preview",
+    "properties": {
+        "type": "SelfHosted",
+        "typeProperties": {}
+    },
+    "dependsOn": []
 }
 

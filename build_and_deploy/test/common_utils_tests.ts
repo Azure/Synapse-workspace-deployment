@@ -1,12 +1,15 @@
 import chai = require('chai');
 import {isDefaultArtifact, isStrNullOrEmpty} from "../utils/common_utils";
 import {
-    DEFAULTARTIFACT4,
-    DEFAULTARTIFACTCREDENTAILS,
-    DEFAULTARTIFACTFAIl1,
-    DEFAULTARTIFACTFAIl2, DEFAULTARTIFACTFAIl3,
-    DEFAULTARTIFACTSQL,
-    DEFAULTARTIFACTSTORAGE
+    CUSTOM_ARTIFACT_CREDENTIALS,
+    CUSTOM_ARTIFACT_INTEGRATION_RUNTIMES,
+    CUSTOM_ARTIFACT_SQL,
+    CUSTOM_ARTIFACT_STORAGE,
+    DEFAULT_ARTIFACT_CREDENTAILS,
+    DEFAULT_ARTIFACT_INTEGRATION_RUNTIMES,
+    DEFAULT_ARTIFACT_SQL,
+    DEFAULT_ARTIFACT_STORAGE,
+    MALFORED_ARTIFACT_STORAGE,
 } from "./helpers/test_fixtures";
 
 var chaiAsPromised = require("chai-as-promised");
@@ -25,30 +28,38 @@ describe('CommonUtils', function () {
     });
 
     it('Should consider it as default artifact - SQL', function (){
-        chai.assert.isTrue(isDefaultArtifact(JSON.stringify(DEFAULTARTIFACTSQL)));
+        chai.assert.isTrue(isDefaultArtifact(JSON.stringify(DEFAULT_ARTIFACT_SQL)));
     });
 
     it('Should consider it as default artifact - Storage', function (){
-        chai.assert.isTrue(isDefaultArtifact(JSON.stringify(DEFAULTARTIFACTSTORAGE)));
+        chai.assert.isTrue(isDefaultArtifact(JSON.stringify(DEFAULT_ARTIFACT_STORAGE)));
     });
 
     it('Should consider it as default artifact - Credentials', function (){
-        chai.assert.isTrue(isDefaultArtifact(JSON.stringify(DEFAULTARTIFACTCREDENTAILS)));
+        chai.assert.isTrue(isDefaultArtifact(JSON.stringify(DEFAULT_ARTIFACT_CREDENTAILS)));
+    });
+
+    it('Should consider it as default artifact - Integration Runtimes', function (){
+        chai.assert.isTrue(isDefaultArtifact(JSON.stringify(DEFAULT_ARTIFACT_INTEGRATION_RUNTIMES)));
     });
 
     it('Should not consider it as default artifact - Storage', function (){
-        chai.assert.isFalse(isDefaultArtifact(JSON.stringify(DEFAULTARTIFACTFAIl1)));
+        chai.assert.isFalse(isDefaultArtifact(JSON.stringify(CUSTOM_ARTIFACT_STORAGE)));
     });
 
     it('Should not consider it as default artifact - Storage', function (){
-        chai.assert.isFalse(isDefaultArtifact(JSON.stringify(DEFAULTARTIFACTFAIl2)));
+        chai.assert.isFalse(isDefaultArtifact(JSON.stringify(MALFORED_ARTIFACT_STORAGE)));
     });
 
     it('Should not consider it as default artifact - SQL', function (){
-        chai.assert.isFalse(isDefaultArtifact(JSON.stringify(DEFAULTARTIFACTFAIl3)));
+        chai.assert.isFalse(isDefaultArtifact(JSON.stringify(CUSTOM_ARTIFACT_SQL)));
     });
 
     it('Should not consider it as default artifact - Credentials', function (){
-        chai.assert.isFalse(isDefaultArtifact(JSON.stringify(DEFAULTARTIFACT4)));
+        chai.assert.isFalse(isDefaultArtifact(JSON.stringify(CUSTOM_ARTIFACT_CREDENTIALS)));
+    });
+
+    it('Should not consider it as default artifact - Integration Runtimes', function (){
+        chai.assert.isFalse(isDefaultArtifact(JSON.stringify(CUSTOM_ARTIFACT_INTEGRATION_RUNTIMES)));
     });
 });
