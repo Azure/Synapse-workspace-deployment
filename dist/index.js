@@ -9657,7 +9657,7 @@ function isStrNullOrEmpty(val) {
 exports.isStrNullOrEmpty = isStrNullOrEmpty;
 function isDefaultArtifact(artifact) {
     var artifactJson = JSON.parse(artifact);
-    if (artifactJson.type.toLowerCase() == artifacts_enum_1.DataFactoryType.managedPrivateEndpoints)
+    if (artifactJson.type == artifacts_enum_1.DataFactoryType.managedPrivateEndpoints)
         return DefaultArtifact.DefaultArtifacts.some(function (e) { return e.matches(artifactJson.name, artifactJson.properties.groupId, artifactJson.type); });
     return DefaultArtifact.DefaultArtifacts.some(function (e) { return e.matches(artifactJson.name, artifactJson.properties.type, artifactJson.type); });
 }
