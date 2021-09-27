@@ -137,6 +137,8 @@ var ArtifactClient = /** @class */ (function () {
                                 return [2 /*return*/, this.deployCredential(baseUrl, payload, token)];
                             case artifacts_enum_1.Artifact.kqlScript:
                                 return [2 /*return*/, this.deployKqlScript(baseUrl, payload, token)];
+                            case artifacts_enum_1.Artifact.managedprivateendpoints:
+                                return [2 /*return*/, this.deployManagedPrivateEndpoint(baseUrl, payload, token)];
                             default:
                                 return [2 /*return*/, deploy_utils_1.DeployStatus.skipped];
                         }
@@ -404,6 +406,23 @@ var ArtifactClient = /** @class */ (function () {
                     case 2:
                         err_11 = _a.sent();
                         throw new Error("SparkJobDefination deployment status " + JSON.stringify(err_11));
+                    case 3: return [2 /*return*/];
+                }
+            });
+        });
+    };
+    ArtifactClient.prototype.deployManagedPrivateEndpoint = function (baseUrl, payload, token) {
+        return __awaiter(this, void 0, void 0, function () {
+            var err_12;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        _a.trys.push([0, 2, , 3]);
+                        return [4 /*yield*/, this.artifactDeploymentTask(baseUrl, artifacts_enum_1.Artifact.managedprivateendpoints.toString() + "s", payload, token)];
+                    case 1: return [2 /*return*/, _a.sent()];
+                    case 2:
+                        err_12 = _a.sent();
+                        throw new Error("SparkJobDefination deployment status " + JSON.stringify(err_12));
                     case 3: return [2 /*return*/];
                 }
             });
@@ -8794,8 +8813,7 @@ var Orchestrator = /** @class */ (function () {
     Orchestrator.prototype.skipDeployment = function (artifactTypeToDeploy) {
         if (artifactTypeToDeploy == artifacts_enum_1.Artifact.sqlpool ||
             artifactTypeToDeploy == artifacts_enum_1.Artifact.bigdatapools ||
-            artifactTypeToDeploy == artifacts_enum_1.Artifact.managedvirtualnetworks ||
-            artifactTypeToDeploy == artifacts_enum_1.Artifact.managedprivateendpoints) {
+            artifactTypeToDeploy == artifacts_enum_1.Artifact.managedvirtualnetworks) {
             return true;
         }
         return false;
@@ -9639,16 +9657,32 @@ function isStrNullOrEmpty(val) {
 exports.isStrNullOrEmpty = isStrNullOrEmpty;
 function isDefaultArtifact(artifact) {
     var artifactJson = JSON.parse(artifact);
-    for (var key in artifacts_enum_1.DEFAULT_ARTIFACTS) {
-        if (artifactJson.name.toLowerCase().indexOf(artifacts_enum_1.DEFAULT_ARTIFACTS[key]) != -1 &&
-            [artifacts_enum_1.DataFactoryType.linkedservice.toLowerCase(), artifacts_enum_1.DataFactoryType.credential.toLowerCase()].indexOf(artifactJson.type.toLowerCase()) != -1 &&
-            artifactJson.properties.type.toLowerCase() === artifacts_enum_1.DEFAULT_ARTIFACTS_TYPE[key].toLowerCase())
-            return true;
-    }
-    ;
-    return false;
+    if (artifactJson.type.toLowerCase() == artifacts_enum_1.DataFactoryType.managedPrivateEndpoints)
+        return DefaultArtifact.DefaultArtifacts.some(function (e) { return e.matches(artifactJson.name, artifactJson.properties.groupId, artifactJson.type); });
+    return DefaultArtifact.DefaultArtifacts.some(function (e) { return e.matches(artifactJson.name, artifactJson.properties.type, artifactJson.type); });
 }
 exports.isDefaultArtifact = isDefaultArtifact;
+var DefaultArtifact = /** @class */ (function () {
+    function DefaultArtifact(name, type, dataFactoryType) {
+        this.name = name;
+        this.type = type;
+        this.dataFactoryType = dataFactoryType;
+    }
+    DefaultArtifact.prototype.matches = function (name, type, dataFactoryType) {
+        return name.toLowerCase().indexOf(this.name) >= 0
+            && type.toLowerCase() === this.type
+            && dataFactoryType === this.dataFactoryType;
+    };
+    DefaultArtifact.DefaultArtifacts = [
+        new DefaultArtifact("workspacedefaultsqlserver", "azuresqldw", artifacts_enum_1.DataFactoryType.linkedservice),
+        new DefaultArtifact("workspacedefaultstorage", "azureblobfs", artifacts_enum_1.DataFactoryType.linkedservice),
+        new DefaultArtifact("workspacesystemidentity", "managedidentity", artifacts_enum_1.DataFactoryType.credential),
+        new DefaultArtifact("synapse-ws-sql", "sql", artifacts_enum_1.DataFactoryType.managedPrivateEndpoints),
+        new DefaultArtifact("synapse-ws-sqlOnDemand", "sqlOnDemand", artifacts_enum_1.DataFactoryType.managedPrivateEndpoints),
+        new DefaultArtifact("synapse-ws-custstgacct", "dfs", artifacts_enum_1.DataFactoryType.managedPrivateEndpoints),
+    ];
+    return DefaultArtifact;
+}());
 //# sourceMappingURL=common_utils.js.map
 
 /***/ }),
