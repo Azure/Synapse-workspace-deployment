@@ -12,7 +12,7 @@ export function isStrNullOrEmpty(val: string): boolean {
 
 export function isDefaultArtifact(artifact: string): boolean{
     let artifactJson = JSON.parse(artifact);
-    if (artifactJson.type.toLowerCase() == DataFactoryType.managedPrivateEndpoints)
+    if (artifactJson.type == DataFactoryType.managedPrivateEndpoints)
         return DefaultArtifact.DefaultArtifacts.some((e: DefaultArtifact) => e.matches(artifactJson.name, artifactJson.properties.groupId, artifactJson.type));
     return DefaultArtifact.DefaultArtifacts.some((e: DefaultArtifact) => e.matches(artifactJson.name, artifactJson.properties.type, artifactJson.type));
 
