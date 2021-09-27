@@ -88,6 +88,8 @@ export class ArtifactClient {
                 return this.deployCredential(baseUrl, payload, token);
             case Artifact.kqlScript:
                 return this.deployKqlScript(baseUrl, payload, token);
+            case Artifact.managedprivateendpoints:
+                return this.deployManagedPrivateEndpoint(baseUrl, payload, token);
             default:
                 return DeployStatus.skipped;
         }
@@ -243,6 +245,16 @@ export class ArtifactClient {
         try {
             return await this.artifactDeploymentTask(baseUrl,
                 `${Artifact.sparkjobdefinition.toString()}s`, payload, token);
+        } catch (err) {
+            throw new Error("SparkJobDefination deployment status " + JSON.stringify(err));
+        }
+    }
+
+    private async deployManagedPrivateEndpoint(baseUrl: string, payload: Resource, token: string)
+        : Promise<string> {
+        try {
+            return await this.artifactDeploymentTask(baseUrl,
+                `${Artifact.managedprivateendpoints.toString()}s`, payload, token);
         } catch (err) {
             throw new Error("SparkJobDefination deployment status " + JSON.stringify(err));
         }

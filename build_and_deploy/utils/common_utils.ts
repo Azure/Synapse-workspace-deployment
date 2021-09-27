@@ -12,12 +12,29 @@ export function isStrNullOrEmpty(val: string): boolean {
 
 export function isDefaultArtifact(artifact: string): boolean{
     let artifactJson = JSON.parse(artifact);
-    for(let key in DEFAULT_ARTIFACTS){
-        if(artifactJson.name.toLowerCase().indexOf(DEFAULT_ARTIFACTS[key as keyof typeof DEFAULT_ARTIFACTS]) != -1 &&
-            [DataFactoryType.linkedservice.toLowerCase(), DataFactoryType.credential.toLowerCase()].indexOf(artifactJson.type.toLowerCase()) != -1 &&
-            artifactJson.properties.type.toLowerCase() === DEFAULT_ARTIFACTS_TYPE[key as keyof typeof DEFAULT_ARTIFACTS_TYPE].toLowerCase()
-        )
-            return true;
-    };
-    return false;
+    if (artifactJson.type.toLowerCase() == DataFactoryType.managedPrivateEndpoints)
+        return DefaultArtifact.DefaultArtifacts.some((e: DefaultArtifact) => e.matches(artifactJson.name, artifactJson.properties.groupId, artifactJson.type));
+    return DefaultArtifact.DefaultArtifacts.some((e: DefaultArtifact) => e.matches(artifactJson.name, artifactJson.properties.type, artifactJson.type));
+
+}
+
+class DefaultArtifact {
+    public static DefaultArtifacts: DefaultArtifact[] = [
+        new DefaultArtifact("workspacedefaultsqlserver", "azuresqldw", DataFactoryType.linkedservice),
+        new DefaultArtifact("workspacedefaultstorage", "azureblobfs", DataFactoryType.linkedservice),
+        new DefaultArtifact("workspacesystemidentity", "managedidentity", DataFactoryType.credential),
+        new DefaultArtifact("synapse-ws-sql", "sql", DataFactoryType.managedPrivateEndpoints),
+        new DefaultArtifact("synapse-ws-sqlOnDemand", "sqlOnDemand", DataFactoryType.managedPrivateEndpoints),
+        new DefaultArtifact("synapse-ws-custstgacct", "dfs", DataFactoryType.managedPrivateEndpoints),
+
+    ];
+
+    private constructor(private name: string, private type: string, private dataFactoryType: DataFactoryType) {
+    }
+
+    public matches(name: string, type: string, dataFactoryType: string): boolean {
+        return name.toLowerCase().indexOf(this.name) >= 0
+            && type.toLowerCase() === this.type
+            && dataFactoryType === this.dataFactoryType;
+    }
 }

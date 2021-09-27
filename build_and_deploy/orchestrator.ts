@@ -91,8 +91,7 @@ export class Orchestrator {
     private skipDeployment(artifactTypeToDeploy: string) {
         if (artifactTypeToDeploy == Artifact.sqlpool ||
             artifactTypeToDeploy == Artifact.bigdatapools ||
-            artifactTypeToDeploy == Artifact.managedvirtualnetworks ||
-            artifactTypeToDeploy == Artifact.managedprivateendpoints) {
+            artifactTypeToDeploy == Artifact.managedvirtualnetworks) {
             return true;
         }
 
