@@ -9042,6 +9042,7 @@ var yaml = __importStar(__nccwpck_require__(2096));
 var uuid_1 = __nccwpck_require__(2884);
 var logger_1 = __nccwpck_require__(4659);
 var common_utils_1 = __nccwpck_require__(9123);
+var artifacts_enum_1 = __nccwpck_require__(5724);
 // Just 2 random Guids to replace backslash in parameters file.
 var backslash = "7FD5C49AB6444AC1ACCD56B689067FBBAD85B74B0D8943CA887371839DFECF85";
 var quote = "48C16896271D483C916DE1C4EC6F24DBC945F900F9AB464B828EC8005364D322";
@@ -9298,9 +9299,7 @@ function removeWorkspaceNameFromResourceName(resourceName) {
     return resourceName;
 }
 function skipArtifactDeployment(artifactType) {
-    if (artifactType.toLowerCase().indexOf("sqlpools") > -1 ||
-        artifactType.toLowerCase().indexOf("bigdatapools") > -1 ||
-        artifactType.toLowerCase().indexOf("managedvirtualnetworks") > -1) {
+    if (artifacts_enum_1.DataFactoryType.sqlpool == artifactType || artifacts_enum_1.DataFactoryType.bigdatapools == artifactType || artifacts_enum_1.DataFactoryType.managedVirtualNetworks == artifactType) {
         return true;
     }
     return false;
@@ -9313,7 +9312,6 @@ function getArtifactsFromArmTemplate(armTemplate, targetLocation, defaultArtifac
     var _loop_1 = function (value) {
         var artifactJson = jsonArmTemplateParams.resources[value];
         var artifactType = artifactJson.type;
-        console.log("####### ", artifactType);
         if (skipArtifactDeployment(artifactType)) {
             return "continue";
         }
