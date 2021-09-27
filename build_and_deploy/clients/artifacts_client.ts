@@ -254,7 +254,7 @@ export class ArtifactClient {
         : Promise<string> {
         try {
             return await this.artifactDeploymentTask(baseUrl,
-                `${Artifact.managedprivateendpoints.toString()}s`, payload, token);
+                `${Artifact.managedprivateendpoints.toString()}`, payload, token);
         } catch (err) {
             throw new Error("SparkJobDefination deployment status " + JSON.stringify(err));
         }
