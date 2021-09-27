@@ -328,8 +328,7 @@ function removeWorkspaceNameFromResourceName(resourceName: string): string {
 function skipArtifactDeployment(artifactType: string): boolean {
     if (artifactType.toLowerCase().indexOf(`sqlpools`) > -1 ||
         artifactType.toLowerCase().indexOf(`bigdatapools`) > -1 ||
-        artifactType.toLowerCase().indexOf(`managedvirtualnetworks`) > -1 ||
-        artifactType.toLowerCase().indexOf(`managedprivateendpoints`) > -1) {
+        artifactType.toLowerCase().indexOf(`managedvirtualnetworks`) > -1) {
 
         return true;
     }

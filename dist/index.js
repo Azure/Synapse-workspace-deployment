@@ -9300,8 +9300,7 @@ function removeWorkspaceNameFromResourceName(resourceName) {
 function skipArtifactDeployment(artifactType) {
     if (artifactType.toLowerCase().indexOf("sqlpools") > -1 ||
         artifactType.toLowerCase().indexOf("bigdatapools") > -1 ||
-        artifactType.toLowerCase().indexOf("managedvirtualnetworks") > -1 ||
-        artifactType.toLowerCase().indexOf("managedprivateendpoints") > -1) {
+        artifactType.toLowerCase().indexOf("managedvirtualnetworks") > -1) {
         return true;
     }
     return false;
