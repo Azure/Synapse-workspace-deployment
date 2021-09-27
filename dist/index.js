@@ -9313,6 +9313,7 @@ function getArtifactsFromArmTemplate(armTemplate, targetLocation, defaultArtifac
     var _loop_1 = function (value) {
         var artifactJson = jsonArmTemplateParams.resources[value];
         var artifactType = artifactJson.type;
+        console.log("####### ", artifactType);
         if (skipArtifactDeployment(artifactType)) {
             return "continue";
         }

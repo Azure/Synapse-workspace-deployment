@@ -345,7 +345,7 @@ export function getArtifactsFromArmTemplate(armTemplate: string, targetLocation:
     for (let value in jsonArmTemplateParams.resources) {
         let artifactJson = jsonArmTemplateParams.resources[value];
         let artifactType = artifactJson.type as string;
-
+        console.log("####### ", artifactType);
         if (skipArtifactDeployment(artifactType)) {
             //We are not deploying these arm resources anymore
             continue;
