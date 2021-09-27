@@ -418,7 +418,7 @@ var ArtifactClient = /** @class */ (function () {
                 switch (_a.label) {
                     case 0:
                         _a.trys.push([0, 2, , 3]);
-                        return [4 /*yield*/, this.artifactDeploymentTask(baseUrl, artifacts_enum_1.Artifact.managedprivateendpoints.toString() + "s", payload, token)];
+                        return [4 /*yield*/, this.artifactDeploymentTask(baseUrl, "" + artifacts_enum_1.Artifact.managedprivateendpoints.toString(), payload, token)];
                     case 1: return [2 /*return*/, _a.sent()];
                     case 2:
                         err_12 = _a.sent();
