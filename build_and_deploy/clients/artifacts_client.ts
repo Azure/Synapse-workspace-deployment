@@ -135,7 +135,11 @@ export class ArtifactClient {
         if (artifactype === `${Artifact.integrationruntime}s`) {
             url = `${baseUrl}/subscriptions/${this.params.subscriptionId}/resourceGroups/${this.params.resourceGroup}`;
             url = url + `/providers/Microsoft.Synapse/workspaces/${core.getInput('TargetWorkspaceName')}`;
-        } else {
+        }
+        else if(artifactype === Artifact.managedprivateendpoints){
+            url = baseUrl + "/" + Artifact.managedvirtualnetworks + "/default";
+        }
+        else {
             url = `${baseUrl}`;
         }
         return url;
@@ -256,7 +260,7 @@ export class ArtifactClient {
             return await this.artifactDeploymentTask(baseUrl,
                 `${Artifact.managedprivateendpoints.toString()}`, payload, token);
         } catch (err) {
-            throw new Error("SparkJobDefination deployment status " + JSON.stringify(err));
+            throw new Error("ManagedPrivateEndpoint deployment status " + JSON.stringify(err));
         }
     }
 
