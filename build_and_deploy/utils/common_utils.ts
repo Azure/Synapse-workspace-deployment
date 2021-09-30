@@ -33,8 +33,8 @@ class DefaultArtifact {
     }
 
     public matches(name: string, type: string, dataFactoryType: string): boolean {
-        return name.toLowerCase().indexOf(this.name) >= 0
-            && type.toLowerCase() === this.type
+        return name.toLowerCase().indexOf(this.name.toLowerCase()) >= 0
+            && type.toLowerCase() === this.type.toLowerCase()
             && dataFactoryType === this.dataFactoryType;
     }
 }
