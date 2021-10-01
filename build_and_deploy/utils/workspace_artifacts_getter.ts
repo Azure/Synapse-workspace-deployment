@@ -21,7 +21,8 @@ const artifactTypesToQuery:Artifact[] = [
     Artifact.pipeline,
     Artifact.sparkjobdefinition,
     Artifact.sqlscript,
-    Artifact.trigger
+    Artifact.trigger,
+    Artifact.managedprivateendpoints
 ];
 
 export async function getArtifactsFromWorkspaceOfType(artifactTypeToQuery: Artifact, targetWorkspaceName: string, environment: string): Promise<Resource[]> {
@@ -120,7 +121,6 @@ export function getArtifactsToDeleteFromWorkspace(
         if (artifactTypeToDeploy != Artifact.sqlpool &&
             artifactTypeToDeploy != Artifact.bigdatapools &&
             artifactTypeToDeploy != Artifact.managedvirtualnetworks &&
-            artifactTypeToDeploy != Artifact.managedprivateendpoints &&
             artifactTypeToDeploy != Artifact.integrationruntime &&
             checkResource.isDefault != true)
         {
@@ -278,7 +278,12 @@ export function getArtifactsToDeleteFromWorkspaceInOrder(
 function getResourceFromWorkspaceUrl(targetWorkspaceName: string, environment: string, resourceType: string): string
 {
     var url = ArtifactClient.getUrlByEnvironment(targetWorkspaceName, environment);
-    url = `${url}/${resourceType}s?api-version=2019-06-01-preview`
+    if(resourceType == Artifact.managedprivateendpoints){
+        url = url + '/' + Artifact.managedvirtualnetworks + '/default';
+        url = `${url}/${resourceType}?api-version=2019-06-01-preview`
+    }
+    else
+        url = `${url}/${resourceType}s?api-version=2019-06-01-preview`
     return url;
 }
 
