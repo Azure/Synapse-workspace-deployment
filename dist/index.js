@@ -459,7 +459,7 @@ var ArtifactClient = /** @class */ (function () {
                                 }
                                 var location = res.message.headers.location;
                                 res.readBody().then(function (body) { return __awaiter(_this, void 0, void 0, function () {
-                                    var responseJson, operationId, deploymentTrackingRequest;
+                                    var responseJson, operationId, deploymentTrackingRequest, status_1;
                                     return __generator(this, function (_a) {
                                         responseJson = JSON.parse(body);
                                         operationId = responseJson['operationId'];
@@ -482,8 +482,10 @@ var ArtifactClient = /** @class */ (function () {
                                             return [2 /*return*/, resolve(deploy_utils_1.DeployStatus.success)];
                                         }
                                         else {
-                                            if (resourceType == artifacts_enum_1.Artifact.managedprivateendpoints && responseJson['properties']['provisioningState'] == "Succeeded") {
-                                                return [2 /*return*/, resolve(deploy_utils_1.DeployStatus.success)];
+                                            if (resourceType == artifacts_enum_1.Artifact.managedprivateendpoints) {
+                                                status_1 = responseJson['properties']['provisioningState'];
+                                                if (status_1 == "Succeeded" || status_1 == "Provisioning")
+                                                    return [2 /*return*/, resolve(deploy_utils_1.DeployStatus.success)];
                                             }
                                             return [2 /*return*/, reject(deploy_utils_1.DeployStatus.failed)];
                                         }
