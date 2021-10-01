@@ -156,8 +156,7 @@ export class Orchestrator {
             var result : string;
             if (artifactTypeToDelete == Artifact.sqlpool ||
                 artifactTypeToDelete == Artifact.bigdatapools ||
-                artifactTypeToDelete == Artifact.managedvirtualnetworks ||
-                artifactTypeToDelete == Artifact.managedprivateendpoints) {
+                artifactTypeToDelete == Artifact.managedvirtualnetworks) {
                 // Skip this.
                 continue;
             }
