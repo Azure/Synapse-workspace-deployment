@@ -314,8 +314,10 @@ export class ArtifactClient {
 
                         return resolve(DeployStatus.success);
                     } else {
-                        if(resourceType == Artifact.managedprivateendpoints && responseJson['properties']['provisioningState'] == "Succeeded"){
-                            return resolve(DeployStatus.success);
+                        if(resourceType == Artifact.managedprivateendpoints){
+                            let status = responseJson['properties']['provisioningState'];
+                            if (status == "Succeeded" || status == "Provisioning")
+                                return resolve(DeployStatus.success);
                         }
                         return reject(DeployStatus.failed);
                     }
