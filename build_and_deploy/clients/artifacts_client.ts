@@ -127,6 +127,10 @@ export class ArtifactClient {
         var url = this.getCommonPath(baseUrl, artifactype);
         while (artifactNameValue.indexOf(' ') > -1)
             artifactNameValue = artifactNameValue.replace(' ', '%20');
+        if(artifactype == `${Artifact.managedprivateendpoints}s`){
+            return url + `/${Artifact.managedprivateendpoints}/${artifactNameValue}?${this.apiVersion}`;
+        }
+
         return url + `/${artifactype}/${artifactNameValue}?${this.apiVersion}`;
     }
 
@@ -136,7 +140,7 @@ export class ArtifactClient {
             url = `${baseUrl}/subscriptions/${this.params.subscriptionId}/resourceGroups/${this.params.resourceGroup}`;
             url = url + `/providers/Microsoft.Synapse/workspaces/${core.getInput('TargetWorkspaceName')}`;
         }
-        else if(artifactype === Artifact.managedprivateendpoints){
+        else if(artifactype === Artifact.managedprivateendpoints || artifactype == `${Artifact.managedprivateendpoints}s`){
             url = baseUrl + "/" + Artifact.managedvirtualnetworks + "/default";
         }
         else {
@@ -336,15 +340,18 @@ export class ArtifactClient {
                         let responseJson = JSON.parse(body);
                     }
                 });
+                
+                if(resourceType != Artifact.managedprivateendpoints){
 
-                var location :string = res.message.headers.location!;
+                    var location :string = res.message.headers.location!;
 
-                let deploymentTrackingRequest: DeploymentTrackingRequest = {
-                    url: location,
-                    name: payloadObj.name,
-                    token: token
+                    let deploymentTrackingRequest: DeploymentTrackingRequest = {
+                        url: location,
+                        name: payloadObj.name,
+                        token: token
+                    }
+                    this.deploymentTrackingRequests.push(deploymentTrackingRequest);
                 }
-                this.deploymentTrackingRequests.push(deploymentTrackingRequest);
 
                 if (resStatus != 200 && resStatus != 201 && resStatus != 202) {
                     return reject(DeployStatus.failed);
