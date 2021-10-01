@@ -121,7 +121,8 @@ export function getArtifactsToDeleteFromWorkspace(
             artifactTypeToDeploy != Artifact.bigdatapools &&
             artifactTypeToDeploy != Artifact.managedvirtualnetworks &&
             artifactTypeToDeploy != Artifact.managedprivateendpoints &&
-            artifactTypeToDeploy != Artifact.integrationruntime)
+            artifactTypeToDeploy != Artifact.integrationruntime &&
+            checkResource.isDefault != true)
         {
             for(let i=0;i< artifactsToDeploy.length;i++)
             {
