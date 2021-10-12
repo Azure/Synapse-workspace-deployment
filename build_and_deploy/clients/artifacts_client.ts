@@ -88,6 +88,8 @@ export class ArtifactClient {
                 return this.deployCredential(baseUrl, payload, token);
             case Artifact.kqlScript:
                 return this.deployKqlScript(baseUrl, payload, token);
+            case Artifact.managedprivateendpoints:
+                return this.deployManagedPrivateEndpoint(baseUrl, payload, token);
             default:
                 return DeployStatus.skipped;
         }
@@ -125,6 +127,10 @@ export class ArtifactClient {
         var url = this.getCommonPath(baseUrl, artifactype);
         while (artifactNameValue.indexOf(' ') > -1)
             artifactNameValue = artifactNameValue.replace(' ', '%20');
+        if(artifactype == `${Artifact.managedprivateendpoints}s`){
+            return url + `/${Artifact.managedprivateendpoints}/${artifactNameValue}?${this.apiVersion}`;
+        }
+
         return url + `/${artifactype}/${artifactNameValue}?${this.apiVersion}`;
     }
 
@@ -133,7 +139,11 @@ export class ArtifactClient {
         if (artifactype === `${Artifact.integrationruntime}s`) {
             url = `${baseUrl}/subscriptions/${this.params.subscriptionId}/resourceGroups/${this.params.resourceGroup}`;
             url = url + `/providers/Microsoft.Synapse/workspaces/${core.getInput('TargetWorkspaceName')}`;
-        } else {
+        }
+        else if(artifactype === Artifact.managedprivateendpoints || artifactype == `${Artifact.managedprivateendpoints}s`){
+            url = baseUrl + "/" + Artifact.managedvirtualnetworks + "/default";
+        }
+        else {
             url = `${baseUrl}`;
         }
         return url;
@@ -248,6 +258,16 @@ export class ArtifactClient {
         }
     }
 
+    private async deployManagedPrivateEndpoint(baseUrl: string, payload: Resource, token: string)
+        : Promise<string> {
+        try {
+            return await this.artifactDeploymentTask(baseUrl,
+                `${Artifact.managedprivateendpoints.toString()}`, payload, token);
+        } catch (err) {
+            throw new Error("ManagedPrivateEndpoint deployment status " + JSON.stringify(err));
+        }
+    }
+
     private async artifactDeploymentTask(baseUrl: string, resourceType: string, payloadObj: Resource,
         token: string): Promise<string> {
 
@@ -294,6 +314,22 @@ export class ArtifactClient {
 
                         return resolve(DeployStatus.success);
                     } else {
+                        if(resourceType == Artifact.managedprivateendpoints){
+                            let status = responseJson['properties']['provisioningState'];
+                            if (status == "Succeeded"){
+                                return resolve(DeployStatus.success);
+                            }
+
+                            if (status == "Provisioning"){
+                                let deploymentTrackingRequest: DeploymentTrackingRequest = {
+                                    url: url,
+                                    name: payloadObj.name,
+                                    token: token
+                                }
+                                this.deploymentTrackingRequests.push(deploymentTrackingRequest);
+                                return resolve(DeployStatus.success);
+                            }
+                        }
                         return reject(DeployStatus.failed);
                     }
                 });
@@ -317,15 +353,18 @@ export class ArtifactClient {
                         let responseJson = JSON.parse(body);
                     }
                 });
+                
+                if(resourceType != Artifact.managedprivateendpoints){
 
-                var location :string = res.message.headers.location!;
+                    var location :string = res.message.headers.location!;
 
-                let deploymentTrackingRequest: DeploymentTrackingRequest = {
-                    url: location,
-                    name: payloadObj.name,
-                    token: token
+                    let deploymentTrackingRequest: DeploymentTrackingRequest = {
+                        url: location,
+                        name: payloadObj.name,
+                        token: token
+                    }
+                    this.deploymentTrackingRequests.push(deploymentTrackingRequest);
                 }
-                this.deploymentTrackingRequests.push(deploymentTrackingRequest);
 
                 if (resStatus != 200 && resStatus != 201 && resStatus != 202) {
                     return reject(DeployStatus.failed);

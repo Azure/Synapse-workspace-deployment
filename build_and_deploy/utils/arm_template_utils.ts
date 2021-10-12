@@ -3,9 +3,10 @@
 
 
 import * as yaml from 'js-yaml';
-import { v4 as uuidv4 } from 'uuid';
-import { SystemLogger } from './logger';
+import {v4 as uuidv4} from 'uuid';
+import {SystemLogger} from './logger';
 import {isDefaultArtifact} from "./common_utils";
+import {DataFactoryType} from "./artifacts_enum";
 
 // Just 2 random Guids to replace backslash in parameters file.
 const backslash: string = "7FD5C49AB6444AC1ACCD56B689067FBBAD85B74B0D8943CA887371839DFECF85";
@@ -326,12 +327,8 @@ function removeWorkspaceNameFromResourceName(resourceName: string): string {
 }
 
 function skipArtifactDeployment(artifactType: string): boolean {
-    if (artifactType.toLowerCase().indexOf(`sqlpools`) > -1 ||
-        artifactType.toLowerCase().indexOf(`bigdatapools`) > -1 ||
-        artifactType.toLowerCase().indexOf(`managedvirtualnetworks`) > -1 ||
-        artifactType.toLowerCase().indexOf(`managedprivateendpoints`) > -1) {
-
-        return true;
+    if(DataFactoryType.sqlpool == artifactType || DataFactoryType.bigdatapools == artifactType || DataFactoryType.managedVirtualNetworks == artifactType){
+            return true
     }
 
     return false;
@@ -346,7 +343,6 @@ export function getArtifactsFromArmTemplate(armTemplate: string, targetLocation:
     for (let value in jsonArmTemplateParams.resources) {
         let artifactJson = jsonArmTemplateParams.resources[value];
         let artifactType = artifactJson.type as string;
-
         if (skipArtifactDeployment(artifactType)) {
             //We are not deploying these arm resources anymore
             continue;

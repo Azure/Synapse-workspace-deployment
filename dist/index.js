@@ -137,6 +137,8 @@ var ArtifactClient = /** @class */ (function () {
                                 return [2 /*return*/, this.deployCredential(baseUrl, payload, token)];
                             case artifacts_enum_1.Artifact.kqlScript:
                                 return [2 /*return*/, this.deployKqlScript(baseUrl, payload, token)];
+                            case artifacts_enum_1.Artifact.managedprivateendpoints:
+                                return [2 /*return*/, this.deployManagedPrivateEndpoint(baseUrl, payload, token)];
                             default:
                                 return [2 /*return*/, deploy_utils_1.DeployStatus.skipped];
                         }
@@ -202,6 +204,9 @@ var ArtifactClient = /** @class */ (function () {
         var url = this.getCommonPath(baseUrl, artifactype);
         while (artifactNameValue.indexOf(' ') > -1)
             artifactNameValue = artifactNameValue.replace(' ', '%20');
+        if (artifactype == artifacts_enum_1.Artifact.managedprivateendpoints + "s") {
+            return url + ("/" + artifacts_enum_1.Artifact.managedprivateendpoints + "/" + artifactNameValue + "?" + this.apiVersion);
+        }
         return url + ("/" + artifactype + "/" + artifactNameValue + "?" + this.apiVersion);
     };
     ArtifactClient.prototype.getCommonPath = function (baseUrl, artifactype) {
@@ -209,6 +214,9 @@ var ArtifactClient = /** @class */ (function () {
         if (artifactype === artifacts_enum_1.Artifact.integrationruntime + "s") {
             url = baseUrl + "/subscriptions/" + this.params.subscriptionId + "/resourceGroups/" + this.params.resourceGroup;
             url = url + ("/providers/Microsoft.Synapse/workspaces/" + core.getInput('TargetWorkspaceName'));
+        }
+        else if (artifactype === artifacts_enum_1.Artifact.managedprivateendpoints || artifactype == artifacts_enum_1.Artifact.managedprivateendpoints + "s") {
+            url = baseUrl + "/" + artifacts_enum_1.Artifact.managedvirtualnetworks + "/default";
         }
         else {
             url = "" + baseUrl;
@@ -409,6 +417,23 @@ var ArtifactClient = /** @class */ (function () {
             });
         });
     };
+    ArtifactClient.prototype.deployManagedPrivateEndpoint = function (baseUrl, payload, token) {
+        return __awaiter(this, void 0, void 0, function () {
+            var err_12;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        _a.trys.push([0, 2, , 3]);
+                        return [4 /*yield*/, this.artifactDeploymentTask(baseUrl, "" + artifacts_enum_1.Artifact.managedprivateendpoints.toString(), payload, token)];
+                    case 1: return [2 /*return*/, _a.sent()];
+                    case 2:
+                        err_12 = _a.sent();
+                        throw new Error("ManagedPrivateEndpoint deployment status " + JSON.stringify(err_12));
+                    case 3: return [2 /*return*/];
+                }
+            });
+        });
+    };
     ArtifactClient.prototype.artifactDeploymentTask = function (baseUrl, resourceType, payloadObj, token) {
         return __awaiter(this, void 0, void 0, function () {
             var _this = this;
@@ -434,7 +459,7 @@ var ArtifactClient = /** @class */ (function () {
                                 }
                                 var location = res.message.headers.location;
                                 res.readBody().then(function (body) { return __awaiter(_this, void 0, void 0, function () {
-                                    var responseJson, operationId, deploymentTrackingRequest;
+                                    var responseJson, operationId, deploymentTrackingRequest, status_1, deploymentTrackingRequest;
                                     return __generator(this, function (_a) {
                                         responseJson = JSON.parse(body);
                                         operationId = responseJson['operationId'];
@@ -457,6 +482,21 @@ var ArtifactClient = /** @class */ (function () {
                                             return [2 /*return*/, resolve(deploy_utils_1.DeployStatus.success)];
                                         }
                                         else {
+                                            if (resourceType == artifacts_enum_1.Artifact.managedprivateendpoints) {
+                                                status_1 = responseJson['properties']['provisioningState'];
+                                                if (status_1 == "Succeeded") {
+                                                    return [2 /*return*/, resolve(deploy_utils_1.DeployStatus.success)];
+                                                }
+                                                if (status_1 == "Provisioning") {
+                                                    deploymentTrackingRequest = {
+                                                        url: url,
+                                                        name: payloadObj.name,
+                                                        token: token
+                                                    };
+                                                    this.deploymentTrackingRequests.push(deploymentTrackingRequest);
+                                                    return [2 /*return*/, resolve(deploy_utils_1.DeployStatus.success)];
+                                                }
+                                            }
                                             return [2 /*return*/, reject(deploy_utils_1.DeployStatus.failed)];
                                         }
                                         return [2 /*return*/];
@@ -489,13 +529,15 @@ var ArtifactClient = /** @class */ (function () {
                                         var responseJson = JSON.parse(body);
                                     }
                                 });
-                                var location = res.message.headers.location;
-                                var deploymentTrackingRequest = {
-                                    url: location,
-                                    name: payloadObj.name,
-                                    token: token
-                                };
-                                _this.deploymentTrackingRequests.push(deploymentTrackingRequest);
+                                if (resourceType != artifacts_enum_1.Artifact.managedprivateendpoints) {
+                                    var location = res.message.headers.location;
+                                    var deploymentTrackingRequest = {
+                                        url: location,
+                                        name: payloadObj.name,
+                                        token: token
+                                    };
+                                    _this.deploymentTrackingRequests.push(deploymentTrackingRequest);
+                                }
                                 if (resStatus != 200 && resStatus != 201 && resStatus != 202) {
                                     return reject(deploy_utils_1.DeployStatus.failed);
                                 }
@@ -8794,8 +8836,7 @@ var Orchestrator = /** @class */ (function () {
     Orchestrator.prototype.skipDeployment = function (artifactTypeToDeploy) {
         if (artifactTypeToDeploy == artifacts_enum_1.Artifact.sqlpool ||
             artifactTypeToDeploy == artifacts_enum_1.Artifact.bigdatapools ||
-            artifactTypeToDeploy == artifacts_enum_1.Artifact.managedvirtualnetworks ||
-            artifactTypeToDeploy == artifacts_enum_1.Artifact.managedprivateendpoints) {
+            artifactTypeToDeploy == artifacts_enum_1.Artifact.managedvirtualnetworks) {
             return true;
         }
         return false;
@@ -8866,8 +8907,7 @@ var Orchestrator = /** @class */ (function () {
                         logger_1.SystemLogger.info("Deleting " + resource.name + " of type " + artifactTypeToDelete);
                         if (artifactTypeToDelete == artifacts_enum_1.Artifact.sqlpool ||
                             artifactTypeToDelete == artifacts_enum_1.Artifact.bigdatapools ||
-                            artifactTypeToDelete == artifacts_enum_1.Artifact.managedvirtualnetworks ||
-                            artifactTypeToDelete == artifacts_enum_1.Artifact.managedprivateendpoints) {
+                            artifactTypeToDelete == artifacts_enum_1.Artifact.managedvirtualnetworks) {
                             // Skip this.
                             return [3 /*break*/, 3];
                         }
@@ -9024,6 +9064,7 @@ var yaml = __importStar(__nccwpck_require__(2096));
 var uuid_1 = __nccwpck_require__(2884);
 var logger_1 = __nccwpck_require__(4659);
 var common_utils_1 = __nccwpck_require__(9123);
+var artifacts_enum_1 = __nccwpck_require__(5724);
 // Just 2 random Guids to replace backslash in parameters file.
 var backslash = "7FD5C49AB6444AC1ACCD56B689067FBBAD85B74B0D8943CA887371839DFECF85";
 var quote = "48C16896271D483C916DE1C4EC6F24DBC945F900F9AB464B828EC8005364D322";
@@ -9280,10 +9321,7 @@ function removeWorkspaceNameFromResourceName(resourceName) {
     return resourceName;
 }
 function skipArtifactDeployment(artifactType) {
-    if (artifactType.toLowerCase().indexOf("sqlpools") > -1 ||
-        artifactType.toLowerCase().indexOf("bigdatapools") > -1 ||
-        artifactType.toLowerCase().indexOf("managedvirtualnetworks") > -1 ||
-        artifactType.toLowerCase().indexOf("managedprivateendpoints") > -1) {
+    if (artifacts_enum_1.DataFactoryType.sqlpool == artifactType || artifacts_enum_1.DataFactoryType.bigdatapools == artifactType || artifacts_enum_1.DataFactoryType.managedVirtualNetworks == artifactType) {
         return true;
     }
     return false;
@@ -9639,16 +9677,32 @@ function isStrNullOrEmpty(val) {
 exports.isStrNullOrEmpty = isStrNullOrEmpty;
 function isDefaultArtifact(artifact) {
     var artifactJson = JSON.parse(artifact);
-    for (var key in artifacts_enum_1.DEFAULT_ARTIFACTS) {
-        if (artifactJson.name.toLowerCase().indexOf(artifacts_enum_1.DEFAULT_ARTIFACTS[key]) != -1 &&
-            [artifacts_enum_1.DataFactoryType.linkedservice.toLowerCase(), artifacts_enum_1.DataFactoryType.credential.toLowerCase()].indexOf(artifactJson.type.toLowerCase()) != -1 &&
-            artifactJson.properties.type.toLowerCase() === artifacts_enum_1.DEFAULT_ARTIFACTS_TYPE[key].toLowerCase())
-            return true;
-    }
-    ;
-    return false;
+    if (artifactJson.type == artifacts_enum_1.DataFactoryType.managedPrivateEndpoints)
+        return DefaultArtifact.DefaultArtifacts.some(function (e) { return e.matches(artifactJson.name, artifactJson.properties.groupId, artifactJson.type); });
+    return DefaultArtifact.DefaultArtifacts.some(function (e) { return e.matches(artifactJson.name, artifactJson.properties.type, artifactJson.type); });
 }
 exports.isDefaultArtifact = isDefaultArtifact;
+var DefaultArtifact = /** @class */ (function () {
+    function DefaultArtifact(name, type, dataFactoryType) {
+        this.name = name;
+        this.type = type;
+        this.dataFactoryType = dataFactoryType;
+    }
+    DefaultArtifact.prototype.matches = function (name, type, dataFactoryType) {
+        return name.toLowerCase().includes(this.name.toLowerCase())
+            && type.toLowerCase() === this.type.toLowerCase()
+            && dataFactoryType === this.dataFactoryType;
+    };
+    DefaultArtifact.DefaultArtifacts = [
+        new DefaultArtifact("workspacedefaultsqlserver", "azuresqldw", artifacts_enum_1.DataFactoryType.linkedservice),
+        new DefaultArtifact("workspacedefaultstorage", "azureblobfs", artifacts_enum_1.DataFactoryType.linkedservice),
+        new DefaultArtifact("workspacesystemidentity", "managedidentity", artifacts_enum_1.DataFactoryType.credential),
+        new DefaultArtifact("synapse-ws-sql", "sql", artifacts_enum_1.DataFactoryType.managedPrivateEndpoints),
+        new DefaultArtifact("synapse-ws-sqlOnDemand", "sqlOnDemand", artifacts_enum_1.DataFactoryType.managedPrivateEndpoints),
+        new DefaultArtifact("synapse-ws-custstgacct", "dfs", artifacts_enum_1.DataFactoryType.managedPrivateEndpoints),
+    ];
+    return DefaultArtifact;
+}());
 //# sourceMappingURL=common_utils.js.map
 
 /***/ }),
@@ -10213,7 +10267,8 @@ var artifactTypesToQuery = [
     artifacts_enum_1.Artifact.pipeline,
     artifacts_enum_1.Artifact.sparkjobdefinition,
     artifacts_enum_1.Artifact.sqlscript,
-    artifacts_enum_1.Artifact.trigger
+    artifacts_enum_1.Artifact.trigger,
+    artifacts_enum_1.Artifact.managedprivateendpoints
 ];
 function getArtifactsFromWorkspaceOfType(artifactTypeToQuery, targetWorkspaceName, environment) {
     return __awaiter(this, void 0, void 0, function () {
@@ -10325,8 +10380,8 @@ function getArtifactsToDeleteFromWorkspace(artifactsInWorkspace, artifactsToDepl
         if (artifactTypeToDeploy != artifacts_enum_1.Artifact.sqlpool &&
             artifactTypeToDeploy != artifacts_enum_1.Artifact.bigdatapools &&
             artifactTypeToDeploy != artifacts_enum_1.Artifact.managedvirtualnetworks &&
-            artifactTypeToDeploy != artifacts_enum_1.Artifact.managedprivateendpoints &&
-            artifactTypeToDeploy != artifacts_enum_1.Artifact.integrationruntime) {
+            artifactTypeToDeploy != artifacts_enum_1.Artifact.integrationruntime &&
+            checkResource.isDefault != true) {
             for (var i = 0; i < artifactsToDeploy.length; i++) {
                 for (var j = 0; j < artifactsToDeploy[i].length; j++) {
                     var resouce = artifactsToDeploy[i][j];
@@ -10437,7 +10492,12 @@ function getArtifactsToDeleteFromWorkspaceInOrder(artifactsToDelete) {
 exports.getArtifactsToDeleteFromWorkspaceInOrder = getArtifactsToDeleteFromWorkspaceInOrder;
 function getResourceFromWorkspaceUrl(targetWorkspaceName, environment, resourceType) {
     var url = artifacts_client_1.ArtifactClient.getUrlByEnvironment(targetWorkspaceName, environment);
-    url = url + "/" + resourceType + "s?api-version=2019-06-01-preview";
+    if (resourceType == artifacts_enum_1.Artifact.managedprivateendpoints) {
+        url = url + '/' + artifacts_enum_1.Artifact.managedvirtualnetworks + '/default';
+        url = url + "/" + resourceType + "?api-version=2019-06-01-preview";
+    }
+    else
+        url = url + "/" + resourceType + "s?api-version=2019-06-01-preview";
     return url;
 }
 // Gets the list of artifacts this artifact depends on.
