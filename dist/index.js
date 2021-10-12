@@ -9679,7 +9679,7 @@ var DefaultArtifact = /** @class */ (function () {
         this.dataFactoryType = dataFactoryType;
     }
     DefaultArtifact.prototype.matches = function (name, type, dataFactoryType) {
-        return name.toLowerCase().indexOf(this.name.toLowerCase()) >= 0
+        return name.toLowerCase().includes(this.name.toLowerCase())
             && type.toLowerCase() === this.type.toLowerCase()
             && dataFactoryType === this.dataFactoryType;
     };

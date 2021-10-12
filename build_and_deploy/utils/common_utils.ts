@@ -26,14 +26,13 @@ class DefaultArtifact {
         new DefaultArtifact("synapse-ws-sql", "sql", DataFactoryType.managedPrivateEndpoints),
         new DefaultArtifact("synapse-ws-sqlOnDemand", "sqlOnDemand", DataFactoryType.managedPrivateEndpoints),
         new DefaultArtifact("synapse-ws-custstgacct", "dfs", DataFactoryType.managedPrivateEndpoints),
-
     ];
 
     private constructor(private name: string, private type: string, private dataFactoryType: DataFactoryType) {
     }
 
     public matches(name: string, type: string, dataFactoryType: string): boolean {
-        return name.toLowerCase().indexOf(this.name.toLowerCase()) >= 0
+        return name.toLowerCase().includes(this.name.toLowerCase())
             && type.toLowerCase() === this.type.toLowerCase()
             && dataFactoryType === this.dataFactoryType;
     }
