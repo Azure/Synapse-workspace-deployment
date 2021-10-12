@@ -316,8 +316,19 @@ export class ArtifactClient {
                     } else {
                         if(resourceType == Artifact.managedprivateendpoints){
                             let status = responseJson['properties']['provisioningState'];
-                            if (status == "Succeeded" || status == "Provisioning")
+                            if (status == "Succeeded"){
                                 return resolve(DeployStatus.success);
+                            }
+
+                            if (status == "Provisioning"){
+                                let deploymentTrackingRequest: DeploymentTrackingRequest = {
+                                    url: url,
+                                    name: payloadObj.name,
+                                    token: token
+                                }
+                                this.deploymentTrackingRequests.push(deploymentTrackingRequest);
+                                return resolve(DeployStatus.success);
+                            }
                         }
                         return reject(DeployStatus.failed);
                     }
