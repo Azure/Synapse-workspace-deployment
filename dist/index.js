@@ -9113,12 +9113,8 @@ function replaceBackSlash(inputString) {
         return "";
     }
     var outputString = inputString;
-    while (outputString.indexOf("\\\"") >= 0) {
-        outputString = outputString.substr(0, outputString.indexOf("\\\"")) + quote + outputString.substr(outputString.indexOf("\\\"") + 2);
-    }
-    while (outputString.indexOf("\\") >= 0) {
-        outputString = outputString.substr(0, outputString.indexOf("\\")) + backslash + outputString.substr(outputString.indexOf("\\") + 1);
-    }
+    outputString = outputString.replace(/(\\\")/g, quote);
+    outputString = outputString.replace(/(\\)/g, backslash);
     return outputString;
 }
 function replaceDoubleQuoteCode(inputString) {
@@ -9180,7 +9176,9 @@ function replaceParameters(armParams, armTemplate, overrideArmParameters, target
         if (value.indexOf("parameters") > -1) {
             armParamValues.forEach(function (valueInside, keyInside) {
                 if (value.indexOf(keyInside) > -1) {
-                    armParamValues.set(key, value.split('[' + keyInside + ']').join("'" + valueInside + "'"));
+                    var newValue = value.split('[' + keyInside + ']').join("" + valueInside);
+                    armParamValues.set(key, newValue);
+                    value = newValue; // Otherwise the below if condition will again get executed.
                 }
                 if (value.indexOf(keyInside) > -1) {
                     armParamValues.set(key, value.split(keyInside).join("'" + valueInside + "'"));
@@ -9196,13 +9194,13 @@ function replaceParameters(armParams, armTemplate, overrideArmParameters, target
     });
     // Replace parameterValues
     armParamValues.forEach(function (value, key) {
-        if (isJsonValue(replaceDoubleQuoteCode(value))) {
-            armTemplate = armTemplate.split("\"[" + key + "]\"").join("" + replaceDoubleQuoteCode(value));
+        if (isJsonValue(value)) {
+            armTemplate = armTemplate.split("\"[" + key + "]\"").join("" + value);
         }
         else {
-            armTemplate = armTemplate.split("\"[" + key + "]\"").join("\"" + replaceDoubleQuoteCode(value) + "\"");
+            armTemplate = armTemplate.split("\"[" + key + "]\"").join("\"" + value + "\"");
         }
-        armTemplate = armTemplate.split(key).join("'" + replaceDoubleQuoteCode(value) + "'");
+        armTemplate = armTemplate.split(key).join("'" + value + "'");
     });
     logger_1.SystemLogger.info("Complete replacement of parameters in the template");
     return armTemplate;
@@ -9259,13 +9257,17 @@ function getParameterValuesFromArmTemplate(armParams, armTemplate, overrideArmPa
     var jsonArmParams = JSON.parse(armParams);
     var armParamValues = new Map();
     for (var value in jsonArmParams.parameters) {
-        armParamValues.set("parameters('" + value + "')", replaceDoubleQuote(sanitize(JSON.stringify(jsonArmParams.parameters[value].value))));
+        var paramValue = jsonArmParams.parameters[value].value;
+        paramValue = typeof (paramValue) == "object" ? JSON.stringify(paramValue) : paramValue;
+        armParamValues.set("parameters('" + value + "')", paramValue);
     }
     // Convert arm template to json, look at the default parameters if any and add missing ones to the map we have
     var jsonArmTemplateParams = JSON.parse(armTemplate);
     var armTemplateParamValues = new Map();
     for (var value in jsonArmTemplateParams.parameters) {
-        armTemplateParamValues.set("parameters('" + value + "')", replaceDoubleQuote(JSON.stringify(jsonArmTemplateParams.parameters[value].defaultValue)));
+        var paramValue = jsonArmTemplateParams.parameters[value].defaultValue;
+        paramValue = typeof (paramValue) == "object" ? JSON.stringify(paramValue) : paramValue;
+        armTemplateParamValues.set("parameters('" + value + "')", paramValue);
     }
     armTemplateParamValues.forEach(function (value, key) {
         if (!armParamValues.has(key)) {
@@ -9279,20 +9281,11 @@ function getParameterValuesFromArmTemplate(armParams, armTemplate, overrideArmPa
     if (overrideArmParameters != null && overrideArmParameters.length > 2) {
         var cnt = 1;
         if (overrideArmParameters.startsWith('-')) {
-            while (overrideArmParameters.length > 0 && overrideArmParameters.indexOf('-') > -1 && overrideArmParameters.indexOf(' ') > -1 && cnt < 1000) {
-                cnt = cnt + 1;
-                var startIndex = overrideArmParameters.indexOf('-') + '-'.length;
-                var endIndex = overrideArmParameters.indexOf(' ');
-                var paramName = overrideArmParameters.substring(startIndex, endIndex).trim();
-                overrideArmParameters = overrideArmParameters.substring(endIndex);
-                startIndex = overrideArmParameters.indexOf(' ') + ' '.length;
-                endIndex = overrideArmParameters.indexOf(' -', startIndex);
-                if (endIndex == -1) {
-                    endIndex = overrideArmParameters.length;
-                }
-                var paramValue = sanitize(overrideArmParameters.substring(startIndex, endIndex).trim());
-                armParamValues.set("parameters('" + paramName + "')", paramValue);
-                overrideArmParameters = overrideArmParameters.substring(endIndex).trim();
+            var keyValuePairs = overrideArmParameters.split("-");
+            // Start with 1 as  0th will be a blank string
+            for (var i = 1; i < keyValuePairs.length; i++) {
+                var kv = keyValuePairs[i].trim().split(" ");
+                armParamValues.set("parameters('" + kv[0] + "')", kv[1]);
             }
         }
         // Means user has give a yaml as input
@@ -9300,19 +9293,13 @@ function getParameterValuesFromArmTemplate(armParams, armTemplate, overrideArmPa
             var overrides = yaml.load(overrideArmParameters);
             var overridesObj = JSON.parse(JSON.stringify(overrides));
             for (var key in overridesObj) {
-                var paramValue = JSON.stringify(overridesObj[key]);
-                armParamValues.set("parameters('" + key + "')", sanitize(paramValue));
+                var paramValue = typeof (overridesObj[key]) == "object" ?
+                    JSON.stringify(overridesObj[key]) : overridesObj[key];
+                armParamValues.set("parameters('" + key + "')", paramValue);
             }
         }
     }
     return armParamValues;
-}
-function sanitize(paramValue) {
-    if ((paramValue.startsWith("\"") && paramValue.endsWith("\"")) ||
-        (paramValue.startsWith("'") && paramValue.endsWith("'"))) {
-        paramValue = paramValue.substr(1, paramValue.length - 2);
-    }
-    return paramValue;
 }
 function removeWorkspaceNameFromResourceName(resourceName) {
     while (resourceName.indexOf("/") >= 0) {

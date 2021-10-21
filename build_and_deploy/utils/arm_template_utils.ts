@@ -70,17 +70,9 @@ function replaceBackSlash(inputString: string): string {
     if (inputString == null || inputString == "") {
         return "";
     }
-
     let outputString: string = inputString;
-
-    while (outputString.indexOf(`\\\"`) >= 0) {
-        outputString = outputString.substr(0, outputString.indexOf(`\\\"`)) + quote + outputString.substr(outputString.indexOf(`\\\"`) + 2);
-    }
-
-    while (outputString.indexOf(`\\`) >= 0) {
-        outputString = outputString.substr(0, outputString.indexOf(`\\`)) + backslash + outputString.substr(outputString.indexOf(`\\`) + 1);
-    }
-
+    outputString = outputString.replace(/(\\\")/g, quote);
+    outputString = outputString.replace(/(\\)/g, backslash);
     return outputString;
 }
 
@@ -163,7 +155,9 @@ function replaceParameters(armParams: string, armTemplate: string, overrideArmPa
         if(value.indexOf("parameters") > -1){
             armParamValues.forEach((valueInside, keyInside) => {
                 if(value.indexOf(keyInside) > -1) {
-                    armParamValues.set(key, value.split('['+keyInside+']').join(`'${valueInside}'`));
+                    let newValue = value.split('['+keyInside+']').join(`${valueInside}`);
+                    armParamValues.set(key, newValue);
+                    value = newValue; // Otherwise the below if condition will again get executed.
                 }
                 if(value.indexOf(keyInside) > -1) {
                     armParamValues.set(key, value.split(keyInside).join(`'${valueInside}'`));
@@ -182,14 +176,14 @@ function replaceParameters(armParams: string, armTemplate: string, overrideArmPa
 
     // Replace parameterValues
     armParamValues.forEach((value, key) => {
-        if (isJsonValue(replaceDoubleQuoteCode(value))) {
-            armTemplate = armTemplate.split(`"[` + key + `]"`).join(`${replaceDoubleQuoteCode(value)}`);
+        if (isJsonValue(value)) {
+            armTemplate = armTemplate.split(`"[` + key + `]"`).join(`${value}`);
         }
         else {
-            armTemplate = armTemplate.split(`"[` + key + `]"`).join(`"${replaceDoubleQuoteCode(value)}"`);
+            armTemplate = armTemplate.split(`"[` + key + `]"`).join(`"${value}"`);
         }
 
-        armTemplate = armTemplate.split(key).join(`'${replaceDoubleQuoteCode(value)}'`);
+        armTemplate = armTemplate.split(key).join(`'${value}'`);
     });
 
     SystemLogger.info("Complete replacement of parameters in the template");
@@ -211,6 +205,7 @@ function replaceVariables(armTemplate: string): string {
     SystemLogger.info("Begin replacement of variables in the template");
     let jsonArmTemplateParams = JSON.parse(armTemplate);
     let armVariableValues = new Map<string, string>();
+
     for (let value in jsonArmTemplateParams.variables) {
         let variableValue = jsonArmTemplateParams.variables[value] as string;
         variableValue = replaceStrByRegex(variableValue);
@@ -255,14 +250,18 @@ function getParameterValuesFromArmTemplate(armParams: string, armTemplate: strin
     let jsonArmParams = JSON.parse(armParams);
     let armParamValues = new Map<string, string>()
     for (let value in jsonArmParams.parameters) {
-        armParamValues.set(`parameters('${value}')`, replaceDoubleQuote(sanitize(JSON.stringify(jsonArmParams.parameters[value].value))));
+        let paramValue = jsonArmParams.parameters[value].value;
+        paramValue = typeof(paramValue) == "object" ? JSON.stringify(paramValue) : paramValue;
+        armParamValues.set(`parameters('${value}')`, paramValue);
     }
 
     // Convert arm template to json, look at the default parameters if any and add missing ones to the map we have
     let jsonArmTemplateParams = JSON.parse(armTemplate);
     let armTemplateParamValues = new Map<string, string>()
     for (let value in jsonArmTemplateParams.parameters) {
-        armTemplateParamValues.set(`parameters('${value}')`, replaceDoubleQuote(JSON.stringify(jsonArmTemplateParams.parameters[value].defaultValue)));
+        let paramValue = jsonArmTemplateParams.parameters[value].defaultValue;
+        paramValue = typeof(paramValue) == "object" ? JSON.stringify(paramValue) : paramValue;
+        armTemplateParamValues.set(`parameters('${value}')`, paramValue);
     }
 
     armTemplateParamValues.forEach((value, key) => {
@@ -279,21 +278,12 @@ function getParameterValuesFromArmTemplate(armParams: string, armTemplate: strin
     if (overrideArmParameters != null && overrideArmParameters.length > 2) {
         let cnt = 1;
         if (overrideArmParameters.startsWith('-')) {
-            while (overrideArmParameters.length > 0 && overrideArmParameters.indexOf('-') > -1 && overrideArmParameters.indexOf(' ') > -1 && cnt < 1000) {
-                cnt = cnt + 1;
-                let startIndex = overrideArmParameters.indexOf('-') + '-'.length;
-                let endIndex = overrideArmParameters.indexOf(' ');
-                let paramName = overrideArmParameters.substring(startIndex, endIndex).trim();
-                overrideArmParameters = overrideArmParameters.substring(endIndex);
-                startIndex = overrideArmParameters.indexOf(' ') + ' '.length;
-                endIndex = overrideArmParameters.indexOf(' -', startIndex);
-                if (endIndex == -1) {
-                    endIndex = overrideArmParameters.length;
-                }
-                let paramValue = sanitize(overrideArmParameters.substring(startIndex, endIndex).trim());
+            let keyValuePairs : string[] = overrideArmParameters.split("-");
 
-                armParamValues.set(`parameters('${paramName}')`, paramValue);
-                overrideArmParameters = overrideArmParameters.substring(endIndex).trim();
+            // Start with 1 as  0th will be a blank string
+            for(let i = 1; i < keyValuePairs.length; i++){
+                let kv = keyValuePairs[i].trim().split(" ");
+                armParamValues.set(`parameters('${kv[0]}')`, kv[1]);
             }
         }
 
@@ -302,21 +292,13 @@ function getParameterValuesFromArmTemplate(armParams: string, armTemplate: strin
             let overrides = yaml.load(overrideArmParameters);
             let overridesObj = JSON.parse(JSON.stringify(overrides));
             for (let key in overridesObj) {
-                let paramValue = JSON.stringify(overridesObj[key]);
-                armParamValues.set(`parameters('${key}')`, sanitize(paramValue));
+                let paramValue = typeof(overridesObj[key]) == "object" ?
+                                    JSON.stringify(overridesObj[key]) : overridesObj[key];
+                armParamValues.set(`parameters('${key}')`, paramValue);
             }
         }
     }
-
     return armParamValues;
-}
-
-function sanitize(paramValue: string): string {
-    if ((paramValue.startsWith("\"") && paramValue.endsWith("\"")) ||
-        (paramValue.startsWith("'") && paramValue.endsWith("'"))) {
-        paramValue = paramValue.substr(1, paramValue.length - 2);
-    }
-    return paramValue;
 }
 
 function removeWorkspaceNameFromResourceName(resourceName: string): string {
