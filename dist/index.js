@@ -9059,7 +9059,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.getDependentsFromArtifact = exports.checkIfArtifactExists = exports.checkIfNameExists = exports.getArtifactsFromArmTemplate = exports.replaceStrByRegex = exports.findDefaultArtifacts = exports.replaceDoubleQuoteCode = exports.replaceBackSlashCode = exports.createArmTemplate = exports.getArtifacts = void 0;
+exports.getDependentsFromArtifact = exports.checkIfArtifactExists = exports.checkIfNameExists = exports.getArtifactsFromArmTemplate = exports.replaceStrByRegex = exports.replaceDoubleQuoteCode = exports.replaceBackSlashCode = exports.createArmTemplate = exports.getArtifacts = void 0;
 var yaml = __importStar(__nccwpck_require__(2096));
 var uuid_1 = __nccwpck_require__(2884);
 var logger_1 = __nccwpck_require__(4659);
@@ -9071,12 +9071,10 @@ var quote = "48C16896271D483C916DE1C4EC6F24DBC945F900F9AB464B828EC8005364D322";
 var doublequote = "4467B65E39AA40998907771187C9B539847A7E801C5E4F0E9513C1D6154BC816";
 function getArtifacts(armParams, armTemplate, overrideArmParameters, targetWorkspaceName, targetLocation) {
     return __awaiter(this, void 0, void 0, function () {
-        var defaultArtifacts;
         return __generator(this, function (_a) {
             armTemplate = createArmTemplate(armParams, armTemplate, overrideArmParameters, targetWorkspaceName);
-            defaultArtifacts = findDefaultArtifacts(armTemplate, targetWorkspaceName);
             armTemplate = JSON.stringify(JSON.parse(armTemplate));
-            return [2 /*return*/, getArtifactsFromArmTemplate(armTemplate, targetLocation, defaultArtifacts)];
+            return [2 /*return*/, getArtifactsFromArmTemplate(armTemplate, targetLocation, targetWorkspaceName)];
         });
     });
 }
@@ -9142,31 +9140,6 @@ function replaceDoubleQuote(inputString) {
     }
     return outputString;
 }
-function findDefaultArtifacts(armTemplate, targetworkspace) {
-    var defaultArtifacts = new Map();
-    var jsonArmTemplateParams = JSON.parse(armTemplate);
-    for (var value in jsonArmTemplateParams.resources) {
-        var artifactJson = jsonArmTemplateParams.resources[value];
-        var artifactName = artifactJson.name;
-        if (common_utils_1.isDefaultArtifact(JSON.stringify(artifactJson))) {
-            if (artifactName.indexOf("/") > 0) {
-                //example `${targetworkspace}/sourceworkspace-WorkspaceDefaultStorage`;
-                var nametoreplace = artifactName.substr(artifactName.lastIndexOf("/") + 1);
-                nametoreplace = nametoreplace.substr(0, nametoreplace.lastIndexOf("-"));
-                var replacedName = artifactName.replace(nametoreplace, targetworkspace);
-                replacedName = replacedName.substr(replacedName.lastIndexOf("/") + 1);
-                nametoreplace = artifactName.substr(artifactName.lastIndexOf("/") + 1);
-                if (nametoreplace == replacedName) {
-                    // source and target workspace are same.
-                    continue;
-                }
-                defaultArtifacts.set(nametoreplace, replacedName);
-            }
-        }
-    }
-    return defaultArtifacts;
-}
-exports.findDefaultArtifacts = findDefaultArtifacts;
 function replaceParameters(armParams, armTemplate, overrideArmParameters, targetWorkspaceName) {
     logger_1.SystemLogger.info("Begin replacement of parameters in the template");
     // Build parameters
@@ -9313,16 +9286,46 @@ function skipArtifactDeployment(artifactType) {
     }
     return false;
 }
-function getArtifactsFromArmTemplate(armTemplate, targetLocation, defaultArtifacts) {
+function isDefaultLinkedService(artifactName) {
+    // We need to replace default linked service names
+    // From  oldWorkspace-workspaceDefaultStorage to newWorkspace-workspaceDefaultStorage, etc
+    // for all references of these default linkedServices.
+    // Users cannot manually create linked services which have '-' in their names.
+    var defaultLinkedService = ["-workspacedefaultsqlserver", "-workspacedefaultstorage"];
+    artifactName = artifactName.toLowerCase();
+    return (artifactName.includes(defaultLinkedService[0]) || artifactName.includes(defaultLinkedService[1]));
+}
+function changeWorkspaceNameInLinkedService(artifactName, targetWS, referenceName) {
+    if (referenceName === void 0) { referenceName = false; }
+    //From sourceWSName-WorkspaceDefaultSqlServer to TargetWS-WorkspaceDefaultSqlServer
+    if (referenceName)
+        return targetWS + artifactName.substr(artifactName.lastIndexOf('-'));
+    // From /linkedServices/sourceWS-WorkspaceDefaultSqlServer
+    // To /linkedServices/TargetWS-WorkspaceDefaultSqlServer
+    return artifactName.substr(0, artifactName.lastIndexOf('/') + 1) + targetWS + artifactName.substr(artifactName.lastIndexOf('-'));
+}
+function replaceReferenceNames(artifactsJson, targetWorkspace) {
+    var refName = /\"referenceName\": \"([a-z0-9-])+-WorkspaceDefault(Storage|SqlServer)\"/g;
+    var newDefaultStorage = "\"referenceName\": \"" + targetWorkspace + "-WorkspaceDefaultStorage\"";
+    var newDefaultSql = "\"referenceName\": \"" + targetWorkspace + "-WorkspaceDefaultSqlServer\"";
+    artifactsJson = artifactsJson.replace(refName, function (matched, unmatched) {
+        if (matched.includes("WorkspaceDefaultStorage"))
+            return newDefaultStorage;
+        return newDefaultSql;
+    });
+    return artifactsJson;
+}
+function getArtifactsFromArmTemplate(armTemplate, targetLocation, targetWorkspace) {
     logger_1.SystemLogger.info("Begin getting Artifacts From Template");
     //now get the resources out:
     var jsonArmTemplateParams = JSON.parse(armTemplate);
     var artifacts = new Array();
-    var _loop_1 = function (value) {
+    for (var value in jsonArmTemplateParams.resources) {
         var artifactJson = jsonArmTemplateParams.resources[value];
         var artifactType = artifactJson.type;
         if (skipArtifactDeployment(artifactType)) {
-            return "continue";
+            //We are not deploying these arm resources anymore
+            continue;
         }
         if (artifactType.toLowerCase().indexOf("sparkjobdefinition") > -1) {
             var fileLocation = artifactJson['properties']['jobProperties']['file'];
@@ -9331,71 +9334,14 @@ function getArtifactsFromArmTemplate(armTemplate, targetLocation, defaultArtifac
             }
         }
         artifactJson.name = removeWorkspaceNameFromResourceName(artifactJson.name);
-        var _loop_2 = function (i) {
-            var dependancyName = artifactJson.dependsOn[i];
-            defaultArtifacts.forEach(function (value, key) {
-                if (dependancyName.indexOf(key) > -1 &&
-                    dependancyName.indexOf("linkedServices") > -1) {
-                    artifactJson.dependsOn[i] = artifactJson.dependsOn[i].replace(key, value);
-                }
-            });
-        };
         for (var i = 0; i < artifactJson.dependsOn.length; i++) {
-            _loop_2(i);
-        }
-        var artifactProperties = artifactJson.properties;
-        if (artifactProperties != null) {
-            var linkedServiceName = artifactProperties.linkedServiceName;
-            if (linkedServiceName != null) {
-                var referenceName_1 = linkedServiceName.referenceName;
-                if (referenceName_1 != null) {
-                    defaultArtifacts.forEach(function (value, key) {
-                        if (referenceName_1.indexOf(key) > -1) {
-                            artifactJson.properties.linkedServiceName.referenceName = artifactJson.properties.linkedServiceName.referenceName.replace(key, value);
-                        }
-                    });
-                }
-            }
-        }
-        for (var artifactJsonValue in artifactJson.properties) {
-            if (artifactJsonValue != "typeProperties" ||
-                JSON.stringify(artifactJson.properties.typeProperties).indexOf("LinkedServiceReference") == -1) {
-                continue;
-            }
-            for (var artifactJsonTypeProperties in artifactJson.properties.typeProperties) {
-                if (JSON.stringify(artifactJson.properties.typeProperties["" + artifactJsonTypeProperties]).indexOf("LinkedServiceReference") == -1) {
-                    continue;
-                }
-                var artifactJsonTypePropertiesJson = artifactJson.properties.typeProperties["" + artifactJsonTypeProperties];
-                for (var artifactJsonTypePropertiesValues in artifactJsonTypePropertiesJson) {
-                    var artifactJsonTypePropertiesValueslinkedService = artifactJson.properties.typeProperties["" + artifactJsonTypeProperties][artifactJsonTypePropertiesValues].linkedService;
-                    if (artifactJsonTypePropertiesValueslinkedService == null) {
-                        continue;
-                    }
-                    var artifactJsonTypePropertiesValueslinkedServiceType = artifactJson.properties.typeProperties["" + artifactJsonTypeProperties][artifactJsonTypePropertiesValues].linkedService.type;
-                    if (artifactJsonTypePropertiesValueslinkedServiceType == null) {
-                        continue;
-                    }
-                    if (artifactJson.properties.typeProperties["" + artifactJsonTypeProperties][artifactJsonTypePropertiesValues].linkedService.type
-                        == "LinkedServiceReference") {
-                        defaultArtifacts.forEach(function (value, key) {
-                            if (artifactJson.properties.typeProperties["" + artifactJsonTypeProperties][artifactJsonTypePropertiesValues].linkedService.referenceName.indexOf(key) > -1) {
-                                artifactJson.properties.typeProperties["" + artifactJsonTypeProperties][artifactJsonTypePropertiesValues].linkedService.referenceName
-                                    = artifactJson.properties.typeProperties["" + artifactJsonTypeProperties][artifactJsonTypePropertiesValues].linkedService.referenceName.replace(key, value);
-                            }
-                        });
-                    }
-                }
+            var dependancyName = artifactJson.dependsOn[i];
+            if (dependancyName.includes("linkedServices/") && isDefaultLinkedService(dependancyName)) {
+                artifactJson.dependsOn[i] = changeWorkspaceNameInLinkedService(artifactJson.dependsOn[i], targetWorkspace);
             }
         }
         var artifactJsonContent = JSON.stringify(artifactJson);
-        defaultArtifacts.forEach(function (value, key) {
-            var refName = "\"referenceName\":\"" + key + "\"";
-            var refNameReplacement = "\"referenceName\":\"" + value + "\"";
-            while (artifactJsonContent.indexOf(refName) > -1) {
-                artifactJsonContent = artifactJsonContent.replace(refName, refNameReplacement);
-            }
-        });
+        artifactJsonContent = replaceReferenceNames(artifactJsonContent, targetWorkspace);
         var resource = {
             type: artifactType,
             isDefault: false,
@@ -9411,17 +9357,13 @@ function getArtifactsFromArmTemplate(armTemplate, targetLocation, defaultArtifac
         logger_1.SystemLogger.info("Found Artifact of type " + artifactType);
         if (common_utils_1.isDefaultArtifact(JSON.stringify(artifactJson))) {
             resource.isDefault = true;
-            defaultArtifacts.forEach(function (value, key) {
-                resource.name = resource.name.replace(key, value);
-            });
+            if (artifactJson.type.toLowerCase() == artifacts_enum_1.DataFactoryType.linkedservice.toLowerCase())
+                resource.name = changeWorkspaceNameInLinkedService(resource.name, targetWorkspace, true);
             logger_1.SystemLogger.info("\tWill be skipped as its a default resource.");
         }
         if (!checkIfArtifactExists(resource, artifacts)) {
             artifacts.push(resource);
         }
-    };
-    for (var value in jsonArmTemplateParams.resources) {
-        _loop_1(value);
     }
     return createDependancyTree(artifacts);
 }
@@ -9433,10 +9375,10 @@ function createDependancyTree(artifacts) {
     var iteration = 0;
     for (var i = 0; i < artifacts.length; i++) {
         //Replace backslash with \
-        artifacts[i].content = replaceDoubleQuoteCode(replaceBackSlashCode(artifacts[i].content));
-        artifacts[i].name = replaceDoubleQuoteCode(replaceBackSlashCode(artifacts[i].name));
+        artifacts[i].content = replaceBackSlashCode(artifacts[i].content);
+        artifacts[i].name = replaceBackSlashCode(artifacts[i].name);
         for (var j = 0; j < artifacts[i].dependson.length; j++) {
-            artifacts[i].dependson[j] = replaceDoubleQuoteCode(replaceBackSlashCode(artifacts[i].dependson[j]));
+            artifacts[i].dependson[j] = replaceBackSlashCode(artifacts[i].dependson[j]);
         }
     }
     // This is the max times, we will go through the artifacts to look for dependancies. So this is the max level of dependancies supported.
@@ -9448,7 +9390,7 @@ function createDependancyTree(artifacts) {
             artifactsBatches.push(artifactBatch);
             artifactBatch = new Array();
         }
-        var _loop_3 = function () {
+        var _loop_1 = function () {
             if (checkIfArtifactExists(artifacts[res], artifactsOrdered)) {
                 return "continue";
             }
@@ -9480,7 +9422,7 @@ function createDependancyTree(artifacts) {
             }
         };
         for (var res = 0; res < artifacts.length; res++) {
-            _loop_3();
+            _loop_1();
         }
         logger_1.SystemLogger.info("Iteration " + iteration + " Figured out deployment order for " + artifactsOrdered.length + " / " + artifacts.length + " Artifacts for Dependencies.");
     }
