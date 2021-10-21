@@ -9678,7 +9678,7 @@ var DefaultArtifact = /** @class */ (function () {
     DefaultArtifact.prototype.matches = function (name, type, dataFactoryType) {
         return name.toLowerCase().includes(this.name.toLowerCase())
             && type.toLowerCase() === this.type.toLowerCase()
-            && dataFactoryType === this.dataFactoryType;
+            && dataFactoryType.toLowerCase() === this.dataFactoryType.toLowerCase();
     };
     DefaultArtifact.DefaultArtifacts = [
         new DefaultArtifact("workspacedefaultsqlserver", "azuresqldw", artifacts_enum_1.DataFactoryType.linkedservice),
