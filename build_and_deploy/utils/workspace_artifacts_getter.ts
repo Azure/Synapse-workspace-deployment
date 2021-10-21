@@ -13,7 +13,7 @@ const client: httpClient.HttpClient = new httpClient.HttpClient(userAgent, undef
 
 const artifactTypesToQuery:Artifact[] = [
     Artifact.credential,
-    Artifact.dataflow,
+    //Artifact.dataflow,
     Artifact.dataset,
     Artifact.integrationruntime,
     Artifact.linkedservice,
