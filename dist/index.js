@@ -9305,9 +9305,9 @@ function changeWorkspaceNameInLinkedService(artifactName, targetWS, referenceNam
     return artifactName.substr(0, artifactName.lastIndexOf('/') + 1) + targetWS + artifactName.substr(artifactName.lastIndexOf('-'));
 }
 function replaceReferenceNames(artifactsJson, targetWorkspace) {
-    var refName = /\"referenceName\": \"([a-z0-9-])+-WorkspaceDefault(Storage|SqlServer)\"/g;
-    var newDefaultStorage = "\"referenceName\": \"" + targetWorkspace + "-WorkspaceDefaultStorage\"";
-    var newDefaultSql = "\"referenceName\": \"" + targetWorkspace + "-WorkspaceDefaultSqlServer\"";
+    var refName = /\"referenceName\":\"([a-z0-9-])+-WorkspaceDefault(Storage|SqlServer)\"/g;
+    var newDefaultStorage = "\"referenceName\":\"" + targetWorkspace + "-WorkspaceDefaultStorage\"";
+    var newDefaultSql = "\"referenceName\":\"" + targetWorkspace + "-WorkspaceDefaultSqlServer\"";
     artifactsJson = artifactsJson.replace(refName, function (matched, unmatched) {
         if (matched.includes("WorkspaceDefaultStorage"))
             return newDefaultStorage;

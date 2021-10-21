@@ -305,10 +305,10 @@ function changeWorkspaceNameInLinkedService(artifactName: string, targetWS: stri
 }
 
 function replaceReferenceNames(artifactsJson: string, targetWorkspace: string): string{
-    let refName = /\"referenceName\": \"([a-z0-9-])+-WorkspaceDefault(Storage|SqlServer)\"/g;
+    let refName = /\"referenceName\":\"([a-z0-9-])+-WorkspaceDefault(Storage|SqlServer)\"/g;
 
-    let newDefaultStorage = `\"referenceName\": \"${targetWorkspace}-WorkspaceDefaultStorage\"`;
-    let newDefaultSql = `\"referenceName\": \"${targetWorkspace}-WorkspaceDefaultSqlServer\"`;
+    let newDefaultStorage = `\"referenceName\":\"${targetWorkspace}-WorkspaceDefaultStorage\"`;
+    let newDefaultSql = `\"referenceName\":\"${targetWorkspace}-WorkspaceDefaultSqlServer\"`;
 
     artifactsJson = artifactsJson.replace(refName, (matched, unmatched) => {
         if(matched.includes("WorkspaceDefaultStorage")) return newDefaultStorage;
