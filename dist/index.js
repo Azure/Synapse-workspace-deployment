@@ -9258,7 +9258,7 @@ function getParameterValuesFromArmTemplate(armParams, armTemplate, overrideArmPa
             // Start with 1 as  0th will be a blank string
             for (var i = 1; i < keyValuePairs.length; i++) {
                 var kv = keyValuePairs[i].trim().split(" ");
-                armParamValues.set("parameters('" + kv[0] + "')", kv[1]);
+                armParamValues.set("parameters('" + kv[0] + "')", sanitize(kv[1]));
             }
         }
         // Means user has give a yaml as input
@@ -9273,6 +9273,13 @@ function getParameterValuesFromArmTemplate(armParams, armTemplate, overrideArmPa
         }
     }
     return armParamValues;
+}
+function sanitize(paramValue) {
+    if ((paramValue.startsWith("\"") && paramValue.endsWith("\"")) ||
+        (paramValue.startsWith("'") && paramValue.endsWith("'"))) {
+        paramValue = paramValue.substr(1, paramValue.length - 2);
+    }
+    return paramValue;
 }
 function removeWorkspaceNameFromResourceName(resourceName) {
     while (resourceName.indexOf("/") >= 0) {

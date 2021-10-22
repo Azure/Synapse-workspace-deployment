@@ -251,7 +251,7 @@ function getParameterValuesFromArmTemplate(armParams: string, armTemplate: strin
             // Start with 1 as  0th will be a blank string
             for(let i = 1; i < keyValuePairs.length; i++){
                 let kv = keyValuePairs[i].trim().split(" ");
-                armParamValues.set(`parameters('${kv[0]}')`, kv[1]);
+                armParamValues.set(`parameters('${kv[0]}')`, sanitize(kv[1]));
             }
         }
 
@@ -267,6 +267,15 @@ function getParameterValuesFromArmTemplate(armParams: string, armTemplate: strin
         }
     }
     return armParamValues;
+}
+
+function sanitize(paramValue: string): string{
+    if((paramValue.startsWith("\"") && paramValue.endsWith("\"")) ||
+        (paramValue.startsWith("'") && paramValue.endsWith("'"))) {
+        paramValue = paramValue.substr(1, paramValue.length -2);
+    }
+
+    return paramValue;
 }
 
 function removeWorkspaceNameFromResourceName(resourceName: string): string {
