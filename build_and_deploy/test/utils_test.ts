@@ -13,7 +13,7 @@ const chai_object = require('chai');
 const sinon = require("sinon");
 const expect = chai_object.expect;
 const assert = chai_object.assert;
-/*
+
 describe("Test deploy utils", () => {
 
     it('should fetch params', async () => {
@@ -40,22 +40,13 @@ describe("Test deploy utils", () => {
 
 describe("Test Arm template utils", () => {
 
-    it('should populate the arm template', () => {
-        let targetWorkspaceName = "MochaTesting";
-        let completeArmTemplate = createArmTemplate(armParams, armTemplate, "", targetWorkspaceName);
-        expect(completeArmTemplate).to.be.equal(expectedArmTemplate);
-
-        let defaultArtifacts = findDefaultArtifacts(completeArmTemplate, targetWorkspaceName);
-        expect(defaultArtifacts.get('github-cicd-1-WorkspaceDefaultSqlServer')).to.be.equal('MochaTesting-WorkspaceDefaultSqlServer');
-    });
 
     it('should populate arm resources and dependency tree', async () => {
         let targetWorkspaceName = "MochaTesting";
         let completeArmTemplate = createArmTemplate(armParams, armTemplate_complete, "", targetWorkspaceName);
-        let defaultArtifacts = findDefaultArtifacts(completeArmTemplate, targetWorkspaceName);
         completeArmTemplate = JSON.stringify(JSON.parse(completeArmTemplate));
 
-        let resources: Resource[][] = await getArtifactsFromArmTemplate(completeArmTemplate, 'useast', defaultArtifacts);
+        let resources: Resource[][] = await getArtifactsFromArmTemplate(completeArmTemplate, 'useast', targetWorkspaceName);
 
         expect(resources[0][0].type).to.be.equal('Microsoft.Synapse/workspaces/notebooks');
         expect(resources[0][1].type).to.be.equal('Microsoft.Synapse/workspaces/integrationRuntimes');
@@ -66,11 +57,10 @@ describe("Test Arm template utils", () => {
     it('should fail while creating dependency tree', () => {
         let targetWorkspaceName = "MochaTesting";
         let completeArmTemplate = createArmTemplate(armParams, armTemplate, "", targetWorkspaceName);
-        let defaultArtifacts = findDefaultArtifacts(completeArmTemplate, targetWorkspaceName);
         completeArmTemplate = JSON.stringify(JSON.parse(completeArmTemplate));
 
         assert.throws(function () {
-            getArtifactsFromArmTemplate(completeArmTemplate, 'useast', defaultArtifacts), Error,
+            getArtifactsFromArmTemplate(completeArmTemplate, 'useast', targetWorkspaceName), Error,
                 "Could not figure out full dependency model. Some dependencies may not exist in template."
         });
 
@@ -108,4 +98,4 @@ describe("Test SystemLogger utils", () => {
         expect(SystemLogger.error("1")).to.be.equal("1");
         expect(SystemLogger.warn("1")).to.be.equal("1");
     });
-}); */
+});
