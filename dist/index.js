@@ -10188,7 +10188,7 @@ var requestOptions = {};
 var client = new httpClient.HttpClient(userAgent, undefined, requestOptions);
 var artifactTypesToQuery = [
     artifacts_enum_1.Artifact.credential,
-    //Artifact.dataflow,
+    artifacts_enum_1.Artifact.dataflow,
     artifacts_enum_1.Artifact.dataset,
     artifacts_enum_1.Artifact.integrationruntime,
     artifacts_enum_1.Artifact.linkedservice,

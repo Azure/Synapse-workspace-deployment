@@ -350,7 +350,6 @@ export function getArtifactsFromArmTemplate(armTemplate: string, targetLocation:
         }
 
         let artifactJsonContent: string = JSON.stringify(artifactJson);
-
         artifactJsonContent = replaceReferenceNames(artifactJsonContent, targetWorkspace);
 
         let resource: Resource = {
