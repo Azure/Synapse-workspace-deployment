@@ -245,24 +245,13 @@ function getParameterValuesFromArmTemplate(armParams: string, armTemplate: strin
     // Checking length to be > 2 for someone to specify name value, space in between etc. just to be on safe side.
     if(overrideArmParameters != null && overrideArmParameters.length > 2)
     {
-        let cnt = 1;
         if(overrideArmParameters.startsWith('-')){
-            while (overrideArmParameters.length > 0 && overrideArmParameters.indexOf('-') > -1 && overrideArmParameters.indexOf(' ') > -1 && cnt < 1000) {
-                cnt = cnt + 1;
-                let startIndex = overrideArmParameters.indexOf('-') + '-'.length;
-                let endIndex = overrideArmParameters.indexOf(' ');
-                let paramName = overrideArmParameters.substring(startIndex, endIndex).trim();
-                overrideArmParameters = overrideArmParameters.substring(endIndex);
-                startIndex = overrideArmParameters.indexOf(' ') + ' '.length;
-                endIndex = overrideArmParameters.indexOf(' -', startIndex);
-                if (endIndex == -1) {
-                    endIndex = overrideArmParameters.length;
-                }
-                let paramValue = sanitize(overrideArmParameters.substring(startIndex, endIndex).trim());
-
-                armParamValues.set(`parameters('${paramName}')`, paramValue);
-                overrideArmParameters = overrideArmParameters.substring(endIndex).trim();
-            }
+            overrideArmParameters = overrideArmParameters.substr(1);
+            let params = overrideArmParameters.split(" -");
+            params.forEach((param) =>{
+                let keyVal = param.trim().split(" ");
+                armParamValues.set(`parameters('${keyVal[0]}')`, sanitize(keyVal[1]));
+            });
         }
 
         // Means user has give a yaml as input

@@ -9252,23 +9252,13 @@ function getParameterValuesFromArmTemplate(armParams, armTemplate, overrideArmPa
     // Add any overrides.-key1 value1 -key2 value2 -key3 value3
     // Checking length to be > 2 for someone to specify name value, space in between etc. just to be on safe side.
     if (overrideArmParameters != null && overrideArmParameters.length > 2) {
-        var cnt = 1;
         if (overrideArmParameters.startsWith('-')) {
-            while (overrideArmParameters.length > 0 && overrideArmParameters.indexOf('-') > -1 && overrideArmParameters.indexOf(' ') > -1 && cnt < 1000) {
-                cnt = cnt + 1;
-                var startIndex = overrideArmParameters.indexOf('-') + '-'.length;
-                var endIndex = overrideArmParameters.indexOf(' ');
-                var paramName = overrideArmParameters.substring(startIndex, endIndex).trim();
-                overrideArmParameters = overrideArmParameters.substring(endIndex);
-                startIndex = overrideArmParameters.indexOf(' ') + ' '.length;
-                endIndex = overrideArmParameters.indexOf(' -', startIndex);
-                if (endIndex == -1) {
-                    endIndex = overrideArmParameters.length;
-                }
-                var paramValue = sanitize(overrideArmParameters.substring(startIndex, endIndex).trim());
-                armParamValues.set("parameters('" + paramName + "')", paramValue);
-                overrideArmParameters = overrideArmParameters.substring(endIndex).trim();
-            }
+            overrideArmParameters = overrideArmParameters.substr(1);
+            var params = overrideArmParameters.split(" -");
+            params.forEach(function (param) {
+                var keyVal = param.trim().split(" ");
+                armParamValues.set("parameters('" + keyVal[0] + "')", sanitize(keyVal[1]));
+            });
         }
         // Means user has give a yaml as input
         else {
