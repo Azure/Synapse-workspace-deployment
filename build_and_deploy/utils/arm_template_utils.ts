@@ -243,26 +243,35 @@ function getParameterValuesFromArmTemplate(armParams: string, armTemplate: strin
 
     // Add any overrides.-key1 value1 -key2 value2 -key3 value3
     // Checking length to be > 2 for someone to specify name value, space in between etc. just to be on safe side.
-    if (overrideArmParameters != null && overrideArmParameters.length > 2) {
+    if(overrideArmParameters != null && overrideArmParameters.length > 2)
+    {
         let cnt = 1;
-        if (overrideArmParameters.startsWith('-')) {
-            let keyValuePairs : string[] = overrideArmParameters.split("-");
+        if(overrideArmParameters.startsWith('-')){
+            while (overrideArmParameters.length > 0 && overrideArmParameters.indexOf('-') > -1 && overrideArmParameters.indexOf(' ') > -1 && cnt < 1000) {
+                cnt = cnt + 1;
+                let startIndex = overrideArmParameters.indexOf('-') + '-'.length;
+                let endIndex = overrideArmParameters.indexOf(' ');
+                let paramName = overrideArmParameters.substring(startIndex, endIndex).trim();
+                overrideArmParameters = overrideArmParameters.substring(endIndex);
+                startIndex = overrideArmParameters.indexOf(' ') + ' '.length;
+                endIndex = overrideArmParameters.indexOf(' -', startIndex);
+                if (endIndex == -1) {
+                    endIndex = overrideArmParameters.length;
+                }
+                let paramValue = sanitize(overrideArmParameters.substring(startIndex, endIndex).trim());
 
-            // Start with 1 as  0th will be a blank string
-            for(let i = 1; i < keyValuePairs.length; i++){
-                let kv = keyValuePairs[i].trim().split(" ");
-                armParamValues.set(`parameters('${kv[0]}')`, sanitize(kv[1]));
+                armParamValues.set(`parameters('${paramName}')`, paramValue);
+                overrideArmParameters = overrideArmParameters.substring(endIndex).trim();
             }
         }
 
         // Means user has give a yaml as input
-        else {
+        else{
             let overrides = yaml.load(overrideArmParameters);
             let overridesObj = JSON.parse(JSON.stringify(overrides));
-            for (let key in overridesObj) {
-                let paramValue = typeof(overridesObj[key]) == "object" ?
-                                    JSON.stringify(overridesObj[key]) : overridesObj[key];
-                armParamValues.set(`parameters('${key}')`, paramValue);
+            for(let key in overridesObj){
+                let paramValue = JSON.stringify(overridesObj[key]);
+                armParamValues.set(`parameters('${key}')`, sanitize(paramValue));
             }
         }
     }

@@ -9254,11 +9254,20 @@ function getParameterValuesFromArmTemplate(armParams, armTemplate, overrideArmPa
     if (overrideArmParameters != null && overrideArmParameters.length > 2) {
         var cnt = 1;
         if (overrideArmParameters.startsWith('-')) {
-            var keyValuePairs = overrideArmParameters.split("-");
-            // Start with 1 as  0th will be a blank string
-            for (var i = 1; i < keyValuePairs.length; i++) {
-                var kv = keyValuePairs[i].trim().split(" ");
-                armParamValues.set("parameters('" + kv[0] + "')", sanitize(kv[1]));
+            while (overrideArmParameters.length > 0 && overrideArmParameters.indexOf('-') > -1 && overrideArmParameters.indexOf(' ') > -1 && cnt < 1000) {
+                cnt = cnt + 1;
+                var startIndex = overrideArmParameters.indexOf('-') + '-'.length;
+                var endIndex = overrideArmParameters.indexOf(' ');
+                var paramName = overrideArmParameters.substring(startIndex, endIndex).trim();
+                overrideArmParameters = overrideArmParameters.substring(endIndex);
+                startIndex = overrideArmParameters.indexOf(' ') + ' '.length;
+                endIndex = overrideArmParameters.indexOf(' -', startIndex);
+                if (endIndex == -1) {
+                    endIndex = overrideArmParameters.length;
+                }
+                var paramValue = sanitize(overrideArmParameters.substring(startIndex, endIndex).trim());
+                armParamValues.set("parameters('" + paramName + "')", paramValue);
+                overrideArmParameters = overrideArmParameters.substring(endIndex).trim();
             }
         }
         // Means user has give a yaml as input
@@ -9266,9 +9275,8 @@ function getParameterValuesFromArmTemplate(armParams, armTemplate, overrideArmPa
             var overrides = yaml.load(overrideArmParameters);
             var overridesObj = JSON.parse(JSON.stringify(overrides));
             for (var key in overridesObj) {
-                var paramValue = typeof (overridesObj[key]) == "object" ?
-                    JSON.stringify(overridesObj[key]) : overridesObj[key];
-                armParamValues.set("parameters('" + key + "')", paramValue);
+                var paramValue = JSON.stringify(overridesObj[key]);
+                armParamValues.set("parameters('" + key + "')", sanitize(paramValue));
             }
         }
     }
