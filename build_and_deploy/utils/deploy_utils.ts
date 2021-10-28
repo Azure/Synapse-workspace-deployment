@@ -47,6 +47,13 @@ export async function getParams(dataplane: boolean = false, env: string = ""): P
         var activeDirectoryEndpointUrl = getAdEndpointUrl(env);
         var resourceManagerEndpointUrl = getRmEndpointUrl(env);
 
+        if (!managedIdentity) {
+            // TODO: find an official regex for validating the following values
+            if (clientId.match(/^[-\w]+$/)) { throw new Error("Client ID is incorrect")}
+            if (clientSecret.match(/^[-\w]+$/)) { throw new Error("Client Secret is incorrect")}
+            if (tenantId.match(/^[-\w]+$/)) { throw new Error("Tenant ID is incorrect")}
+        }
+
     } catch (err) {
         throw new Error("Unable to parse the secret: " + err);
     }

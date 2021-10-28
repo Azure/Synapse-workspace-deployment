@@ -16,6 +16,7 @@ const expect = chai_object.expect;
 const assert = chai_object.assert;
 
 describe("Test deploy utils", () => {
+    afterEach(() => { sinon.restore(); })
 
     it('should fetch params', async () => {
         let stubbedGetBearer = sinon.stub(pcu, "getBearer").callsFake(() => { return "bearer" });
@@ -25,6 +26,38 @@ describe("Test deploy utils", () => {
         expect(params.clientSecret).to.be.equal('clientSecret');
         expect(params.subscriptionId).to.be.equal('subscriptionId');
         expect(params.tenantId).to.be.equal('tenantId');
+        expect(params.activeDirectoryEndpointUrl).to.be.equal('https://login.microsoftonline.com/');
+        expect(params.resourceManagerEndpointUrl).to.be.equal('https://management.azure.com/');
+        expect(params.bearer).to.be.equal('bearer');
+        expect(params.resourceGroup).to.be.equal('resourceGroup');
+    });
+
+    it('should fail if service principal information is incomplete when not using managed identity', async () => {
+        let stubbedGetBearer = sinon.stub(pcu, "getBearer").callsFake(() => { return "bearer" });
+        let stubbedSPAttributes = sinon.stub(core, "getInput").callsFake((x: any) => { return x === "Environment" ? "Azure Public" : x })
+            .withArgs('managedIdentity').returns(false)
+            .withArgs('clientID').returns('')
+            .withArgs('clientSecret').returns('')
+            .withArgs('tenantId').returns('');
+
+        getParams().catch(error => expect(error).to.be.an(Error))
+
+    });
+
+    it('should not fail if using managed identity and service principle information is incomplete', async () => {
+        let stubbedGetBearer = sinon.stub(pcu, "getBearer").callsFake(() => { return "bearer" });
+        let stubbedSPAttributes = sinon.stub(core, "getInput").callsFake((x: any) => { return x === "Environment" ? "Azure Public" : x })
+            .withArgs('managedIdentity').returns(true)
+            .withArgs('clientId').returns('')
+            .withArgs('clientSecret').returns('')
+            .withArgs('tenantId').returns('');
+
+        let params = await getParams();
+        expect(params.managedIdentity).to.be.equal(true);
+        expect(params.clientId).to.be.equal('');
+        expect(params.clientSecret).to.be.equal('');
+        expect(params.subscriptionId).to.be.equal('subscriptionId');
+        expect(params.tenantId).to.be.equal('');
         expect(params.activeDirectoryEndpointUrl).to.be.equal('https://login.microsoftonline.com/');
         expect(params.resourceManagerEndpointUrl).to.be.equal('https://management.azure.com/');
         expect(params.bearer).to.be.equal('bearer');
