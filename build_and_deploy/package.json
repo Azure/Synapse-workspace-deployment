@@ -6,7 +6,8 @@
   "scripts": {
     "test": "mocha",
     "start": "node entrypoint.js",
-    "build": "tsc"
+    "build": "tsc",
+    "build:dist": "ncc build main.ts -o ../dist"
   },
   "keywords": [],
   "author": "Aaditya Sharma",
@@ -38,6 +39,7 @@
   },
   "devDependencies": {
     "@types/uuid": "^8.3.0",
+    "@vercel/ncc": "^0.31.1",
     "chai": "^4.3.0",
     "mocha": "^8.3.0",
     "node-stream-zip": "^1.11.3",
