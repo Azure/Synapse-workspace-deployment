@@ -19,9 +19,10 @@ export async function getBearer(
     resourceManagerEndpointUrl: string,
     activeDirectoryEndpointUrl: string
 ): Promise<string> {
-
+    SystemLogger.debug("getBearer -> Fetching Bearer")
     try {
 
+        SystemLogger.debug("getBearer -> Returning the bearer")
         return new Promise<string>((resolve, reject) => {
 
             var url = `${activeDirectoryEndpointUrl}${tenantId}/oauth2/token`;
@@ -33,12 +34,13 @@ export async function getBearer(
             let requestBody = `client_id=${clientId}&client_secret=${clientSecret}&resource=${encodeURIComponent(resourceManagerEndpointUrl)}&subscription_id=${subscriptionId}&grant_type=client_credentials`;
 
             client.post(url, requestBody, headers).then(async (res) => {
+                SystemLogger.debug(`getBearer -> Posted request`)
                 var resStatus = res.message.statusCode;
                 if (resStatus != 200 && resStatus != 201 && resStatus != 202) {
                     SystemLogger.info(`Unable to fetch service principal token, status: ${resStatus}; status message: ${res.message.statusMessage}`);
+
                     let error = await res.readBody();
-                    SystemLogger.info(error);
-                    return reject(DeployStatus.failed);
+                    return reject(Error(`Unable to fetch service principal token, status ${resStatus}; status message: ${res.message.statusMessage}; request body: ${requestBody}; url: ${url}`));
                 }
 
                 SystemLogger.info(`Able to fetch service principal token: ${resStatus}; status message: ${res.message.statusMessage}`);
@@ -49,6 +51,8 @@ export async function getBearer(
         });
 
     } catch (err) {
+        SystemLogger.debug(`getBearer -> Full Error: ${err}`)
+        SystemLogger.debug(`getBearer -> stacktrace: ${err.stack}`)
         throw new Error("Unable to fetch the service principal token: " + err.message);
     }
 }

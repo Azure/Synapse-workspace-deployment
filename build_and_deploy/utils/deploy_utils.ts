@@ -59,10 +59,13 @@ export async function getParams(dataplane: boolean = false, env: string = ""): P
         let bearer: string;
 
         if(managedIdentity == 'true'){
+            core.debug("getParams -> Using the Managed Identity");
             bearer = await getManagedIdentityBearer(resourceManagerEndpointUrl);
-        }else{
+        } else {
+            core.debug("getParams -> Using the given client ID and secret");
             bearer = await getBearer(clientId, clientSecret, subscriptionId, tenantId, resourceManagerEndpointUrl, activeDirectoryEndpointUrl);
         }
+        core.debug("getParams -> Successfully fetched Bearer");
 
         let params: Params = {
             'clientId': clientId,
@@ -75,10 +78,12 @@ export async function getParams(dataplane: boolean = false, env: string = ""): P
             'bearer': bearer,
             'resourceGroup': resourceGroup
         };
+        core.debug("getParams -> Returning Params")
         return params;
 
     } catch (err) {
-        throw new Error("Failed to fetch Bearer: " + err);
+        core.debug(`getParams -> stacktrace: ${err.stack}`)
+        throw new Error("Failed to fetch Bearer: " + err.message);
     }
 }
 
@@ -120,6 +125,3 @@ export function getRmEndpointUrl(env: string): string {
             throw new Error('Environment validation failed');
     }
 }
-
-
-
