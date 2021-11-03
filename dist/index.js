@@ -554,7 +554,7 @@ var ArtifactClient = /** @class */ (function () {
     };
     ArtifactClient.prototype.checkStatus = function (url, name, token) {
         return __awaiter(this, void 0, void 0, function () {
-            var timeout, delayMilliSecs, currentTime, nbName, res, resStatus, body, responseJson, status;
+            var timeout, delayMilliSecs, currentTime, nbName, res, resStatus, body, msg, response, responseJson, status;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
@@ -573,13 +573,18 @@ var ArtifactClient = /** @class */ (function () {
                     case 2:
                         res = _a.sent();
                         resStatus = res.message.statusCode;
-                        logger_1.SystemLogger.info("For artifact: " + name + ": Checkstatus: " + resStatus + "; status message: " + res.message.statusMessage);
-                        if (resStatus != 200 && resStatus != 201 && resStatus != 202) {
-                            throw new Error("Checkstatus => status: " + resStatus + "; status message: " + res.message.statusMessage);
-                        }
                         return [4 /*yield*/, res.readBody()];
                     case 3:
                         body = _a.sent();
+                        logger_1.SystemLogger.info("For artifact: " + name + ": Checkstatus: " + resStatus + "; status message: " + res.message.statusMessage);
+                        if (resStatus != 200 && resStatus != 201 && resStatus != 202) {
+                            msg = res.message.statusMessage;
+                            response = JSON.parse(body);
+                            if (body != null && response.error != null && response.error.message != null) {
+                                msg = response.error.message;
+                            }
+                            throw new Error("Checkstatus => status: " + resStatus + "; status message: " + msg);
+                        }
                         if (!!body) return [3 /*break*/, 5];
                         return [4 /*yield*/, this.delay(delayMilliSecs)];
                     case 4:
@@ -8843,46 +8848,48 @@ var Orchestrator = /** @class */ (function () {
     };
     Orchestrator.prototype.deployBatch = function (artifactClient, artifactsToDeploy, targetWorkspace, environment) {
         return __awaiter(this, void 0, void 0, function () {
-            var _i, artifactsToDeploy_1, resource, artifactTypeToDeploy, result;
+            var skipManagedPE, _i, artifactsToDeploy_1, resource, artifactTypeToDeploy, result;
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0:
-                        _i = 0, artifactsToDeploy_1 = artifactsToDeploy;
-                        _a.label = 1;
+                    case 0: return [4 /*yield*/, workspace_artifacts_getter_1.SKipManagedPE(targetWorkspace, environment)];
                     case 1:
-                        if (!(_i < artifactsToDeploy_1.length)) return [3 /*break*/, 6];
+                        skipManagedPE = _a.sent();
+                        _i = 0, artifactsToDeploy_1 = artifactsToDeploy;
+                        _a.label = 2;
+                    case 2:
+                        if (!(_i < artifactsToDeploy_1.length)) return [3 /*break*/, 7];
                         resource = artifactsToDeploy_1[_i];
                         if (resource.isDefault) {
                             logger_1.SystemLogger.info("Skipping deployment of " + resource.name + " as its a default workspace resource.");
-                            return [3 /*break*/, 5];
+                            return [3 /*break*/, 6];
                         }
                         artifactTypeToDeploy = artifacts_client_1.typeMap.get(resource.type.toLowerCase());
                         if (!resource.content) {
                             logger_1.SystemLogger.info("Empty artifactMap of type : " + resource.type + " skipping deployment");
-                            return [3 /*break*/, 5];
+                            return [3 /*break*/, 6];
                         }
                         logger_1.SystemLogger.info("Deploy " + artifactTypeToDeploy + " " + resource.type);
                         result = void 0;
-                        if (!this.skipDeployment(artifactTypeToDeploy)) return [3 /*break*/, 2];
+                        if (!(this.skipDeployment(artifactTypeToDeploy) || (skipManagedPE && artifactTypeToDeploy == artifacts_enum_1.Artifact.managedprivateendpoints))) return [3 /*break*/, 3];
                         // Currently not supporting Sql and spark pools. Skipping
                         //result = await armclient.deploy(resource.content);
                         logger_1.SystemLogger.info("Deployment of type " + artifactsToDeploy + " is not currently supported.");
-                        return [3 /*break*/, 5];
-                    case 2: return [4 /*yield*/, artifactClient.deployArtifact(artifactTypeToDeploy, resource, targetWorkspace, environment)];
-                    case 3:
+                        return [3 /*break*/, 6];
+                    case 3: return [4 /*yield*/, artifactClient.deployArtifact(artifactTypeToDeploy, resource, targetWorkspace, environment)];
+                    case 4:
                         // Do the artifact deployment
                         result = _a.sent();
-                        _a.label = 4;
-                    case 4:
+                        _a.label = 5;
+                    case 5:
                         logger_1.SystemLogger.info("Deployment status : " + result);
                         if (result != deploy_utils_1.DeployStatus.success) {
                             throw new Error("For Artifact " + resource.name + ": Failure in deployment: " + result);
                         }
-                        _a.label = 5;
-                    case 5:
+                        _a.label = 6;
+                    case 6:
                         _i++;
-                        return [3 /*break*/, 1];
-                    case 6: return [2 /*return*/];
+                        return [3 /*break*/, 2];
+                    case 7: return [2 /*return*/];
                 }
             });
         });
@@ -10246,7 +10253,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.getDependentsFromArtifactFromWorkspace = exports.getArtifactsToDeleteFromWorkspaceInOrder = exports.getArtifactsToDeleteFromWorkspace = exports.getArtifactsFromWorkspace = exports.getArtifactsFromWorkspaceOfType = void 0;
+exports.SKipManagedPE = exports.getDependentsFromArtifactFromWorkspace = exports.getArtifactsToDeleteFromWorkspaceInOrder = exports.getArtifactsToDeleteFromWorkspace = exports.getArtifactsFromWorkspace = exports.getArtifactsFromWorkspaceOfType = void 0;
 var artifacts_client_1 = __nccwpck_require__(5131);
 var deployUtils = __importStar(__nccwpck_require__(3850));
 var httpClient = __importStar(__nccwpck_require__(6291));
@@ -10528,6 +10535,41 @@ function crawlArtifacts(artifactContent, dependants, key) {
     }
     return false;
 }
+function SKipManagedPE(targetWorkspaceName, environment) {
+    return __awaiter(this, void 0, void 0, function () {
+        var params, token, headers, resourceUrl, resp;
+        var _this = this;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0: return [4 /*yield*/, deployUtils.getParams(true, environment)];
+                case 1:
+                    params = _a.sent();
+                    token = params.bearer;
+                    headers = {
+                        'Authorization': "Bearer " + token,
+                        'Content-Type': 'application/json',
+                        'User-Agent': userAgent
+                    };
+                    resourceUrl = getResourceFromWorkspaceUrl(targetWorkspaceName, environment, artifacts_enum_1.Artifact.managedprivateendpoints);
+                    resp = new Promise(function (resolve, reject) {
+                        client.get(resourceUrl, headers).then(function (res) { return __awaiter(_this, void 0, void 0, function () {
+                            var resStatus;
+                            return __generator(this, function (_a) {
+                                resStatus = res.message.statusCode;
+                                if (resStatus != 200 && resStatus != 201 && resStatus != 202) {
+                                    logger_1.SystemLogger.info("Failed to fetch workspace info, status: " + resStatus + "; status message: " + res.message.statusMessage);
+                                    return [2 /*return*/, resolve(true)];
+                                }
+                                return [2 /*return*/, resolve(false)];
+                            });
+                        }); });
+                    });
+                    return [2 /*return*/, resp];
+            }
+        });
+    });
+}
+exports.SKipManagedPE = SKipManagedPE;
 //# sourceMappingURL=workspace_artifacts_getter.js.map
 
 /***/ }),

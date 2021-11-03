@@ -391,11 +391,16 @@ export class ArtifactClient {
 
             var res = await this.client.get(url, this.getHeaders(token));
             var resStatus = res.message.statusCode;
+            var body = await res.readBody();
             SystemLogger.info(`For artifact: ${name}: Checkstatus: ${resStatus}; status message: ${res.message.statusMessage}`);
             if (resStatus != 200 && resStatus != 201 && resStatus != 202) {
-                throw new Error(`Checkstatus => status: ${resStatus}; status message: ${res.message.statusMessage}`);
-            }
-            var body = await res.readBody();
+                let msg = res.message.statusMessage;
+                let response = JSON.parse(body);
+                if(body != null && response.error != null && response.error.message != null) {
+                    msg = response.error.message;
+                }
+                throw new Error(`Checkstatus => status: ${resStatus}; status message: ${msg}`);            }
+
             if (!body) {
                 await this.delay(delayMilliSecs);
                 continue;

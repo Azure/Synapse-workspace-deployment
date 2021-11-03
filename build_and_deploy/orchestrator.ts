@@ -12,7 +12,7 @@ import { getWorkspaceLocation } from "./utils/service_principal_client_utils";
 import {
     getArtifactsFromWorkspace,
     getArtifactsToDeleteFromWorkspace,
-    getArtifactsToDeleteFromWorkspaceInOrder
+    getArtifactsToDeleteFromWorkspaceInOrder, SKipManagedPE
 } from "./utils/workspace_artifacts_getter";
 
 export class Orchestrator {
@@ -101,6 +101,8 @@ export class Orchestrator {
     private async deployBatch(artifactClient: ArtifactClient, artifactsToDeploy: Resource[],
         targetWorkspace: string, environment: string) {
 
+        let skipManagedPE = await SKipManagedPE(targetWorkspace, environment);
+
         for (let resource of artifactsToDeploy) {
 
             if (resource.isDefault) {
@@ -116,7 +118,7 @@ export class Orchestrator {
 
             SystemLogger.info(`Deploy ${artifactTypeToDeploy} ${resource.type}`);
             let result: string;
-            if (this.skipDeployment(artifactTypeToDeploy)) {
+            if (this.skipDeployment(artifactTypeToDeploy) || (skipManagedPE && artifactTypeToDeploy == Artifact.managedprivateendpoints)) {
                 // Currently not supporting Sql and spark pools. Skipping
                 //result = await armclient.deploy(resource.content);
                 SystemLogger.info(`Deployment of type ${artifactsToDeploy} is not currently supported.`);
