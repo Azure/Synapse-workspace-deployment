@@ -335,12 +335,11 @@ export async function SKipManagedPE(targetWorkspaceName: string, environment: st
             var resStatus = res.message.statusCode;
 
             if (resStatus != 200 && resStatus != 201 && resStatus != 202) {
-                SystemLogger.info(`Failed to fetch workspace info, status: ${resStatus}; status message: ${res.message.statusMessage}`);
-                return resolve(true);
+                let body = await res.readBody();
+                if(body.includes("does not have a managed virtual network associated"))
+                    return resolve(true);
             }
-
             return resolve(false);
-
         });
     });
 

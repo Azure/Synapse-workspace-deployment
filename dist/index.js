@@ -10553,14 +10553,20 @@ function SKipManagedPE(targetWorkspaceName, environment) {
                     resourceUrl = getResourceFromWorkspaceUrl(targetWorkspaceName, environment, artifacts_enum_1.Artifact.managedprivateendpoints);
                     resp = new Promise(function (resolve, reject) {
                         client.get(resourceUrl, headers).then(function (res) { return __awaiter(_this, void 0, void 0, function () {
-                            var resStatus;
+                            var resStatus, body;
                             return __generator(this, function (_a) {
-                                resStatus = res.message.statusCode;
-                                if (resStatus != 200 && resStatus != 201 && resStatus != 202) {
-                                    logger_1.SystemLogger.info("Failed to fetch workspace info, status: " + resStatus + "; status message: " + res.message.statusMessage);
-                                    return [2 /*return*/, resolve(true)];
+                                switch (_a.label) {
+                                    case 0:
+                                        resStatus = res.message.statusCode;
+                                        if (!(resStatus != 200 && resStatus != 201 && resStatus != 202)) return [3 /*break*/, 2];
+                                        return [4 /*yield*/, res.readBody()];
+                                    case 1:
+                                        body = _a.sent();
+                                        if (body.includes("does not have a managed virtual network associated"))
+                                            return [2 /*return*/, resolve(true)];
+                                        _a.label = 2;
+                                    case 2: return [2 /*return*/, resolve(false)];
                                 }
-                                return [2 /*return*/, resolve(false)];
                             });
                         }); });
                     });
