@@ -13,7 +13,8 @@ export enum Artifact {
     bigdatapools = 'bigdatapools',
     managedvirtualnetworks = 'managedVirtualNetworks',
     managedprivateendpoints = 'managedPrivateEndpoints',
-    kqlScript = 'kqlScript'
+    kqlScript = 'kqlScript',
+    database = "database"
 }
 
 export enum DataFactoryType {
@@ -31,7 +32,8 @@ export enum DataFactoryType {
     sqlpool = "Microsoft.Synapse/workspaces/sqlPools",
     managedVirtualNetworks = "Microsoft.Synapse/workspaces/managedVirtualNetworks",
     managedPrivateEndpoints = "Microsoft.Synapse/workspaces/managedVirtualNetworks/managedPrivateEndpoints",
-    kqlScript = "Microsoft.Synapse/workspaces/kqlscripts"
+    kqlScript = "Microsoft.Synapse/workspaces/kqlscripts",
+    database = "Microsoft.Synapse/workspaces/databases"
 }
 export enum DEFAULT_ARTIFACTS {
     sqlserver = "workspacedefaultsqlserver",

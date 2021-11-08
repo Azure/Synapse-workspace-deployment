@@ -26,7 +26,8 @@ export var typeMap = new Map<string, Artifact>([
     [DataFactoryType.trigger.toLowerCase(), Artifact.trigger],
     [DataFactoryType.managedVirtualNetworks.toLowerCase(), Artifact.managedvirtualnetworks],
     [DataFactoryType.managedPrivateEndpoints.toLowerCase(), Artifact.managedprivateendpoints],
-    [DataFactoryType.kqlScript.toLowerCase(), Artifact.kqlScript]
+    [DataFactoryType.kqlScript.toLowerCase(), Artifact.kqlScript],
+    [DataFactoryType.database.toLowerCase(), Artifact.database],
 ]);
 
 export interface DeploymentTrackingRequest {
@@ -40,6 +41,8 @@ export class ArtifactClient {
     private client: httpClient.HttpClient;
     private requestOptions: httpInterfaces.IRequestOptions = {};
     private apiVersion = 'api-version=2019-06-01-preview';
+    private symsApiVersion = 'api-version=2021-04-01';
+    private idwValidation = 'validationtype=IDWValidation';
     private nameTag = 'name';
     private deploymentTrackingRequests: Array<DeploymentTrackingRequest>;
 
@@ -90,6 +93,8 @@ export class ArtifactClient {
                 return this.deployKqlScript(baseUrl, payload, token);
             case Artifact.managedprivateendpoints:
                 return this.deployManagedPrivateEndpoint(baseUrl, payload, token);
+            case Artifact.database:
+                return this.deployDatabase(baseUrl, payload, token);
             default:
                 return DeployStatus.skipped;
         }
@@ -131,7 +136,8 @@ export class ArtifactClient {
             return url + `/${Artifact.managedprivateendpoints}/${artifactNameValue}?${this.apiVersion}`;
         }
 
-        return url + `/${artifactype}/${artifactNameValue}?${this.apiVersion}`;
+        var version = (artifactype === `${Artifact.database}s`) ? this.symsApiVersion : this.apiVersion;
+        return url + `/${artifactype}/${artifactNameValue}?${version}`;
     }
 
     private getCommonPath(baseUrl: string, artifactype: string): string {
@@ -180,7 +186,7 @@ export class ArtifactClient {
                 `${Artifact.kqlScript.toString()}s`, payload, token);
         } catch (err) {
             SystemLogger.info(err);
-            throw new Error("Credential deployment failed " + JSON.stringify(err));
+            throw new Error("KqlScript deployment failed " + JSON.stringify(err));
         }
     }
 
@@ -268,6 +274,75 @@ export class ArtifactClient {
         }
     }
 
+    public async deployDatabase(baseUrl: string, payload: Resource, token: string): Promise<string> {
+        try {
+            return await this.artifactsGroupDeploymentTask(baseUrl,
+                `databases/ExecuteChangeWithValidation?${this.apiVersion}&${this.idwValidation}`, payload, token);
+        } catch (err) {
+            console.log(err);
+            throw new Error("Database deployment failed " + JSON.stringify(err));
+        }
+    }
+
+    private async artifactsGroupDeploymentTask(baseUrl: string, path: string, payloadObj: Resource,
+        token: string): Promise<string> {
+        return new Promise<string>(async (resolve, reject) => {
+            var url = `${baseUrl}/${path}`;
+            var payload: string = JSON.stringify(JSON.parse(payloadObj.content)['properties']);
+
+            this.client.post(url, payload, this.getHeaders(token)).then((res) => {
+                var resStatus = res.message.statusCode;
+                console.log(`For Artifact: ${payloadObj.name}: ArtifactDeploymentTask status: ${resStatus}; status message: ${res.message.statusMessage}`);
+
+                if (resStatus != 200 && resStatus != 201 && resStatus != 202) {
+                    res.readBody().then((body) => {
+                        if (!!body) {
+                            let responseJson = JSON.parse(body);
+                            console.debug(`For Artifact: ${payloadObj.name}: artifact deployment failed : ${JSON.stringify(responseJson)}`);
+                        }
+                    });
+                    return reject(DeployStatus.failed);
+                }
+                var location: string = res.message.headers.location!;
+
+                res.readBody().then(async (body) => {
+                    try {
+                        if (!location) {
+                            console.log(`For Artifact: ${payloadObj.name}: location header is missing, unable to track status`);
+                            return reject(DeployStatus.failed);
+                        }
+                        var loactionUrl = "";
+                        // Remove this once syms team fixes location header
+                        if (location.includes("/databases/operations/")) {
+                            loactionUrl = location;
+                        } else {
+                            var matchedList = location.match(/operationResults\/(.*?)\?api-version/);
+                            if (matchedList?.length != 2) {
+                                console.log(`For Artifact: ${payloadObj.name}: Failed to parse location url: ${location}`);
+                                return reject(DeployStatus.failed);
+                            }
+                            loactionUrl = `${baseUrl}/databases/operations/${matchedList[1]}?${this.apiVersion}`
+                        }
+
+                        let deploymentTrackingRequest: DeploymentTrackingRequest = {
+                            url: loactionUrl,
+                            name: payloadObj.name,
+                            token: token
+                        }
+                        this.deploymentTrackingRequests.push(deploymentTrackingRequest);
+                    } catch (err) {
+                        console.log(`For Artifact: ${payloadObj.name}: Deployment failed with error: ${JSON.stringify(err)}`);
+                        return reject(DeployStatus.failed);
+                    }
+                    return resolve(DeployStatus.success);
+                });
+            }, (reason) => {
+                console.log(`For Artifact: ${payloadObj.name}: Artifact Deployment failed: ${reason}`);
+                return reject(DeployStatus.failed);
+            });
+        });
+    }
+
     private async artifactDeploymentTask(baseUrl: string, resourceType: string, payloadObj: Resource,
         token: string): Promise<string> {
 
@@ -282,7 +357,6 @@ export class ArtifactClient {
                 SystemLogger.info(`For Artifact: ${payloadObj.name}: ArtifactDeploymentTask status: ${resStatus}; status message: ${res.message.statusMessage}`);
 
                 if (resStatus != 200 && resStatus != 201 && resStatus != 202) {
-                    // Remove this after testing
                     res.readBody().then((body) => {
                         if (!!body) {
                             let responseJson = JSON.parse(body);
@@ -348,26 +422,23 @@ export class ArtifactClient {
                 var resStatus = res.message.statusCode;
                 SystemLogger.info(`For Artifact: ${payloadObj.name}: ArtifactDeletionTask status: ${resStatus}; status message: ${res.message.statusMessage}`);
 
-                res.readBody().then((body) => {
-                    if (!!body) {
-                        let responseJson = JSON.parse(body);
-                    }
-                });
-                
-                if(resourceType != Artifact.managedprivateendpoints){
+                if (resStatus != 200 && resStatus != 201 && resStatus != 202) {
 
-                    var location :string = res.message.headers.location!;
-
-                    let deploymentTrackingRequest: DeploymentTrackingRequest = {
-                        url: location,
-                        name: payloadObj.name,
-                        token: token
-                    }
-                    this.deploymentTrackingRequests.push(deploymentTrackingRequest);
+                    return reject(DeployStatus.failed);
                 }
 
-                if (resStatus != 200 && resStatus != 201 && resStatus != 202) {
-                    return reject(DeployStatus.failed);
+                if (resourceType != Artifact.managedprivateendpoints) {
+
+                    var location: string = res.message.headers.location!;
+
+                    if (!!location) {
+                        let deploymentTrackingRequest: DeploymentTrackingRequest = {
+                            url: location,
+                            name: payloadObj.name,
+                            token: token
+                        }
+                        this.deploymentTrackingRequests.push(deploymentTrackingRequest);
+                    }
                 }
                 return resolve(DeployStatus.success);
             }, (reason) => {
@@ -387,7 +458,7 @@ export class ArtifactClient {
                 SystemLogger.info('Current time: ' + currentTime);
                 throw new Error("Timeout error in checkStatus");
             }
-            var nbName = '';
+            var artifactName = '';
 
             var res = await this.client.get(url, this.getHeaders(token));
             var resStatus = res.message.statusCode;
@@ -409,8 +480,8 @@ export class ArtifactClient {
                 await this.delay(delayMilliSecs);
                 continue;
             }
-            nbName = responseJson['name'];
-            if (nbName === name) {
+            artifactName = responseJson['name'];
+            if (artifactName === name || status === "Succeeded") {
                 SystemLogger.info(`Artifact ${name} deployed successfully.`);
                 break;
             } else {

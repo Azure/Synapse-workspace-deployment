@@ -3,7 +3,7 @@ import * as deployUtils from './deploy_utils';
 import * as httpClient from 'typed-rest-client/HttpClient';
 import * as httpInterfaces from 'typed-rest-client/Interfaces';
 import { checkIfArtifactExists, checkIfNameExists, Resource } from './arm_template_utils';
-import { Artifact } from './artifacts_enum';
+import { Artifact, DataFactoryType } from './artifacts_enum';
 import {SystemLogger} from "./logger";
 import {isDefaultArtifact} from "./common_utils";
 
@@ -22,7 +22,8 @@ const artifactTypesToQuery:Artifact[] = [
     Artifact.sparkjobdefinition,
     Artifact.sqlscript,
     Artifact.trigger,
-    Artifact.managedprivateendpoints
+    Artifact.managedprivateendpoints,
+    Artifact.database
 ];
 
 export async function getArtifactsFromWorkspaceOfType(artifactTypeToQuery: Artifact, targetWorkspaceName: string, environment: string): Promise<Resource[]> {
@@ -62,21 +63,22 @@ export async function getArtifactsFromWorkspaceOfType(artifactTypeToQuery: Artif
 
     var resourcesString = await resp;
     var resourcesJson = JSON.parse(resourcesString);
+    const list = resourcesJson.value ?? resourcesJson?.items;
 
-    for (var rep in resourcesJson.value)
-    {
-        let artifactJson = resourcesJson.value[rep];
+    for (let artifactJson of list) {
         let artifactJsonContent = JSON.stringify(artifactJson);
-        let artifactName =  artifactJson.name;
+        let artifactName = artifactJson.name ?? artifactJson.Name;
+        let type = artifactJson.type ?? ((artifactJson.EntityType === 'DATABASE') ? DataFactoryType.database : artifactJson.EntityType);
+
         let resource: Resource = {
-            type: artifactJson.type,
+            type: type,
             isDefault: false,
             content: artifactJsonContent,
             name: artifactName,
             dependson: getDependentsFromArtifactFromWorkspace(artifactJsonContent)
         };
 
-        if(isDefaultArtifact(artifactJsonContent)){
+        if (type !== DataFactoryType.database && isDefaultArtifact(artifactJsonContent)) {
             resource.isDefault = true;
         }
 
