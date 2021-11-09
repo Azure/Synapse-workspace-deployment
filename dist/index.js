@@ -86,12 +86,15 @@ exports.typeMap = new Map([
     [artifacts_enum_1.DataFactoryType.trigger.toLowerCase(), artifacts_enum_1.Artifact.trigger],
     [artifacts_enum_1.DataFactoryType.managedVirtualNetworks.toLowerCase(), artifacts_enum_1.Artifact.managedvirtualnetworks],
     [artifacts_enum_1.DataFactoryType.managedPrivateEndpoints.toLowerCase(), artifacts_enum_1.Artifact.managedprivateendpoints],
-    [artifacts_enum_1.DataFactoryType.kqlScript.toLowerCase(), artifacts_enum_1.Artifact.kqlScript]
+    [artifacts_enum_1.DataFactoryType.kqlScript.toLowerCase(), artifacts_enum_1.Artifact.kqlScript],
+    [artifacts_enum_1.DataFactoryType.database.toLowerCase(), artifacts_enum_1.Artifact.database],
 ]);
 var ArtifactClient = /** @class */ (function () {
     function ArtifactClient(params) {
         this.requestOptions = {};
         this.apiVersion = 'api-version=2019-06-01-preview';
+        this.symsApiVersion = 'api-version=2021-04-01';
+        this.idwValidation = 'validationtype=IDWValidation';
         this.nameTag = 'name';
         this.params = params;
         this.requestOptions.ignoreSslError = true;
@@ -137,6 +140,10 @@ var ArtifactClient = /** @class */ (function () {
                                 return [2 /*return*/, this.deployCredential(baseUrl, payload, token)];
                             case artifacts_enum_1.Artifact.kqlScript:
                                 return [2 /*return*/, this.deployKqlScript(baseUrl, payload, token)];
+                            case artifacts_enum_1.Artifact.managedprivateendpoints:
+                                return [2 /*return*/, this.deployManagedPrivateEndpoint(baseUrl, payload, token)];
+                            case artifacts_enum_1.Artifact.database:
+                                return [2 /*return*/, this.deployDatabase(baseUrl, payload, token)];
                             default:
                                 return [2 /*return*/, deploy_utils_1.DeployStatus.skipped];
                         }
@@ -202,13 +209,20 @@ var ArtifactClient = /** @class */ (function () {
         var url = this.getCommonPath(baseUrl, artifactype);
         while (artifactNameValue.indexOf(' ') > -1)
             artifactNameValue = artifactNameValue.replace(' ', '%20');
-        return url + ("/" + artifactype + "/" + artifactNameValue + "?" + this.apiVersion);
+        if (artifactype == artifacts_enum_1.Artifact.managedprivateendpoints + "s") {
+            return url + ("/" + artifacts_enum_1.Artifact.managedprivateendpoints + "/" + artifactNameValue + "?" + this.apiVersion);
+        }
+        var version = (artifactype === artifacts_enum_1.Artifact.database + "s") ? this.symsApiVersion : this.apiVersion;
+        return url + ("/" + artifactype + "/" + artifactNameValue + "?" + version);
     };
     ArtifactClient.prototype.getCommonPath = function (baseUrl, artifactype) {
         var url;
         if (artifactype === artifacts_enum_1.Artifact.integrationruntime + "s") {
             url = baseUrl + "/subscriptions/" + this.params.subscriptionId + "/resourceGroups/" + this.params.resourceGroup;
             url = url + ("/providers/Microsoft.Synapse/workspaces/" + core.getInput('TargetWorkspaceName'));
+        }
+        else if (artifactype === artifacts_enum_1.Artifact.managedprivateendpoints || artifactype == artifacts_enum_1.Artifact.managedprivateendpoints + "s") {
+            url = baseUrl + "/" + artifacts_enum_1.Artifact.managedvirtualnetworks + "/default";
         }
         else {
             url = "" + baseUrl;
@@ -267,7 +281,7 @@ var ArtifactClient = /** @class */ (function () {
                     case 2:
                         err_3 = _a.sent();
                         logger_1.SystemLogger.info(err_3);
-                        throw new Error("Credential deployment failed " + JSON.stringify(err_3));
+                        throw new Error("KqlScript deployment failed " + JSON.stringify(err_3));
                     case 3: return [2 /*return*/];
                 }
             });
@@ -409,6 +423,109 @@ var ArtifactClient = /** @class */ (function () {
             });
         });
     };
+    ArtifactClient.prototype.deployManagedPrivateEndpoint = function (baseUrl, payload, token) {
+        return __awaiter(this, void 0, void 0, function () {
+            var err_12;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        _a.trys.push([0, 2, , 3]);
+                        return [4 /*yield*/, this.artifactDeploymentTask(baseUrl, "" + artifacts_enum_1.Artifact.managedprivateendpoints.toString(), payload, token)];
+                    case 1: return [2 /*return*/, _a.sent()];
+                    case 2:
+                        err_12 = _a.sent();
+                        throw new Error("ManagedPrivateEndpoint deployment status " + JSON.stringify(err_12));
+                    case 3: return [2 /*return*/];
+                }
+            });
+        });
+    };
+    ArtifactClient.prototype.deployDatabase = function (baseUrl, payload, token) {
+        return __awaiter(this, void 0, void 0, function () {
+            var err_13;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        _a.trys.push([0, 2, , 3]);
+                        return [4 /*yield*/, this.artifactsGroupDeploymentTask(baseUrl, "databases/ExecuteChangeWithValidation?" + this.apiVersion + "&" + this.idwValidation, payload, token)];
+                    case 1: return [2 /*return*/, _a.sent()];
+                    case 2:
+                        err_13 = _a.sent();
+                        console.log(err_13);
+                        throw new Error("Database deployment failed " + JSON.stringify(err_13));
+                    case 3: return [2 /*return*/];
+                }
+            });
+        });
+    };
+    ArtifactClient.prototype.artifactsGroupDeploymentTask = function (baseUrl, path, payloadObj, token) {
+        return __awaiter(this, void 0, void 0, function () {
+            var _this = this;
+            return __generator(this, function (_a) {
+                return [2 /*return*/, new Promise(function (resolve, reject) { return __awaiter(_this, void 0, void 0, function () {
+                        var url, payload;
+                        var _this = this;
+                        return __generator(this, function (_a) {
+                            url = baseUrl + "/" + path;
+                            payload = JSON.stringify(JSON.parse(payloadObj.content)['properties']);
+                            this.client.post(url, payload, this.getHeaders(token)).then(function (res) {
+                                var resStatus = res.message.statusCode;
+                                console.log("For Artifact: " + payloadObj.name + ": ArtifactDeploymentTask status: " + resStatus + "; status message: " + res.message.statusMessage);
+                                if (resStatus != 200 && resStatus != 201 && resStatus != 202) {
+                                    res.readBody().then(function (body) {
+                                        if (!!body) {
+                                            var responseJson = JSON.parse(body);
+                                            console.debug("For Artifact: " + payloadObj.name + ": artifact deployment failed : " + JSON.stringify(responseJson));
+                                        }
+                                    });
+                                    return reject(deploy_utils_1.DeployStatus.failed);
+                                }
+                                var location = res.message.headers.location;
+                                res.readBody().then(function (body) { return __awaiter(_this, void 0, void 0, function () {
+                                    var loactionUrl, matchedList, deploymentTrackingRequest;
+                                    return __generator(this, function (_a) {
+                                        try {
+                                            if (!location) {
+                                                console.log("For Artifact: " + payloadObj.name + ": location header is missing, unable to track status");
+                                                return [2 /*return*/, reject(deploy_utils_1.DeployStatus.failed)];
+                                            }
+                                            loactionUrl = "";
+                                            // Remove this once syms team fixes location header
+                                            if (location.includes("/databases/operations/")) {
+                                                loactionUrl = location;
+                                            }
+                                            else {
+                                                matchedList = location.match(/operationResults\/(.*?)\?api-version/);
+                                                if ((matchedList === null || matchedList === void 0 ? void 0 : matchedList.length) != 2) {
+                                                    console.log("For Artifact: " + payloadObj.name + ": Failed to parse location url: " + location);
+                                                    return [2 /*return*/, reject(deploy_utils_1.DeployStatus.failed)];
+                                                }
+                                                loactionUrl = baseUrl + "/databases/operations/" + matchedList[1] + "?" + this.apiVersion;
+                                            }
+                                            deploymentTrackingRequest = {
+                                                url: loactionUrl,
+                                                name: payloadObj.name,
+                                                token: token
+                                            };
+                                            this.deploymentTrackingRequests.push(deploymentTrackingRequest);
+                                        }
+                                        catch (err) {
+                                            console.log("For Artifact: " + payloadObj.name + ": Deployment failed with error: " + JSON.stringify(err));
+                                            return [2 /*return*/, reject(deploy_utils_1.DeployStatus.failed)];
+                                        }
+                                        return [2 /*return*/, resolve(deploy_utils_1.DeployStatus.success)];
+                                    });
+                                }); });
+                            }, function (reason) {
+                                console.log("For Artifact: " + payloadObj.name + ": Artifact Deployment failed: " + reason);
+                                return reject(deploy_utils_1.DeployStatus.failed);
+                            });
+                            return [2 /*return*/];
+                        });
+                    }); })];
+            });
+        });
+    };
     ArtifactClient.prototype.artifactDeploymentTask = function (baseUrl, resourceType, payloadObj, token) {
         return __awaiter(this, void 0, void 0, function () {
             var _this = this;
@@ -423,7 +540,6 @@ var ArtifactClient = /** @class */ (function () {
                                 var resStatus = res.message.statusCode;
                                 logger_1.SystemLogger.info("For Artifact: " + payloadObj.name + ": ArtifactDeploymentTask status: " + resStatus + "; status message: " + res.message.statusMessage);
                                 if (resStatus != 200 && resStatus != 201 && resStatus != 202) {
-                                    // Remove this after testing
                                     res.readBody().then(function (body) {
                                         if (!!body) {
                                             var responseJson = JSON.parse(body);
@@ -434,7 +550,7 @@ var ArtifactClient = /** @class */ (function () {
                                 }
                                 var location = res.message.headers.location;
                                 res.readBody().then(function (body) { return __awaiter(_this, void 0, void 0, function () {
-                                    var responseJson, operationId, deploymentTrackingRequest;
+                                    var responseJson, operationId, deploymentTrackingRequest, status_1, deploymentTrackingRequest;
                                     return __generator(this, function (_a) {
                                         responseJson = JSON.parse(body);
                                         operationId = responseJson['operationId'];
@@ -457,6 +573,21 @@ var ArtifactClient = /** @class */ (function () {
                                             return [2 /*return*/, resolve(deploy_utils_1.DeployStatus.success)];
                                         }
                                         else {
+                                            if (resourceType == artifacts_enum_1.Artifact.managedprivateendpoints) {
+                                                status_1 = responseJson['properties']['provisioningState'];
+                                                if (status_1 == "Succeeded") {
+                                                    return [2 /*return*/, resolve(deploy_utils_1.DeployStatus.success)];
+                                                }
+                                                if (status_1 == "Provisioning") {
+                                                    deploymentTrackingRequest = {
+                                                        url: url,
+                                                        name: payloadObj.name,
+                                                        token: token
+                                                    };
+                                                    this.deploymentTrackingRequests.push(deploymentTrackingRequest);
+                                                    return [2 /*return*/, resolve(deploy_utils_1.DeployStatus.success)];
+                                                }
+                                            }
                                             return [2 /*return*/, reject(deploy_utils_1.DeployStatus.failed)];
                                         }
                                         return [2 /*return*/];
@@ -484,20 +615,19 @@ var ArtifactClient = /** @class */ (function () {
                             this.client.del(url, this.getHeaders(token)).then(function (res) {
                                 var resStatus = res.message.statusCode;
                                 logger_1.SystemLogger.info("For Artifact: " + payloadObj.name + ": ArtifactDeletionTask status: " + resStatus + "; status message: " + res.message.statusMessage);
-                                res.readBody().then(function (body) {
-                                    if (!!body) {
-                                        var responseJson = JSON.parse(body);
-                                    }
-                                });
-                                var location = res.message.headers.location;
-                                var deploymentTrackingRequest = {
-                                    url: location,
-                                    name: payloadObj.name,
-                                    token: token
-                                };
-                                _this.deploymentTrackingRequests.push(deploymentTrackingRequest);
                                 if (resStatus != 200 && resStatus != 201 && resStatus != 202) {
                                     return reject(deploy_utils_1.DeployStatus.failed);
+                                }
+                                if (resourceType != artifacts_enum_1.Artifact.managedprivateendpoints) {
+                                    var location = res.message.headers.location;
+                                    if (!!location) {
+                                        var deploymentTrackingRequest = {
+                                            url: location,
+                                            name: payloadObj.name,
+                                            token: token
+                                        };
+                                        _this.deploymentTrackingRequests.push(deploymentTrackingRequest);
+                                    }
                                 }
                                 return resolve(deploy_utils_1.DeployStatus.success);
                             }, function (reason) {
@@ -512,7 +642,7 @@ var ArtifactClient = /** @class */ (function () {
     };
     ArtifactClient.prototype.checkStatus = function (url, name, token) {
         return __awaiter(this, void 0, void 0, function () {
-            var timeout, delayMilliSecs, currentTime, nbName, res, resStatus, body, responseJson, status;
+            var timeout, delayMilliSecs, currentTime, artifactName, res, resStatus, body, msg, response, responseJson, status;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
@@ -526,18 +656,23 @@ var ArtifactClient = /** @class */ (function () {
                             logger_1.SystemLogger.info('Current time: ' + currentTime);
                             throw new Error("Timeout error in checkStatus");
                         }
-                        nbName = '';
+                        artifactName = '';
                         return [4 /*yield*/, this.client.get(url, this.getHeaders(token))];
                     case 2:
                         res = _a.sent();
                         resStatus = res.message.statusCode;
-                        logger_1.SystemLogger.info("For artifact: " + name + ": Checkstatus: " + resStatus + "; status message: " + res.message.statusMessage);
-                        if (resStatus != 200 && resStatus != 201 && resStatus != 202) {
-                            throw new Error("Checkstatus => status: " + resStatus + "; status message: " + res.message.statusMessage);
-                        }
                         return [4 /*yield*/, res.readBody()];
                     case 3:
                         body = _a.sent();
+                        logger_1.SystemLogger.info("For artifact: " + name + ": Checkstatus: " + resStatus + "; status message: " + res.message.statusMessage);
+                        if (resStatus != 200 && resStatus != 201 && resStatus != 202) {
+                            msg = res.message.statusMessage;
+                            response = JSON.parse(body);
+                            if (body != null && response.error != null && response.error.message != null) {
+                                msg = response.error.message;
+                            }
+                            throw new Error("Checkstatus => status: " + resStatus + "; status message: " + msg);
+                        }
                         if (!!body) return [3 /*break*/, 5];
                         return [4 /*yield*/, this.delay(delayMilliSecs)];
                     case 4:
@@ -556,8 +691,8 @@ var ArtifactClient = /** @class */ (function () {
                         _a.sent();
                         return [3 /*break*/, 1];
                     case 8:
-                        nbName = responseJson['name'];
-                        if (nbName === name) {
+                        artifactName = responseJson['name'];
+                        if (artifactName === name || status === "Succeeded") {
                             logger_1.SystemLogger.info("Artifact " + name + " deployed successfully.");
                             return [3 /*break*/, 9];
                         }
@@ -8794,54 +8929,55 @@ var Orchestrator = /** @class */ (function () {
     Orchestrator.prototype.skipDeployment = function (artifactTypeToDeploy) {
         if (artifactTypeToDeploy == artifacts_enum_1.Artifact.sqlpool ||
             artifactTypeToDeploy == artifacts_enum_1.Artifact.bigdatapools ||
-            artifactTypeToDeploy == artifacts_enum_1.Artifact.managedvirtualnetworks ||
-            artifactTypeToDeploy == artifacts_enum_1.Artifact.managedprivateendpoints) {
+            artifactTypeToDeploy == artifacts_enum_1.Artifact.managedvirtualnetworks) {
             return true;
         }
         return false;
     };
     Orchestrator.prototype.deployBatch = function (artifactClient, artifactsToDeploy, targetWorkspace, environment) {
         return __awaiter(this, void 0, void 0, function () {
-            var _i, artifactsToDeploy_1, resource, artifactTypeToDeploy, result;
+            var skipManagedPE, _i, artifactsToDeploy_1, resource, artifactTypeToDeploy, result;
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0:
-                        _i = 0, artifactsToDeploy_1 = artifactsToDeploy;
-                        _a.label = 1;
+                    case 0: return [4 /*yield*/, workspace_artifacts_getter_1.SKipManagedPE(targetWorkspace, environment)];
                     case 1:
-                        if (!(_i < artifactsToDeploy_1.length)) return [3 /*break*/, 6];
+                        skipManagedPE = _a.sent();
+                        _i = 0, artifactsToDeploy_1 = artifactsToDeploy;
+                        _a.label = 2;
+                    case 2:
+                        if (!(_i < artifactsToDeploy_1.length)) return [3 /*break*/, 7];
                         resource = artifactsToDeploy_1[_i];
                         if (resource.isDefault) {
                             logger_1.SystemLogger.info("Skipping deployment of " + resource.name + " as its a default workspace resource.");
-                            return [3 /*break*/, 5];
+                            return [3 /*break*/, 6];
                         }
                         artifactTypeToDeploy = artifacts_client_1.typeMap.get(resource.type.toLowerCase());
                         if (!resource.content) {
                             logger_1.SystemLogger.info("Empty artifactMap of type : " + resource.type + " skipping deployment");
-                            return [3 /*break*/, 5];
+                            return [3 /*break*/, 6];
                         }
                         logger_1.SystemLogger.info("Deploy " + artifactTypeToDeploy + " " + resource.type);
                         result = void 0;
-                        if (!this.skipDeployment(artifactTypeToDeploy)) return [3 /*break*/, 2];
+                        if (!(this.skipDeployment(artifactTypeToDeploy) || (skipManagedPE && artifactTypeToDeploy == artifacts_enum_1.Artifact.managedprivateendpoints))) return [3 /*break*/, 3];
                         // Currently not supporting Sql and spark pools. Skipping
                         //result = await armclient.deploy(resource.content);
                         logger_1.SystemLogger.info("Deployment of type " + artifactsToDeploy + " is not currently supported.");
-                        return [3 /*break*/, 5];
-                    case 2: return [4 /*yield*/, artifactClient.deployArtifact(artifactTypeToDeploy, resource, targetWorkspace, environment)];
-                    case 3:
+                        return [3 /*break*/, 6];
+                    case 3: return [4 /*yield*/, artifactClient.deployArtifact(artifactTypeToDeploy, resource, targetWorkspace, environment)];
+                    case 4:
                         // Do the artifact deployment
                         result = _a.sent();
-                        _a.label = 4;
-                    case 4:
+                        _a.label = 5;
+                    case 5:
                         logger_1.SystemLogger.info("Deployment status : " + result);
                         if (result != deploy_utils_1.DeployStatus.success) {
                             throw new Error("For Artifact " + resource.name + ": Failure in deployment: " + result);
                         }
-                        _a.label = 5;
-                    case 5:
+                        _a.label = 6;
+                    case 6:
                         _i++;
-                        return [3 /*break*/, 1];
-                    case 6: return [2 /*return*/];
+                        return [3 /*break*/, 2];
+                    case 7: return [2 /*return*/];
                 }
             });
         });
@@ -8866,8 +9002,7 @@ var Orchestrator = /** @class */ (function () {
                         logger_1.SystemLogger.info("Deleting " + resource.name + " of type " + artifactTypeToDelete);
                         if (artifactTypeToDelete == artifacts_enum_1.Artifact.sqlpool ||
                             artifactTypeToDelete == artifacts_enum_1.Artifact.bigdatapools ||
-                            artifactTypeToDelete == artifacts_enum_1.Artifact.managedvirtualnetworks ||
-                            artifactTypeToDelete == artifacts_enum_1.Artifact.managedprivateendpoints) {
+                            artifactTypeToDelete == artifacts_enum_1.Artifact.managedvirtualnetworks) {
                             // Skip this.
                             return [3 /*break*/, 3];
                         }
@@ -9024,6 +9159,7 @@ var yaml = __importStar(__nccwpck_require__(2096));
 var uuid_1 = __nccwpck_require__(2884);
 var logger_1 = __nccwpck_require__(4659);
 var common_utils_1 = __nccwpck_require__(9123);
+var artifacts_enum_1 = __nccwpck_require__(5724);
 // Just 2 random Guids to replace backslash in parameters file.
 var backslash = "7FD5C49AB6444AC1ACCD56B689067FBBAD85B74B0D8943CA887371839DFECF85";
 var quote = "48C16896271D483C916DE1C4EC6F24DBC945F900F9AB464B828EC8005364D322";
@@ -9280,10 +9416,7 @@ function removeWorkspaceNameFromResourceName(resourceName) {
     return resourceName;
 }
 function skipArtifactDeployment(artifactType) {
-    if (artifactType.toLowerCase().indexOf("sqlpools") > -1 ||
-        artifactType.toLowerCase().indexOf("bigdatapools") > -1 ||
-        artifactType.toLowerCase().indexOf("managedvirtualnetworks") > -1 ||
-        artifactType.toLowerCase().indexOf("managedprivateendpoints") > -1) {
+    if (artifacts_enum_1.DataFactoryType.sqlpool == artifactType || artifacts_enum_1.DataFactoryType.bigdatapools == artifactType || artifacts_enum_1.DataFactoryType.managedVirtualNetworks == artifactType) {
         return true;
     }
     return false;
@@ -9585,6 +9718,7 @@ var Artifact;
     Artifact["managedvirtualnetworks"] = "managedVirtualNetworks";
     Artifact["managedprivateendpoints"] = "managedPrivateEndpoints";
     Artifact["kqlScript"] = "kqlScript";
+    Artifact["database"] = "database";
 })(Artifact = exports.Artifact || (exports.Artifact = {}));
 var DataFactoryType;
 (function (DataFactoryType) {
@@ -9603,6 +9737,7 @@ var DataFactoryType;
     DataFactoryType["managedVirtualNetworks"] = "Microsoft.Synapse/workspaces/managedVirtualNetworks";
     DataFactoryType["managedPrivateEndpoints"] = "Microsoft.Synapse/workspaces/managedVirtualNetworks/managedPrivateEndpoints";
     DataFactoryType["kqlScript"] = "Microsoft.Synapse/workspaces/kqlscripts";
+    DataFactoryType["database"] = "Microsoft.Synapse/workspaces/databases";
 })(DataFactoryType = exports.DataFactoryType || (exports.DataFactoryType = {}));
 var DEFAULT_ARTIFACTS;
 (function (DEFAULT_ARTIFACTS) {
@@ -9639,16 +9774,32 @@ function isStrNullOrEmpty(val) {
 exports.isStrNullOrEmpty = isStrNullOrEmpty;
 function isDefaultArtifact(artifact) {
     var artifactJson = JSON.parse(artifact);
-    for (var key in artifacts_enum_1.DEFAULT_ARTIFACTS) {
-        if (artifactJson.name.toLowerCase().indexOf(artifacts_enum_1.DEFAULT_ARTIFACTS[key]) != -1 &&
-            [artifacts_enum_1.DataFactoryType.linkedservice.toLowerCase(), artifacts_enum_1.DataFactoryType.credential.toLowerCase()].indexOf(artifactJson.type.toLowerCase()) != -1 &&
-            artifactJson.properties.type.toLowerCase() === artifacts_enum_1.DEFAULT_ARTIFACTS_TYPE[key].toLowerCase())
-            return true;
-    }
-    ;
-    return false;
+    if (artifactJson.type == artifacts_enum_1.DataFactoryType.managedPrivateEndpoints)
+        return DefaultArtifact.DefaultArtifacts.some(function (e) { return e.matches(artifactJson.name, artifactJson.properties.groupId, artifactJson.type); });
+    return DefaultArtifact.DefaultArtifacts.some(function (e) { return e.matches(artifactJson.name, artifactJson.properties.type, artifactJson.type); });
 }
 exports.isDefaultArtifact = isDefaultArtifact;
+var DefaultArtifact = /** @class */ (function () {
+    function DefaultArtifact(name, type, dataFactoryType) {
+        this.name = name;
+        this.type = type;
+        this.dataFactoryType = dataFactoryType;
+    }
+    DefaultArtifact.prototype.matches = function (name, type, dataFactoryType) {
+        return name.toLowerCase().includes(this.name.toLowerCase())
+            && type.toLowerCase() === this.type.toLowerCase()
+            && dataFactoryType.toLowerCase() === this.dataFactoryType.toLowerCase();
+    };
+    DefaultArtifact.DefaultArtifacts = [
+        new DefaultArtifact("workspacedefaultsqlserver", "azuresqldw", artifacts_enum_1.DataFactoryType.linkedservice),
+        new DefaultArtifact("workspacedefaultstorage", "azureblobfs", artifacts_enum_1.DataFactoryType.linkedservice),
+        new DefaultArtifact("workspacesystemidentity", "managedidentity", artifacts_enum_1.DataFactoryType.credential),
+        new DefaultArtifact("synapse-ws-sql", "sql", artifacts_enum_1.DataFactoryType.managedPrivateEndpoints),
+        new DefaultArtifact("synapse-ws-sqlOnDemand", "sqlOnDemand", artifacts_enum_1.DataFactoryType.managedPrivateEndpoints),
+        new DefaultArtifact("synapse-ws-custstgacct", "dfs", artifacts_enum_1.DataFactoryType.managedPrivateEndpoints),
+    ];
+    return DefaultArtifact;
+}());
 //# sourceMappingURL=common_utils.js.map
 
 /***/ }),
@@ -9751,7 +9902,7 @@ function getParams(dataplane, env) {
                         resourceManagerEndpointUrl = getRmEndpointUrl(env_1);
                     }
                     catch (err) {
-                        throw new Error("Unable to parse the secret: " + err.message);
+                        throw new Error("Unable to parse the secret: " + err);
                     }
                     _a.label = 1;
                 case 1:
@@ -9787,7 +9938,7 @@ function getParams(dataplane, env) {
                     return [2 /*return*/, params];
                 case 8:
                     err_1 = _a.sent();
-                    throw new Error("Failed to fetch Bearer: " + err_1.message);
+                    throw new Error("Failed to fetch Bearer: " + err_1);
                 case 9: return [2 /*return*/];
             }
         });
@@ -10192,7 +10343,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.getDependentsFromArtifactFromWorkspace = exports.getArtifactsToDeleteFromWorkspaceInOrder = exports.getArtifactsToDeleteFromWorkspace = exports.getArtifactsFromWorkspace = exports.getArtifactsFromWorkspaceOfType = void 0;
+exports.SKipManagedPE = exports.getDependentsFromArtifactFromWorkspace = exports.getArtifactsToDeleteFromWorkspaceInOrder = exports.getArtifactsToDeleteFromWorkspace = exports.getArtifactsFromWorkspace = exports.getArtifactsFromWorkspaceOfType = void 0;
 var artifacts_client_1 = __nccwpck_require__(5131);
 var deployUtils = __importStar(__nccwpck_require__(3850));
 var httpClient = __importStar(__nccwpck_require__(6291));
@@ -10213,17 +10364,20 @@ var artifactTypesToQuery = [
     artifacts_enum_1.Artifact.pipeline,
     artifacts_enum_1.Artifact.sparkjobdefinition,
     artifacts_enum_1.Artifact.sqlscript,
-    artifacts_enum_1.Artifact.trigger
+    artifacts_enum_1.Artifact.trigger,
+    artifacts_enum_1.Artifact.managedprivateendpoints,
+    artifacts_enum_1.Artifact.database
 ];
 function getArtifactsFromWorkspaceOfType(artifactTypeToQuery, targetWorkspaceName, environment) {
+    var _a, _b, _c;
     return __awaiter(this, void 0, void 0, function () {
-        var params, token, headers, artifacts, resourceUrl, resp, resourcesString, resourcesJson, rep, artifactJson, artifactJsonContent, artifactName, resource;
+        var params, token, headers, artifacts, resourceUrl, resp, resourcesString, resourcesJson, list, _i, list_1, artifactJson, artifactJsonContent, artifactName, type, resource;
         var _this = this;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
+        return __generator(this, function (_d) {
+            switch (_d.label) {
                 case 0: return [4 /*yield*/, deployUtils.getParams(true, environment)];
                 case 1:
-                    params = _a.sent();
+                    params = _d.sent();
                     token = params.bearer;
                     headers = {
                         'Authorization': "Bearer " + token,
@@ -10260,20 +10414,22 @@ function getArtifactsFromWorkspaceOfType(artifactTypeToQuery, targetWorkspaceNam
                     });
                     return [4 /*yield*/, resp];
                 case 2:
-                    resourcesString = _a.sent();
+                    resourcesString = _d.sent();
                     resourcesJson = JSON.parse(resourcesString);
-                    for (rep in resourcesJson.value) {
-                        artifactJson = resourcesJson.value[rep];
+                    list = (_a = resourcesJson.value) !== null && _a !== void 0 ? _a : resourcesJson === null || resourcesJson === void 0 ? void 0 : resourcesJson.items;
+                    for (_i = 0, list_1 = list; _i < list_1.length; _i++) {
+                        artifactJson = list_1[_i];
                         artifactJsonContent = JSON.stringify(artifactJson);
-                        artifactName = artifactJson.name;
+                        artifactName = (_b = artifactJson.name) !== null && _b !== void 0 ? _b : artifactJson.Name;
+                        type = (_c = artifactJson.type) !== null && _c !== void 0 ? _c : ((artifactJson.EntityType === 'DATABASE') ? artifacts_enum_1.DataFactoryType.database : artifactJson.EntityType);
                         resource = {
-                            type: artifactJson.type,
+                            type: type,
                             isDefault: false,
                             content: artifactJsonContent,
                             name: artifactName,
                             dependson: getDependentsFromArtifactFromWorkspace(artifactJsonContent)
                         };
-                        if (common_utils_1.isDefaultArtifact(artifactJsonContent)) {
+                        if (type !== artifacts_enum_1.DataFactoryType.database && common_utils_1.isDefaultArtifact(artifactJsonContent)) {
                             resource.isDefault = true;
                         }
                         artifacts.push(resource);
@@ -10325,8 +10481,8 @@ function getArtifactsToDeleteFromWorkspace(artifactsInWorkspace, artifactsToDepl
         if (artifactTypeToDeploy != artifacts_enum_1.Artifact.sqlpool &&
             artifactTypeToDeploy != artifacts_enum_1.Artifact.bigdatapools &&
             artifactTypeToDeploy != artifacts_enum_1.Artifact.managedvirtualnetworks &&
-            artifactTypeToDeploy != artifacts_enum_1.Artifact.managedprivateendpoints &&
-            artifactTypeToDeploy != artifacts_enum_1.Artifact.integrationruntime) {
+            artifactTypeToDeploy != artifacts_enum_1.Artifact.integrationruntime &&
+            checkResource.isDefault != true) {
             for (var i = 0; i < artifactsToDeploy.length; i++) {
                 for (var j = 0; j < artifactsToDeploy[i].length; j++) {
                     var resouce = artifactsToDeploy[i][j];
@@ -10437,7 +10593,12 @@ function getArtifactsToDeleteFromWorkspaceInOrder(artifactsToDelete) {
 exports.getArtifactsToDeleteFromWorkspaceInOrder = getArtifactsToDeleteFromWorkspaceInOrder;
 function getResourceFromWorkspaceUrl(targetWorkspaceName, environment, resourceType) {
     var url = artifacts_client_1.ArtifactClient.getUrlByEnvironment(targetWorkspaceName, environment);
-    url = url + "/" + resourceType + "s?api-version=2019-06-01-preview";
+    if (resourceType == artifacts_enum_1.Artifact.managedprivateendpoints) {
+        url = url + '/' + artifacts_enum_1.Artifact.managedvirtualnetworks + '/default';
+        url = url + "/" + resourceType + "?api-version=2019-06-01-preview";
+    }
+    else
+        url = url + "/" + resourceType + "s?api-version=2019-06-01-preview";
     return url;
 }
 // Gets the list of artifacts this artifact depends on.
@@ -10468,6 +10629,47 @@ function crawlArtifacts(artifactContent, dependants, key) {
     }
     return false;
 }
+function SKipManagedPE(targetWorkspaceName, environment) {
+    return __awaiter(this, void 0, void 0, function () {
+        var params, token, headers, resourceUrl, resp;
+        var _this = this;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0: return [4 /*yield*/, deployUtils.getParams(true, environment)];
+                case 1:
+                    params = _a.sent();
+                    token = params.bearer;
+                    headers = {
+                        'Authorization': "Bearer " + token,
+                        'Content-Type': 'application/json',
+                        'User-Agent': userAgent
+                    };
+                    resourceUrl = getResourceFromWorkspaceUrl(targetWorkspaceName, environment, artifacts_enum_1.Artifact.managedprivateendpoints);
+                    resp = new Promise(function (resolve, reject) {
+                        client.get(resourceUrl, headers).then(function (res) { return __awaiter(_this, void 0, void 0, function () {
+                            var resStatus, body;
+                            return __generator(this, function (_a) {
+                                switch (_a.label) {
+                                    case 0:
+                                        resStatus = res.message.statusCode;
+                                        if (!(resStatus != 200 && resStatus != 201 && resStatus != 202)) return [3 /*break*/, 2];
+                                        return [4 /*yield*/, res.readBody()];
+                                    case 1:
+                                        body = _a.sent();
+                                        if (body.includes("does not have a managed virtual network associated"))
+                                            return [2 /*return*/, resolve(true)];
+                                        _a.label = 2;
+                                    case 2: return [2 /*return*/, resolve(false)];
+                                }
+                            });
+                        }); });
+                    });
+                    return [2 /*return*/, resp];
+            }
+        });
+    });
+}
+exports.SKipManagedPE = SKipManagedPE;
 //# sourceMappingURL=workspace_artifacts_getter.js.map
 
 /***/ }),

@@ -3,7 +3,7 @@ import * as deployUtils from './deploy_utils';
 import * as httpClient from 'typed-rest-client/HttpClient';
 import * as httpInterfaces from 'typed-rest-client/Interfaces';
 import { checkIfArtifactExists, checkIfNameExists, Resource } from './arm_template_utils';
-import { Artifact } from './artifacts_enum';
+import { Artifact, DataFactoryType } from './artifacts_enum';
 import {SystemLogger} from "./logger";
 import {isDefaultArtifact} from "./common_utils";
 
@@ -21,7 +21,9 @@ const artifactTypesToQuery:Artifact[] = [
     Artifact.pipeline,
     Artifact.sparkjobdefinition,
     Artifact.sqlscript,
-    Artifact.trigger
+    Artifact.trigger,
+    Artifact.managedprivateendpoints,
+    Artifact.database
 ];
 
 export async function getArtifactsFromWorkspaceOfType(artifactTypeToQuery: Artifact, targetWorkspaceName: string, environment: string): Promise<Resource[]> {
@@ -61,21 +63,22 @@ export async function getArtifactsFromWorkspaceOfType(artifactTypeToQuery: Artif
 
     var resourcesString = await resp;
     var resourcesJson = JSON.parse(resourcesString);
+    const list = resourcesJson.value ?? resourcesJson?.items;
 
-    for (var rep in resourcesJson.value)
-    {
-        let artifactJson = resourcesJson.value[rep];
+    for (let artifactJson of list) {
         let artifactJsonContent = JSON.stringify(artifactJson);
-        let artifactName =  artifactJson.name;
+        let artifactName = artifactJson.name ?? artifactJson.Name;
+        let type = artifactJson.type ?? ((artifactJson.EntityType === 'DATABASE') ? DataFactoryType.database : artifactJson.EntityType);
+
         let resource: Resource = {
-            type: artifactJson.type,
+            type: type,
             isDefault: false,
             content: artifactJsonContent,
             name: artifactName,
             dependson: getDependentsFromArtifactFromWorkspace(artifactJsonContent)
         };
 
-        if(isDefaultArtifact(artifactJsonContent)){
+        if (type !== DataFactoryType.database && isDefaultArtifact(artifactJsonContent)) {
             resource.isDefault = true;
         }
 
@@ -120,8 +123,8 @@ export function getArtifactsToDeleteFromWorkspace(
         if (artifactTypeToDeploy != Artifact.sqlpool &&
             artifactTypeToDeploy != Artifact.bigdatapools &&
             artifactTypeToDeploy != Artifact.managedvirtualnetworks &&
-            artifactTypeToDeploy != Artifact.managedprivateendpoints &&
-            artifactTypeToDeploy != Artifact.integrationruntime)
+            artifactTypeToDeploy != Artifact.integrationruntime &&
+            checkResource.isDefault != true)
         {
             for(let i=0;i< artifactsToDeploy.length;i++)
             {
@@ -277,7 +280,12 @@ export function getArtifactsToDeleteFromWorkspaceInOrder(
 function getResourceFromWorkspaceUrl(targetWorkspaceName: string, environment: string, resourceType: string): string
 {
     var url = ArtifactClient.getUrlByEnvironment(targetWorkspaceName, environment);
-    url = `${url}/${resourceType}s?api-version=2019-06-01-preview`
+    if(resourceType == Artifact.managedprivateendpoints){
+        url = url + '/' + Artifact.managedvirtualnetworks + '/default';
+        url = `${url}/${resourceType}?api-version=2019-06-01-preview`
+    }
+    else
+        url = `${url}/${resourceType}s?api-version=2019-06-01-preview`
     return url;
 }
 
@@ -312,3 +320,31 @@ function crawlArtifacts(artifactContent: object, dependants: string[], key: stri
     }
     return false;
 }
+export async function SKipManagedPE(targetWorkspaceName: string, environment: string): Promise<boolean>{
+    var params = await deployUtils.getParams(true, environment);
+    var token =  params.bearer;
+
+    var headers: httpInterfaces.IHeaders = {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        'User-Agent': userAgent
+    }
+
+    var resourceUrl = getResourceFromWorkspaceUrl(targetWorkspaceName, environment,Artifact.managedprivateendpoints);
+
+    var resp = new Promise<boolean>((resolve, reject) => {
+        client.get(resourceUrl, headers).then(async (res) => {
+            var resStatus = res.message.statusCode;
+
+            if (resStatus != 200 && resStatus != 201 && resStatus != 202) {
+                let body = await res.readBody();
+                if(body.includes("does not have a managed virtual network associated"))
+                    return resolve(true);
+            }
+            return resolve(false);
+        });
+    });
+
+    return resp;
+}
+

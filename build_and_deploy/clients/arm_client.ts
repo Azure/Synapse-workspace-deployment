@@ -117,7 +117,7 @@ export async function deploy(armTemplate: string): Promise<string> {
             });
         });
     } catch (err) {
-        throw new Error("ARM template deployment failed: " + err.message);
+        throw new Error("ARM template deployment failed: " + err);
     }
 }
 
