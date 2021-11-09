@@ -320,3 +320,31 @@ function crawlArtifacts(artifactContent: object, dependants: string[], key: stri
     }
     return false;
 }
+export async function SKipManagedPE(targetWorkspaceName: string, environment: string): Promise<boolean>{
+    var params = await deployUtils.getParams(true, environment);
+    var token =  params.bearer;
+
+    var headers: httpInterfaces.IHeaders = {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        'User-Agent': userAgent
+    }
+
+    var resourceUrl = getResourceFromWorkspaceUrl(targetWorkspaceName, environment,Artifact.managedprivateendpoints);
+
+    var resp = new Promise<boolean>((resolve, reject) => {
+        client.get(resourceUrl, headers).then(async (res) => {
+            var resStatus = res.message.statusCode;
+
+            if (resStatus != 200 && resStatus != 201 && resStatus != 202) {
+                let body = await res.readBody();
+                if(body.includes("does not have a managed virtual network associated"))
+                    return resolve(true);
+            }
+            return resolve(false);
+        });
+    });
+
+    return resp;
+}
+
