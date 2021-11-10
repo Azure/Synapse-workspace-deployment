@@ -70,6 +70,9 @@ export async function getArtifactsFromWorkspaceOfType(artifactTypeToQuery: Artif
         let artifactName = artifactJson.name ?? artifactJson.Name;
         let type = artifactJson.type ?? ((artifactJson.EntityType === 'DATABASE') ? DataFactoryType.database : artifactJson.EntityType);
 
+        if(type == Artifact.database && SkipDatabase(artifactJsonContent))
+            continue;
+
         let resource: Resource = {
             type: type,
             isDefault: false,
@@ -349,5 +352,20 @@ export async function SKipManagedPE(targetWorkspaceName: string, environment: st
     });
 
     return resp;
+}
+
+function SkipDatabase(artifactJsonContent: string): boolean{
+    let artifactJson = JSON.parse(artifactJsonContent);
+
+    if (artifactJson != null &&
+        artifactJson["Origin"] != null &&
+        artifactJson["Origin"]["Type"].toLowerCase() == "SPARK".toLowerCase() &&
+        artifactJson["Properties"] != null &&
+        artifactJson["Properties"]["IsSyMSCDMDatabase"] != null &&
+        artifactJson["Properties"]["IsSyMSCDMDatabase"].toString().toLowerCase() == "true"){
+        return false;
+    }
+
+    return true;
 }
 
