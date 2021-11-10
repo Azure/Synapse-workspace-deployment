@@ -70,7 +70,7 @@ export async function getArtifactsFromWorkspaceOfType(artifactTypeToQuery: Artif
         let artifactName = artifactJson.name ?? artifactJson.Name;
         let type = artifactJson.type ?? ((artifactJson.EntityType === 'DATABASE') ? DataFactoryType.database : artifactJson.EntityType);
 
-        if(type == Artifact.database && SkipDatabase(artifactJsonContent))
+        if(type == DataFactoryType.database && SkipDatabase(artifactJsonContent))
             continue;
 
         let resource: Resource = {
