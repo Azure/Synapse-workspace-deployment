@@ -10422,7 +10422,7 @@ function getArtifactsFromWorkspaceOfType(artifactTypeToQuery, targetWorkspaceNam
                         artifactJsonContent = JSON.stringify(artifactJson);
                         artifactName = (_b = artifactJson.name) !== null && _b !== void 0 ? _b : artifactJson.Name;
                         type = (_c = artifactJson.type) !== null && _c !== void 0 ? _c : ((artifactJson.EntityType === 'DATABASE') ? artifacts_enum_1.DataFactoryType.database : artifactJson.EntityType);
-                        if (type == artifacts_enum_1.Artifact.database && SkipDatabase(artifactJsonContent))
+                        if (type == artifacts_enum_1.DataFactoryType.database && SkipDatabase(artifactJsonContent))
                             continue;
                         resource = {
                             type: type,
