@@ -356,11 +356,13 @@ export async function SKipManagedPE(targetWorkspaceName: string, environment: st
 
 function SkipDatabase(artifactJsonContent: string): boolean{
     let artifactJson = JSON.parse(artifactJsonContent);
+
     if (artifactJson != null &&
-        artifactJson["properties"] != null &&
-        artifactJson["properties"]["Type"].toLowerCase() == "SPARK".toLowerCase() &&
-        artifactJson["properties"]["Properties"] != null &&
-        artifactJson["properties"]["Properties"]["IsSyMSCDMDatabase"].toString().toLowerCase() == "true"){
+        artifactJson["Origin"] != null &&
+        artifactJson["Origin"]["Type"].toLowerCase() == "SPARK".toLowerCase() &&
+        artifactJson["Properties"] != null &&
+        artifactJson["Properties"]["IsSyMSCDMDatabase"] != null &&
+        artifactJson["Properties"]["IsSyMSCDMDatabase"].toString().toLowerCase() == "true"){
         return false;
     }
 
