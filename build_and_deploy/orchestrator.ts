@@ -21,15 +21,17 @@ export class Orchestrator {
     private targetWorkspace: string;
     private environment: string;
     private deleteArtifactsNotInTemplate: boolean
+    private deployMPE: boolean
 
     constructor(packageFiles: PackageFile, artifactClient: ArtifactClient,
-        targetWorkspace: string, environment: string, deleteArtifactsNotInTemplate: boolean) {
+        targetWorkspace: string, environment: string, deleteArtifactsNotInTemplate: boolean, deployMPE: boolean) {
 
         this.packageFiles = packageFiles;
         this.artifactClient = artifactClient;
         this.targetWorkspace = targetWorkspace;
         this.environment = environment;
         this.deleteArtifactsNotInTemplate = deleteArtifactsNotInTemplate;
+        this.deployMPE = deployMPE;
     }
 
     public async orchestrateFromPublishBranch() {
@@ -44,6 +46,8 @@ export class Orchestrator {
             }
 
             let targetLocation = await getWorkspaceLocation(this.artifactClient.getParams(), this.targetWorkspace);
+            let canDeployMPE =  this.deployMPE && await SKipManagedPE(this.targetWorkspace, this.environment);
+
             let artifactsToDeploy: Resource[][] = await getArtifacts(armParameterContent, armTemplateContent, overrideArmParameters,
                 this.targetWorkspace, targetLocation);
 
@@ -61,7 +65,7 @@ export class Orchestrator {
             }
 
             SystemLogger.info("Start deploying artifacts from the template.");
-            await this.deployResourcesInOrder(this.artifactClient, artifactsToDeploy, this.targetWorkspace, this.environment);
+            await this.deployResourcesInOrder(this.artifactClient, artifactsToDeploy, this.targetWorkspace, this.environment, canDeployMPE);
             SystemLogger.info("Completed deploying artifacts from the template.");
 
         } catch (err) {
@@ -70,10 +74,10 @@ export class Orchestrator {
     }
 
     private async deployResourcesInOrder(artifactClient: ArtifactClient, artifactsToDeploy: Resource[][],
-        targetWorkspace: string, environment: string) {
+        targetWorkspace: string, environment: string, canDeployMPE: boolean) {
         for (let i = 0; i < artifactsToDeploy.length; i++) {
             let batchOfArtifacts = artifactsToDeploy[i];
-            await this.deployBatch(artifactClient, batchOfArtifacts, targetWorkspace, environment);
+            await this.deployBatch(artifactClient, batchOfArtifacts, targetWorkspace, environment, canDeployMPE);
             await artifactClient.WaitForAllDeployments(false);
         }
     }
@@ -99,9 +103,7 @@ export class Orchestrator {
     }
 
     private async deployBatch(artifactClient: ArtifactClient, artifactsToDeploy: Resource[],
-        targetWorkspace: string, environment: string) {
-
-        let skipManagedPE = await SKipManagedPE(targetWorkspace, environment);
+        targetWorkspace: string, environment: string, DeployMPE: boolean) {
 
         for (let resource of artifactsToDeploy) {
 
@@ -118,7 +120,7 @@ export class Orchestrator {
 
             SystemLogger.info(`Deploy ${artifactTypeToDeploy} ${resource.type}`);
             let result: string;
-            if (this.skipDeployment(artifactTypeToDeploy) || (skipManagedPE && artifactTypeToDeploy == Artifact.managedprivateendpoints)) {
+            if (this.skipDeployment(artifactTypeToDeploy) || (!DeployMPE && artifactTypeToDeploy == Artifact.managedprivateendpoints)) {
                 // Currently not supporting Sql and spark pools. Skipping
                 //result = await armclient.deploy(resource.content);
                 SystemLogger.info(`Deployment of type ${artifactsToDeploy} is not currently supported.`);

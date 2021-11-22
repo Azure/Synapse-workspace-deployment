@@ -77,6 +77,9 @@ uses: Azure/synapse-workspace-deployment
           managedIdentity: true
 ```
 
+#### Deploying managed private endpoints
+In order to deploy managed private endpoints
+
 #### Secrets
 `clientSecret` is a sensitive detail and must be stored in GitHub secrets.
 
