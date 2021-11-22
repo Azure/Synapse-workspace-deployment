@@ -46,7 +46,8 @@ export class Orchestrator {
             }
 
             let targetLocation = await getWorkspaceLocation(this.artifactClient.getParams(), this.targetWorkspace);
-            let canDeployMPE =  this.deployMPE && await SKipManagedPE(this.targetWorkspace, this.environment);
+            let canDeployMPE =  await SKipManagedPE(this.targetWorkspace, this.environment);
+            canDeployMPE = !canDeployMPE && this.deployMPE;
 
             let artifactsToDeploy: Resource[][] = await getArtifacts(armParameterContent, armTemplateContent, overrideArmParameters,
                 this.targetWorkspace, targetLocation);
@@ -123,7 +124,7 @@ export class Orchestrator {
             if (this.skipDeployment(artifactTypeToDeploy) || (!DeployMPE && artifactTypeToDeploy == Artifact.managedprivateendpoints)) {
                 // Currently not supporting Sql and spark pools. Skipping
                 //result = await armclient.deploy(resource.content);
-                SystemLogger.info(`Deployment of type ${artifactsToDeploy} is not currently supported.`);
+                SystemLogger.info(`Deployment of type ${artifactTypeToDeploy} is not currently supported.`);
                 continue;
             }
             else {
