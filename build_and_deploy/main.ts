@@ -25,14 +25,14 @@ export async function main() {
     }
 
     let deployMPE: boolean = false;
-    const deployMPEString = core.getInput("deployManagedPrivateEdnpoint");
+    const deployMPEString = core.getInput("deployManagedPrivateEndpoint");
     if(deployMPEString.toLowerCase() == "true")
     {
         deployMPE = true;
     }
 
     SystemLogger.info(`DeleteArtifactsNotInTemplate=${deleteArtifactsNotInTemplate}`);
-    SystemLogger.info(`deployManagedPrivateEdnpoint=${deployMPE}`);
+    SystemLogger.info(`deployManagedPrivateEndpoint=${deployMPE}`);
 
 
     try {
