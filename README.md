@@ -44,6 +44,9 @@ TargetWorkspaceName:
   managedIdentity:
     description: 'Use managed identity to generate the bearer token'
     required: false
+  deployManagedPrivateEndpoint:
+    description: 'Deploy managed private endpoints in the template.'
+    required: false
 ```
 
 ## Usage
@@ -76,6 +79,11 @@ uses: Azure/synapse-workspace-deployment
           subscriptionId: ${{ secrets.SUBID }}
           managedIdentity: true
 ```
+
+#### Deploying managed private endpoints
+In order to deploy managed private endpoints, pass deployManagedPrivateEndpoint is true.
+Along with you may also be required to override the resourceIDs in the templates so that the new private endpoint
+does not point to the same resource as source workspace.
 
 #### Secrets
 `clientSecret` is a sensitive detail and must be stored in GitHub secrets.

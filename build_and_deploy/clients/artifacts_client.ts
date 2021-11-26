@@ -267,6 +267,14 @@ export class ArtifactClient {
     private async deployManagedPrivateEndpoint(baseUrl: string, payload: Resource, token: string)
         : Promise<string> {
         try {
+            let payLoadJson = JSON.parse(payload.content);
+
+            if(payLoadJson["properties"].hasOwnProperty("fqdns")){
+                delete payLoadJson["properties"]["fqdns"];
+            }
+
+            payload.content = JSON.stringify(payLoadJson);
+
             return await this.artifactDeploymentTask(baseUrl,
                 `${Artifact.managedprivateendpoints.toString()}`, payload, token);
         } catch (err) {
