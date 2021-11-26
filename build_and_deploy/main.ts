@@ -23,7 +23,17 @@ export async function main() {
     {
         deleteArtifactsNotInTemplate = true;
     }
+
+    let deployMPE: boolean = false;
+    const deployMPEString = core.getInput("deployManagedPrivateEndpoint");
+    if(deployMPEString.toLowerCase() == "true")
+    {
+        deployMPE = true;
+    }
+
     SystemLogger.info(`DeleteArtifactsNotInTemplate=${deleteArtifactsNotInTemplate}`);
+    SystemLogger.info(`deployManagedPrivateEndpoint=${deployMPE}`);
+
 
     try {
         const packageFiles: PackageFile = new PackageFile(templateFile, parametersFile, overrideArmParameters);
@@ -36,7 +46,8 @@ export async function main() {
             artifactClient,
             targetWorkspace,
             environment,
-            deleteArtifactsNotInTemplate
+            deleteArtifactsNotInTemplate,
+            deployMPE
         );
         await orchestrator.orchestrateFromPublishBranch();
     } catch (err) {
