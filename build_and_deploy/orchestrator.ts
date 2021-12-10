@@ -91,7 +91,8 @@ export class Orchestrator {
     private skipDeployment(artifactTypeToDeploy: string) {
         if (artifactTypeToDeploy == Artifact.sqlpool ||
             artifactTypeToDeploy == Artifact.bigdatapools ||
-            artifactTypeToDeploy == Artifact.managedvirtualnetworks) {
+            artifactTypeToDeploy == Artifact.managedvirtualnetworks ||
+            artifactTypeToDeploy == Artifact.managedprivateendpoints) {
             return true;
         }
 
@@ -100,8 +101,6 @@ export class Orchestrator {
 
     private async deployBatch(artifactClient: ArtifactClient, artifactsToDeploy: Resource[],
         targetWorkspace: string, environment: string) {
-
-        let skipManagedPE = await SKipManagedPE(targetWorkspace, environment);
 
         for (let resource of artifactsToDeploy) {
 
@@ -118,7 +117,7 @@ export class Orchestrator {
 
             SystemLogger.info(`Deploy ${artifactTypeToDeploy} ${resource.type}`);
             let result: string;
-            if (this.skipDeployment(artifactTypeToDeploy) || (skipManagedPE && artifactTypeToDeploy == Artifact.managedprivateendpoints)) {
+            if (this.skipDeployment(artifactTypeToDeploy)) {
                 // Currently not supporting Sql and spark pools. Skipping
                 //result = await armclient.deploy(resource.content);
                 SystemLogger.info(`Deployment of type ${artifactsToDeploy} is not currently supported.`);
@@ -158,7 +157,8 @@ export class Orchestrator {
             var result : string;
             if (artifactTypeToDelete == Artifact.sqlpool ||
                 artifactTypeToDelete == Artifact.bigdatapools ||
-                artifactTypeToDelete == Artifact.managedvirtualnetworks) {
+                artifactTypeToDelete == Artifact.managedvirtualnetworks||
+                artifactTypeToDelete == Artifact.managedprivateendpoints) {
                 // Skip this.
                 continue;
             }

@@ -22,7 +22,6 @@ const artifactTypesToQuery:Artifact[] = [
     Artifact.sparkjobdefinition,
     Artifact.sqlscript,
     Artifact.trigger,
-    Artifact.managedprivateendpoints,
     Artifact.database
 ];
 
@@ -96,7 +95,7 @@ export async function getArtifactsFromWorkspace(targetWorkspaceName: string, env
     let artifacts = new Array<Resource>();
     for(let x=0; x < artifactTypesToQuery.length; x++)
     {
-        if (artifactTypesToQuery[x] == Artifact.managedprivateendpoints && await SKipManagedPE(targetWorkspaceName, environment))
+        if (artifactTypesToQuery[x] == Artifact.managedprivateendpoints)
             continue;
 
         let artifactsOfType = await getArtifactsFromWorkspaceOfType(artifactTypesToQuery[x], targetWorkspaceName, environment);
@@ -130,6 +129,7 @@ export function getArtifactsToDeleteFromWorkspace(
             artifactTypeToDeploy != Artifact.bigdatapools &&
             artifactTypeToDeploy != Artifact.managedvirtualnetworks &&
             artifactTypeToDeploy != Artifact.integrationruntime &&
+            artifactTypeToDeploy != Artifact.managedprivateendpoints &&
             checkResource.isDefault != true)
         {
             for(let i=0;i< artifactsToDeploy.length;i++)
