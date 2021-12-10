@@ -22,7 +22,6 @@ const artifactTypesToQuery:Artifact[] = [
     Artifact.sparkjobdefinition,
     Artifact.sqlscript,
     Artifact.trigger,
-    Artifact.managedprivateendpoints,
     Artifact.database
 ];
 
@@ -130,6 +129,7 @@ export function getArtifactsToDeleteFromWorkspace(
             artifactTypeToDeploy != Artifact.bigdatapools &&
             artifactTypeToDeploy != Artifact.managedvirtualnetworks &&
             artifactTypeToDeploy != Artifact.integrationruntime &&
+            artifactTypeToDeploy != Artifact.managedprivateendpoints &&
             checkResource.isDefault != true)
         {
             for(let i=0;i< artifactsToDeploy.length;i++)
