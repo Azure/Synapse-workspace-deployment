@@ -10441,36 +10441,29 @@ function getArtifactsFromWorkspaceOfType(artifactTypeToQuery, targetWorkspaceNam
 exports.getArtifactsFromWorkspaceOfType = getArtifactsFromWorkspaceOfType;
 function getArtifactsFromWorkspace(targetWorkspaceName, environment) {
     return __awaiter(this, void 0, void 0, function () {
-        var artifacts, x, _a, artifactsOfType;
-        return __generator(this, function (_b) {
-            switch (_b.label) {
+        var artifacts, x, artifactsOfType;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
                 case 0:
                     logger_1.SystemLogger.info("Getting Artifacts from workspace: " + targetWorkspaceName + ".");
                     artifacts = new Array();
                     x = 0;
-                    _b.label = 1;
+                    _a.label = 1;
                 case 1:
-                    if (!(x < artifactTypesToQuery.length)) return [3 /*break*/, 6];
-                    _a = artifactTypesToQuery[x] == artifacts_enum_1.Artifact.managedprivateendpoints;
-                    if (!_a) return [3 /*break*/, 3];
-                    return [4 /*yield*/, SKipManagedPE(targetWorkspaceName, environment)];
-                case 2:
-                    _a = (_b.sent());
-                    _b.label = 3;
-                case 3:
-                    if (_a)
-                        return [3 /*break*/, 5];
+                    if (!(x < artifactTypesToQuery.length)) return [3 /*break*/, 4];
+                    if (artifactTypesToQuery[x] == artifacts_enum_1.Artifact.managedprivateendpoints)
+                        return [3 /*break*/, 3];
                     return [4 /*yield*/, getArtifactsFromWorkspaceOfType(artifactTypesToQuery[x], targetWorkspaceName, environment)];
-                case 4:
-                    artifactsOfType = _b.sent();
+                case 2:
+                    artifactsOfType = _a.sent();
                     artifactsOfType.forEach(function (value) {
                         artifacts.push(value);
                     });
-                    _b.label = 5;
-                case 5:
+                    _a.label = 3;
+                case 3:
                     x++;
                     return [3 /*break*/, 1];
-                case 6: return [2 /*return*/, artifacts];
+                case 4: return [2 /*return*/, artifacts];
             }
         });
     });

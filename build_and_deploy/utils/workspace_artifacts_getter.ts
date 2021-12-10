@@ -95,7 +95,7 @@ export async function getArtifactsFromWorkspace(targetWorkspaceName: string, env
     let artifacts = new Array<Resource>();
     for(let x=0; x < artifactTypesToQuery.length; x++)
     {
-        if (artifactTypesToQuery[x] == Artifact.managedprivateendpoints && await SKipManagedPE(targetWorkspaceName, environment))
+        if (artifactTypesToQuery[x] == Artifact.managedprivateendpoints)
             continue;
 
         let artifactsOfType = await getArtifactsFromWorkspaceOfType(artifactTypesToQuery[x], targetWorkspaceName, environment);
