@@ -88,6 +88,38 @@ does not point to the same resource as source workspace.
 #### Secrets
 `clientSecret` is a sensitive detail and must be stored in GitHub secrets.
 
+#### Overriding parameters (OverrideArmParameters)
+
+The OverrideArmParameters file should contain key value pairs in yaml format.
+
+If the parameters file has the following content:
+
+```json
+// ./devazuresynapse/TemplateForWorkspace.json
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "AppSecrets_properties_typeProperties_baseUrl": {
+      "value": "https://{{organization}}-dev-kv.Environment-kv.vault.azure.net/"
+    },
+    "devazuresynapse-WorkspaceDefaultStorage_properties_typeProperties_url": {
+      "value": "https://dev{{organization}}datalake.dfs.core.windows.net"
+    },
+    "AzureDeltaLake_properties_typeProperties_url": {
+      "value": "https://dev{{organization}}deltalake.dfs.core.windows.net"
+    }
+  }
+}
+```
+
+```yaml
+# ./parameters/production/parameters.yaml
+AppSecrets_properties_typeProperties_baseUrl: https://{{organization}}-prod-kv.vault.azure.net/
+devazuresynapse-WorkspaceDefaultStorage_properties_typeProperties_url: https://dev{{organization}}datalake.dfs.core.windows.net
+AzureDeltaLake_properties_typeProperties_url: https://prod{{organization}}deltalake.dfs.core.windows.net
+```
+
 #### Environment
 * Azure Public - https://dev.azuresynapse.net
 * Azure China - https://dev.azuresynapse.azure.cn
