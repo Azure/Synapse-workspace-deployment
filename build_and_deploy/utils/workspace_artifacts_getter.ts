@@ -38,8 +38,8 @@ export async function getArtifactsFromWorkspaceOfType(artifactTypeToQuery: Artif
 
     let artifacts = new Array<Resource>();
     var resourceUrl = getResourceFromWorkspaceUrl(targetWorkspaceName, environment, artifactTypeToQuery.toString());
-
     let moreResult = true;
+
     while(moreResult){
         var resp = new Promise<string>((resolve, reject) => {
             client.get(resourceUrl, headers).then(async (res) => {
@@ -66,6 +66,7 @@ export async function getArtifactsFromWorkspaceOfType(artifactTypeToQuery: Artif
         var resourcesString = await resp;
         var resourcesJson = JSON.parse(resourcesString);
         const list = resourcesJson.value ?? resourcesJson?.items;
+        moreResult = false;
 
         for (let artifactJson of list) {
             let artifactJsonContent = JSON.stringify(artifactJson);
@@ -90,9 +91,7 @@ export async function getArtifactsFromWorkspaceOfType(artifactTypeToQuery: Artif
             artifacts.push(resource);
             if(resourcesJson.hasOwnProperty("nextLink")){
                 resourceUrl = resourcesJson.nextLink;
-            }
-            else{
-                moreResult = false;
+                moreResult = true;
             }
         }
     }
