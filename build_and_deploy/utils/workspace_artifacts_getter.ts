@@ -183,7 +183,7 @@ function countOfArtifactDependancy(checkArtifact: Resource, selectedListOfResour
         if(restype.indexOf("Microsoft.Synapse/workspaces/")> -1){
             restype = restype.substr("Microsoft.Synapse/workspaces/".length);
         }
-        let nameToCheck = `${restype}/${resName}`;
+        let nameToCheck = `${restype.substring(0, restype.length-1)}Reference/${resName}`;
         nameToCheck = nameToCheck.toLowerCase();
 
         for(let i=0;i< resource.dependson.length;i++)
