@@ -39,54 +39,64 @@ export async function getArtifactsFromWorkspaceOfType(artifactTypeToQuery: Artif
     let artifacts = new Array<Resource>();
     var resourceUrl = getResourceFromWorkspaceUrl(targetWorkspaceName, environment, artifactTypeToQuery.toString());
 
-    var resp = new Promise<string>((resolve, reject) => {
-        client.get(resourceUrl, headers).then(async (res) => {
-            var resStatus = res.message.statusCode;
+    let moreResult = true;
+    while(moreResult){
+        var resp = new Promise<string>((resolve, reject) => {
+            client.get(resourceUrl, headers).then(async (res) => {
+                var resStatus = res.message.statusCode;
 
-            if (resStatus != 200 && resStatus != 201 && resStatus != 202) {
-                SystemLogger.info(`Failed to fetch workspace info, status: ${resStatus}; status message: ${res.message.statusMessage}`);
-                return reject("Failed to fetch workspace info " + res.message.statusMessage);
-            }
-            var body = await res.readBody();
+                if (resStatus != 200 && resStatus != 201 && resStatus != 202) {
+                    SystemLogger.info(`Failed to fetch workspace info, status: ${resStatus}; status message: ${res.message.statusMessage}`);
+                    return reject("Failed to fetch workspace info " + res.message.statusMessage);
+                }
+                var body = await res.readBody();
 
-            if (!body) {
-                SystemLogger.info("No response body for url: " + resourceUrl);
-                return reject("Failed to fetch workspace info response");
-            }
-            return resolve(body);
+                if (!body) {
+                    SystemLogger.info("No response body for url: " + resourceUrl);
+                    return reject("Failed to fetch workspace info response");
+                }
+                return resolve(body);
 
-        }, (reason) => {
-            SystemLogger.info('Failed to fetch artifacts from workspace: '+ reason);
-            return reject(deployUtils.DeployStatus.failed);
+            }, (reason) => {
+                SystemLogger.info('Failed to fetch artifacts from workspace: '+ reason);
+                return reject(deployUtils.DeployStatus.failed);
+            });
         });
-    });
 
-    var resourcesString = await resp;
-    var resourcesJson = JSON.parse(resourcesString);
-    const list = resourcesJson.value ?? resourcesJson?.items;
+        var resourcesString = await resp;
+        var resourcesJson = JSON.parse(resourcesString);
+        const list = resourcesJson.value ?? resourcesJson?.items;
 
-    for (let artifactJson of list) {
-        let artifactJsonContent = JSON.stringify(artifactJson);
-        let artifactName = artifactJson.name ?? artifactJson.Name;
-        let type = artifactJson.type ?? ((artifactJson.EntityType === 'DATABASE') ? DataFactoryType.database : artifactJson.EntityType);
+        for (let artifactJson of list) {
+            let artifactJsonContent = JSON.stringify(artifactJson);
+            let artifactName = artifactJson.name ?? artifactJson.Name;
+            let type = artifactJson.type ?? ((artifactJson.EntityType === 'DATABASE') ? DataFactoryType.database : artifactJson.EntityType);
 
-        if(type == DataFactoryType.database && SkipDatabase(artifactJsonContent))
-            continue;
+            if(type == DataFactoryType.database && SkipDatabase(artifactJsonContent))
+                continue;
 
-        let resource: Resource = {
-            type: type,
-            isDefault: false,
-            content: artifactJsonContent,
-            name: artifactName,
-            dependson: getDependentsFromArtifactFromWorkspace(artifactJsonContent)
-        };
+            let resource: Resource = {
+                type: type,
+                isDefault: false,
+                content: artifactJsonContent,
+                name: artifactName,
+                dependson: getDependentsFromArtifactFromWorkspace(artifactJsonContent)
+            };
 
-        if (type !== DataFactoryType.database && isDefaultArtifact(artifactJsonContent)) {
-            resource.isDefault = true;
+            if (type !== DataFactoryType.database && isDefaultArtifact(artifactJsonContent)) {
+                resource.isDefault = true;
+            }
+
+            artifacts.push(resource);
+            if(resourcesJson.hasOwnProperty("nextLink")){
+                resourceUrl = resourcesJson.nextLink;
+            }
+            else{
+                moreResult = false;
+            }
         }
-
-        artifacts.push(resource);
     }
+
 
     return artifacts;
 }
