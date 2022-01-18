@@ -1,9 +1,9 @@
-import { ArtifactClient } from '../clients/artifacts_client';
+import {ArtifactClient} from '../clients/artifacts_client';
 import * as deployUtils from './deploy_utils';
 import * as httpClient from 'typed-rest-client/HttpClient';
 import * as httpInterfaces from 'typed-rest-client/Interfaces';
-import { checkIfArtifactExists, checkIfNameExists, Resource } from './arm_template_utils';
-import { Artifact, DataFactoryType } from './artifacts_enum';
+import {checkIfArtifactExists, Resource} from './arm_template_utils';
+import {Artifact, DataFactoryType} from './artifacts_enum';
 import {SystemLogger} from "./logger";
 import {isDefaultArtifact} from "./common_utils";
 
@@ -23,7 +23,8 @@ const artifactTypesToQuery:Artifact[] = [
     Artifact.sqlscript,
     Artifact.trigger,
     Artifact.managedprivateendpoints,
-    Artifact.database
+    Artifact.database,
+    Artifact.kqlScript
 ];
 
 export async function getArtifactsFromWorkspaceOfType(artifactTypeToQuery: Artifact, targetWorkspaceName: string, environment: string): Promise<Resource[]> {
