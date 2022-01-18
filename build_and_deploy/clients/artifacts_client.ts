@@ -519,11 +519,14 @@ export class ArtifactClient {
             var resStatus: number = res.message.statusCode!;
 
             var body = await res.readBody();
-            var bodyObj = JSON.parse(body);
+            if(body.trim() != ""){
+                let bodyObj = JSON.parse(body);
 
-            if(bodyObj["status"].toLowerCase() == "failed"){
-                console.log(bodyObj["error"]["message"]);
-                throw new Error(`For Artifact: ${name} deletion failed. ${JSON.stringify(bodyObj)}`);
+                if(bodyObj["status"].toLowerCase() == "failed"){
+                    console.log(bodyObj["error"]["message"]);
+                    throw new Error(`For Artifact: ${name} deletion failed. ${JSON.stringify(bodyObj)}`);
+                }
+
             }
 
             SystemLogger.info(`For Artifact: ${name}: Checkstatus: ${resStatus}; status message: ${res.message.statusMessage}`);
