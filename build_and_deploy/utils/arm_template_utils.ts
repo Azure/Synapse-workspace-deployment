@@ -5,7 +5,7 @@
 import * as yaml from 'js-yaml';
 import {v4 as uuidv4} from 'uuid';
 import {SystemLogger} from './logger';
-import {isDefaultArtifact} from "./common_utils";
+import {DefaultArtifact, isDefaultArtifact} from "./common_utils";
 import {DataFactoryType} from "./artifacts_enum";
 
 // Just 2 random Guids to replace backslash in parameters file.
@@ -132,8 +132,22 @@ export function findDefaultArtifacts(armTemplate: string, targetworkspace: strin
         if (isDefaultArtifact(JSON.stringify(artifactJson))) {
             if (artifactName.indexOf("/") > 0) {
                 //example `${targetworkspace}/sourceworkspace-WorkspaceDefaultStorage`;
-                let nametoreplace = artifactName.substr(artifactName.lastIndexOf("/") + 1);
-                nametoreplace = nametoreplace.substr(0, nametoreplace.lastIndexOf("-"));
+
+                let lastIndexOfslash = artifactName.lastIndexOf("/");
+                let targetWorkspaceInArtifact = artifactName.substring(0, lastIndexOfslash);
+                let nametoreplace = artifactName.substr(lastIndexOfslash + 1);
+
+                // Extract source workspace name
+                let defaultArtifactName: string = '';
+                for(let i = 0; i < DefaultArtifact.DefaultArtifacts.length; i++){
+                    let name = DefaultArtifact.DefaultArtifacts[i];
+                    if(nametoreplace.toLowerCase().endsWith(name.name.toLowerCase())){
+                        defaultArtifactName = name.name;
+                        break;
+                    }
+                }
+
+                let replacedName = `${targetWorkspaceInArtifact}/${targetworkspace}-${defaultArtifactName}`;
 
                 let replacedName = artifactName.replace(nametoreplace, targetworkspace);
                 replacedName = replacedName.substr(replacedName.lastIndexOf("/") + 1);
