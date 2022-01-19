@@ -134,7 +134,6 @@ export function findDefaultArtifacts(armTemplate: string, targetworkspace: strin
                 //example `${targetworkspace}/sourceworkspace-WorkspaceDefaultStorage`;
 
                 let lastIndexOfslash = artifactName.lastIndexOf("/");
-                let targetWorkspaceInArtifact = artifactName.substring(0, lastIndexOfslash);
                 let nametoreplace = artifactName.substr(lastIndexOfslash + 1);
 
                 // Extract source workspace name
@@ -142,18 +141,12 @@ export function findDefaultArtifacts(armTemplate: string, targetworkspace: strin
                 for(let i = 0; i < DefaultArtifact.DefaultArtifacts.length; i++){
                     let name = DefaultArtifact.DefaultArtifacts[i];
                     if(nametoreplace.toLowerCase().endsWith(name.name.toLowerCase())){
-                        defaultArtifactName = name.name;
+                        defaultArtifactName = nametoreplace.substring(nametoreplace.toLowerCase().indexOf(name.name.toLowerCase()));
                         break;
                     }
                 }
 
-                let replacedName = `${targetWorkspaceInArtifact}/${targetworkspace}-${defaultArtifactName}`;
-
-                let replacedName = artifactName.replace(nametoreplace, targetworkspace);
-                replacedName = replacedName.substr(replacedName.lastIndexOf("/") + 1);
-
-                nametoreplace = artifactName.substr(artifactName.lastIndexOf("/") + 1);
-
+                let replacedName = `${targetworkspace}-${defaultArtifactName}`;
                 if (nametoreplace == replacedName) {
                     // source and target workspace are same.
                     continue;
