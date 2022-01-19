@@ -523,7 +523,7 @@ export class ArtifactClient {
                 let bodyObj = JSON.parse(body);
 
                 if(bodyObj["status"].toLowerCase() == "failed"){
-                    console.log(bodyObj["error"]["message"]);
+                    SystemLogger.info(bodyObj["error"]["message"]);
                     throw new Error(`For Artifact: ${name} deletion failed. ${JSON.stringify(bodyObj)}`);
                 }
 
