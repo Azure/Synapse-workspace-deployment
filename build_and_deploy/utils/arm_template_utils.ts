@@ -146,7 +146,8 @@ export function findDefaultArtifacts(armTemplate: string, targetworkspace: strin
                     }
                 }
 
-                let replacedName = `${targetworkspace}-${defaultArtifactName}`;
+                let replacedName = defaultArtifactName == "WorkspaceSystemIdentity" ? defaultArtifactName : `${targetworkspace}-${defaultArtifactName}`;
+
                 if (nametoreplace == replacedName) {
                     // source and target workspace are same.
                     continue;
