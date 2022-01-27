@@ -10107,7 +10107,7 @@ var DefaultArtifact = /** @class */ (function () {
         new DefaultArtifact("workspacesystemidentity", "managedidentity", artifacts_enum_1.DataFactoryType.credential),
         new DefaultArtifact("synapse-ws-sql", "sql", artifacts_enum_1.DataFactoryType.managedPrivateEndpoints),
         new DefaultArtifact("synapse-ws-sqlOnDemand", "sqlOnDemand", artifacts_enum_1.DataFactoryType.managedPrivateEndpoints),
-        new DefaultArtifact("synapse-ws-custstgacct", "dfs", artifacts_enum_1.DataFactoryType.managedPrivateEndpoints),
+        new DefaultArtifact("synapse-ws-kusto", "Kusto", artifacts_enum_1.DataFactoryType.managedPrivateEndpoints),
     ];
     return DefaultArtifact;
 }());

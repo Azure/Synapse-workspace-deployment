@@ -25,7 +25,7 @@ export class DefaultArtifact {
         new DefaultArtifact("workspacesystemidentity", "managedidentity", DataFactoryType.credential),
         new DefaultArtifact("synapse-ws-sql", "sql", DataFactoryType.managedPrivateEndpoints),
         new DefaultArtifact("synapse-ws-sqlOnDemand", "sqlOnDemand", DataFactoryType.managedPrivateEndpoints),
-        new DefaultArtifact("synapse-ws-custstgacct", "dfs", DataFactoryType.managedPrivateEndpoints),
+        new DefaultArtifact("synapse-ws-kusto", "Kusto", DataFactoryType.managedPrivateEndpoints),
     ];
 
     private constructor(public name: string, public type: string, public dataFactoryType: DataFactoryType) {
