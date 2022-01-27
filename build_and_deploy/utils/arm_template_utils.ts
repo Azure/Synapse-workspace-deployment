@@ -140,7 +140,7 @@ export function findDefaultArtifacts(armTemplate: string, targetworkspace: strin
                 let defaultArtifactName: string = '';
                 for(let i = 0; i < DefaultArtifact.DefaultArtifacts.length; i++){
                     let name = DefaultArtifact.DefaultArtifacts[i];
-                    if(nametoreplace.toLowerCase().endsWith(name.name.toLowerCase())){
+                    if(nametoreplace.toLowerCase().includes(name.name.toLowerCase())){
                         defaultArtifactName = nametoreplace.substring(nametoreplace.toLowerCase().indexOf(name.name.toLowerCase()));
                         break;
                     }

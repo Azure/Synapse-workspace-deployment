@@ -9560,7 +9560,7 @@ function findDefaultArtifacts(armTemplate, targetworkspace) {
                 var defaultArtifactName = '';
                 for (var i = 0; i < common_utils_1.DefaultArtifact.DefaultArtifacts.length; i++) {
                     var name_1 = common_utils_1.DefaultArtifact.DefaultArtifacts[i];
-                    if (nametoreplace.toLowerCase().endsWith(name_1.name.toLowerCase())) {
+                    if (nametoreplace.toLowerCase().includes(name_1.name.toLowerCase())) {
                         defaultArtifactName = nametoreplace.substring(nametoreplace.toLowerCase().indexOf(name_1.name.toLowerCase()));
                         break;
                     }
