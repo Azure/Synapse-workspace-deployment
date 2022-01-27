@@ -878,6 +878,7 @@ function main() {
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
+                    logger_1.SystemLogger.setLogger(new logger_1.ActionLogger(true));
                     targetWorkspace = core.getInput('TargetWorkspaceName');
                     templateFile = core.getInput("TemplateFile");
                     parametersFile = core.getInput("ParametersFile");
@@ -903,7 +904,6 @@ function main() {
                 case 2:
                     params = _a.sent();
                     artifactClient = new artifacts_client_1.ArtifactClient(params);
-                    logger_1.SystemLogger.setLogger(new logger_1.ActionLogger(true));
                     orchestrator = new orchestrator_1.Orchestrator(packageFiles, artifactClient, targetWorkspace, environment, deleteArtifactsNotInTemplate, deployMPE);
                     return [4 /*yield*/, orchestrator.orchestrateFromPublishBranch()];
                 case 3:
