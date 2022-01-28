@@ -10789,6 +10789,8 @@ function getArtifactsFromWorkspace(targetWorkspaceName, environment) {
                     return [4 /*yield*/, getArtifactsFromWorkspaceOfType(artifactTypesToQuery[x], targetWorkspaceName, environment)];
                 case 4:
                     artifactsOfType = _b.sent();
+                    console.log("########### -> ", artifactTypesToQuery[x]);
+                    console.log(artifactsOfType);
                     artifactsOfType.forEach(function (value) {
                         artifacts.push(value);
                     });

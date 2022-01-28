@@ -110,6 +110,8 @@ export async function getArtifactsFromWorkspace(targetWorkspaceName: string, env
             continue;
 
         let artifactsOfType = await getArtifactsFromWorkspaceOfType(artifactTypesToQuery[x], targetWorkspaceName, environment);
+        console.log("########### -> ",artifactTypesToQuery[x]);
+        console.log(artifactsOfType);
         artifactsOfType.forEach((value)=>{
             artifacts.push(value);
         });
