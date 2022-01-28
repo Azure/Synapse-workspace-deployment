@@ -96,7 +96,8 @@ export class Orchestrator {
     private skipDeployment(artifactTypeToDeploy: string) {
         if (artifactTypeToDeploy == Artifact.sqlpool ||
             artifactTypeToDeploy == Artifact.bigdatapools ||
-            artifactTypeToDeploy == Artifact.managedvirtualnetworks) {
+            artifactTypeToDeploy == Artifact.managedvirtualnetworks ||
+            artifactTypeToDeploy == Artifact.managedprivateendpoints) {
             return true;
         }
 
@@ -105,6 +106,7 @@ export class Orchestrator {
 
     private async deployBatch(artifactClient: ArtifactClient, artifactsToDeploy: Resource[],
         targetWorkspace: string, environment: string, DeployMPE: boolean) {
+
 
         for (let resource of artifactsToDeploy) {
 
@@ -161,7 +163,8 @@ export class Orchestrator {
             var result : string;
             if (artifactTypeToDelete == Artifact.sqlpool ||
                 artifactTypeToDelete == Artifact.bigdatapools ||
-                artifactTypeToDelete == Artifact.managedvirtualnetworks) {
+                artifactTypeToDelete == Artifact.managedvirtualnetworks||
+                artifactTypeToDelete == Artifact.managedprivateendpoints) {
                 // Skip this.
                 continue;
             }

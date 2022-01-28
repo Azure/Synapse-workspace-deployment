@@ -91,8 +91,6 @@ export class ArtifactClient {
                 return this.deployCredential(baseUrl, payload, token);
             case Artifact.kqlScript:
                 return this.deployKqlScript(baseUrl, payload, token);
-            case Artifact.managedprivateendpoints:
-                return this.deployManagedPrivateEndpoint(baseUrl, payload, token);
             case Artifact.database:
                 return this.deployDatabase(baseUrl, payload, token);
             default:
