@@ -265,6 +265,14 @@ export class ArtifactClient {
     private async deployManagedPrivateEndpoint(baseUrl: string, payload: Resource, token: string)
         : Promise<string> {
         try {
+            let payLoadJson = JSON.parse(payload.content);
+
+            if(payLoadJson["properties"].hasOwnProperty("fqdns")){
+                delete payLoadJson["properties"]["fqdns"];
+            }
+
+            payload.content = JSON.stringify(payLoadJson);
+
             return await this.artifactDeploymentTask(baseUrl,
                 `${Artifact.managedprivateendpoints.toString()}`, payload, token);
         } catch (err) {
@@ -507,6 +515,18 @@ export class ArtifactClient {
 
             var res = await this.client.get(url, this.getHeaders(token));
             var resStatus: number = res.message.statusCode!;
+
+            var body = await res.readBody();
+            if(body.trim() != ""){
+                let bodyObj = JSON.parse(body);
+
+                if(bodyObj["status"].toLowerCase() == "failed"){
+                    SystemLogger.info(bodyObj["error"]["message"]);
+                    throw new Error(`For Artifact: ${name} deletion failed. ${JSON.stringify(bodyObj)}`);
+                }
+
+            }
+
             SystemLogger.info(`For Artifact: ${name}: Checkstatus: ${resStatus}; status message: ${res.message.statusMessage}`);
             if (resStatus != 200 && resStatus < 203) {
                 await this.delay(delayMilliSecs);

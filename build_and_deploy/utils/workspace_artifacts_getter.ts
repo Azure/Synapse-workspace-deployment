@@ -1,9 +1,9 @@
-import { ArtifactClient } from '../clients/artifacts_client';
+import {ArtifactClient} from '../clients/artifacts_client';
 import * as deployUtils from './deploy_utils';
 import * as httpClient from 'typed-rest-client/HttpClient';
 import * as httpInterfaces from 'typed-rest-client/Interfaces';
-import { checkIfArtifactExists, checkIfNameExists, Resource } from './arm_template_utils';
-import { Artifact, DataFactoryType } from './artifacts_enum';
+import {checkIfArtifactExists, Resource} from './arm_template_utils';
+import {Artifact, DataFactoryType} from './artifacts_enum';
 import {SystemLogger} from "./logger";
 import {isDefaultArtifact} from "./common_utils";
 
@@ -22,7 +22,9 @@ const artifactTypesToQuery:Artifact[] = [
     Artifact.sparkjobdefinition,
     Artifact.sqlscript,
     Artifact.trigger,
-    Artifact.database
+    Artifact.managedprivateendpoints,
+    Artifact.database,
+    Artifact.kqlScript
 ];
 
 export async function getArtifactsFromWorkspaceOfType(artifactTypeToQuery: Artifact, targetWorkspaceName: string, environment: string): Promise<Resource[]> {
@@ -37,55 +39,64 @@ export async function getArtifactsFromWorkspaceOfType(artifactTypeToQuery: Artif
 
     let artifacts = new Array<Resource>();
     var resourceUrl = getResourceFromWorkspaceUrl(targetWorkspaceName, environment, artifactTypeToQuery.toString());
+    let moreResult = true;
 
-    var resp = new Promise<string>((resolve, reject) => {
-        client.get(resourceUrl, headers).then(async (res) => {
-            var resStatus = res.message.statusCode;
+    while(moreResult){
+        var resp = new Promise<string>((resolve, reject) => {
+            client.get(resourceUrl, headers).then(async (res) => {
+                var resStatus = res.message.statusCode;
 
-            if (resStatus != 200 && resStatus != 201 && resStatus != 202) {
-                SystemLogger.info(`Failed to fetch workspace info, status: ${resStatus}; status message: ${res.message.statusMessage}`);
-                return reject("Failed to fetch workspace info " + res.message.statusMessage);
-            }
-            var body = await res.readBody();
+                if (resStatus != 200 && resStatus != 201 && resStatus != 202) {
+                    SystemLogger.info(`Failed to fetch workspace info, status: ${resStatus}; status message: ${res.message.statusMessage}`);
+                    return reject("Failed to fetch workspace info " + res.message.statusMessage);
+                }
+                var body = await res.readBody();
 
-            if (!body) {
-                SystemLogger.info("No response body for url: " + resourceUrl);
-                return reject("Failed to fetch workspace info response");
-            }
-            return resolve(body);
+                if (!body) {
+                    SystemLogger.info("No response body for url: " + resourceUrl);
+                    return reject("Failed to fetch workspace info response");
+                }
+                return resolve(body);
 
-        }, (reason) => {
-            SystemLogger.info('Failed to fetch artifacts from workspace: '+ reason);
-            return reject(deployUtils.DeployStatus.failed);
+            }, (reason) => {
+                SystemLogger.info('Failed to fetch artifacts from workspace: '+ reason);
+                return reject(deployUtils.DeployStatus.failed);
+            });
         });
-    });
 
-    var resourcesString = await resp;
-    var resourcesJson = JSON.parse(resourcesString);
-    const list = resourcesJson.value ?? resourcesJson?.items;
+        var resourcesString = await resp;
+        var resourcesJson = JSON.parse(resourcesString);
+        const list = resourcesJson.value ?? resourcesJson?.items;
+        moreResult = false;
 
-    for (let artifactJson of list) {
-        let artifactJsonContent = JSON.stringify(artifactJson);
-        let artifactName = artifactJson.name ?? artifactJson.Name;
-        let type = artifactJson.type ?? ((artifactJson.EntityType === 'DATABASE') ? DataFactoryType.database : artifactJson.EntityType);
+        for (let artifactJson of list) {
+            let artifactJsonContent = JSON.stringify(artifactJson);
+            let artifactName = artifactJson.name ?? artifactJson.Name;
+            let type = artifactJson.type ?? ((artifactJson.EntityType === 'DATABASE') ? DataFactoryType.database : artifactJson.EntityType);
 
-        if(type == DataFactoryType.database && SkipDatabase(artifactJsonContent))
-            continue;
+            if(type == DataFactoryType.database && SkipDatabase(artifactJsonContent))
+                continue;
 
-        let resource: Resource = {
-            type: type,
-            isDefault: false,
-            content: artifactJsonContent,
-            name: artifactName,
-            dependson: getDependentsFromArtifactFromWorkspace(artifactJsonContent)
-        };
+            let resource: Resource = {
+                type: type,
+                isDefault: false,
+                content: artifactJsonContent,
+                name: artifactName,
+                dependson: getDependentsFromArtifactFromWorkspace(artifactJsonContent)
+            };
 
-        if (type !== DataFactoryType.database && isDefaultArtifact(artifactJsonContent)) {
-            resource.isDefault = true;
+            if (type !== DataFactoryType.database && isDefaultArtifact(artifactJsonContent)) {
+                resource.isDefault = true;
+            }
+
+            artifacts.push(resource);
+            if(resourcesJson.hasOwnProperty("nextLink")){
+                resourceUrl = resourcesJson.nextLink;
+                moreResult = true;
+            }
         }
-
-        artifacts.push(resource);
     }
+
 
     return artifacts;
 }
@@ -174,7 +185,7 @@ function countOfArtifactDependancy(checkArtifact: Resource, selectedListOfResour
         if(restype.indexOf("Microsoft.Synapse/workspaces/")> -1){
             restype = restype.substr("Microsoft.Synapse/workspaces/".length);
         }
-        let nameToCheck = `${restype}/${resName}`;
+        let nameToCheck = `${restype.substring(0, restype.length-1)}Reference/${resName}`;
         nameToCheck = nameToCheck.toLowerCase();
 
         for(let i=0;i< resource.dependson.length;i++)

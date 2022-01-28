@@ -11,6 +11,8 @@ import { ActionLogger, SystemLogger } from './utils/logger';
 
 export async function main() {
 
+    SystemLogger.setLogger(new ActionLogger(true));
+
     const targetWorkspace: string = core.getInput('TargetWorkspaceName');
     const templateFile: string = core.getInput("TemplateFile");
     const parametersFile: string = core.getInput("ParametersFile");
@@ -23,20 +25,30 @@ export async function main() {
     {
         deleteArtifactsNotInTemplate = true;
     }
+
+    let deployMPE: boolean = false;
+    const deployMPEString = core.getInput("deployManagedPrivateEndpoint");
+    if(deployMPEString.toLowerCase() == "true")
+    {
+        deployMPE = true;
+    }
+
     SystemLogger.info(`DeleteArtifactsNotInTemplate=${deleteArtifactsNotInTemplate}`);
+    SystemLogger.info(`deployManagedPrivateEndpoint=${deployMPE}`);
+
 
     try {
         const packageFiles: PackageFile = new PackageFile(templateFile, parametersFile, overrideArmParameters);
         const params = await getParams();
         const artifactClient: ArtifactClient = new ArtifactClient(params);
-        SystemLogger.setLogger(new ActionLogger(true));
 
         const orchestrator: Orchestrator = new Orchestrator(
             packageFiles,
             artifactClient,
             targetWorkspace,
             environment,
-            deleteArtifactsNotInTemplate
+            deleteArtifactsNotInTemplate,
+            deployMPE
         );
         await orchestrator.orchestrateFromPublishBranch();
     } catch (err) {
