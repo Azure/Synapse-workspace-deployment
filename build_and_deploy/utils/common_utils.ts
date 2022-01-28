@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import {DataFactoryType, DEFAULT_ARTIFACTS, DEFAULT_ARTIFACTS_TYPE} from "./artifacts_enum";
+import {DataFactoryType} from "./artifacts_enum";
 
 export function isStrNullOrEmpty(val: string): boolean {
     if (val === undefined || val === null || val.trim() === '') {
@@ -18,17 +18,17 @@ export function isDefaultArtifact(artifact: string): boolean{
 
 }
 
-class DefaultArtifact {
+export class DefaultArtifact {
     public static DefaultArtifacts: DefaultArtifact[] = [
         new DefaultArtifact("workspacedefaultsqlserver", "azuresqldw", DataFactoryType.linkedservice),
         new DefaultArtifact("workspacedefaultstorage", "azureblobfs", DataFactoryType.linkedservice),
         new DefaultArtifact("workspacesystemidentity", "managedidentity", DataFactoryType.credential),
         new DefaultArtifact("synapse-ws-sql", "sql", DataFactoryType.managedPrivateEndpoints),
         new DefaultArtifact("synapse-ws-sqlOnDemand", "sqlOnDemand", DataFactoryType.managedPrivateEndpoints),
-        new DefaultArtifact("synapse-ws-custstgacct", "dfs", DataFactoryType.managedPrivateEndpoints),
+        new DefaultArtifact("synapse-ws-kusto", "Kusto", DataFactoryType.managedPrivateEndpoints),
     ];
 
-    private constructor(private name: string, private type: string, private dataFactoryType: DataFactoryType) {
+    private constructor(public name: string, public type: string, public dataFactoryType: DataFactoryType) {
     }
 
     public matches(name: string, type: string, dataFactoryType: string): boolean {
