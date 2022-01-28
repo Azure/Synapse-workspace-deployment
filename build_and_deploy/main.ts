@@ -11,6 +11,8 @@ import { ActionLogger, SystemLogger } from './utils/logger';
 
 export async function main() {
 
+    SystemLogger.setLogger(new ActionLogger(true));
+
     const targetWorkspace: string = core.getInput('TargetWorkspaceName');
     const templateFile: string = core.getInput("TemplateFile");
     const parametersFile: string = core.getInput("ParametersFile");
@@ -39,7 +41,6 @@ export async function main() {
         const packageFiles: PackageFile = new PackageFile(templateFile, parametersFile, overrideArmParameters);
         const params = await getParams();
         const artifactClient: ArtifactClient = new ArtifactClient(params);
-        SystemLogger.setLogger(new ActionLogger(true));
 
         const orchestrator: Orchestrator = new Orchestrator(
             packageFiles,
