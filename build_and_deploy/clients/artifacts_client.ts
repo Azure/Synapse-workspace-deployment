@@ -489,7 +489,7 @@ export class ArtifactClient {
             if (!!status && status == 'Failed') {
                 SystemLogger.info(`For artifact: ${name}: Artifact Deployment status: ${status}`);
                 throw new Error(`Failed to fetch the deployment status ${JSON.stringify(responseJson['error'])}`);
-            } else if (!!status && status == 'InProgress') {
+            } else if (!!status && (status == 'InProgress' || status == 'Accepted')) {
                 await this.delay(delayMilliSecs);
                 continue;
             }
@@ -498,7 +498,7 @@ export class ArtifactClient {
                 SystemLogger.info(`Artifact ${name} deployed successfully.`);
                 break;
             } else {
-                throw new Error('Artifiact deployment validation failed');
+                throw new Error(`Artifact deployment validation failed : ${body}`);
             }
         }
     }

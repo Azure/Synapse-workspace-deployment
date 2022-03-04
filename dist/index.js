@@ -689,7 +689,7 @@ var ArtifactClient = /** @class */ (function () {
                         logger_1.SystemLogger.info("For artifact: " + name + ": Artifact Deployment status: " + status);
                         throw new Error("Failed to fetch the deployment status " + JSON.stringify(responseJson['error']));
                     case 6:
-                        if (!(!!status && status == 'InProgress')) return [3 /*break*/, 8];
+                        if (!(!!status && (status == 'InProgress' || status == 'Accepted'))) return [3 /*break*/, 8];
                         return [4 /*yield*/, this.delay(delayMilliSecs)];
                     case 7:
                         _a.sent();
@@ -701,7 +701,7 @@ var ArtifactClient = /** @class */ (function () {
                             return [3 /*break*/, 9];
                         }
                         else {
-                            throw new Error('Artifiact deployment validation failed');
+                            throw new Error("Artifact deployment validation failed : " + body);
                         }
                         return [3 /*break*/, 1];
                     case 9: return [2 /*return*/];
