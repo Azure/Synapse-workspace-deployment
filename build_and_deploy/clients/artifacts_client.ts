@@ -498,7 +498,10 @@ export class ArtifactClient {
                 SystemLogger.info(`Artifact ${name} deployed successfully.`);
                 break;
             } else {
-                throw new Error('Artifiact deployment validation failed');
+                SystemLogger.info(`=========`);
+                SystemLogger.info(body);
+                SystemLogger.info(`=========`);
+                throw new Error('Artifact deployment validation failed');
             }
         }
     }

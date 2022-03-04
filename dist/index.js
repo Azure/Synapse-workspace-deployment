@@ -701,7 +701,10 @@ var ArtifactClient = /** @class */ (function () {
                             return [3 /*break*/, 9];
                         }
                         else {
-                            throw new Error('Artifiact deployment validation failed');
+                            logger_1.SystemLogger.info("=========");
+                            logger_1.SystemLogger.info(body);
+                            logger_1.SystemLogger.info("=========");
+                            throw new Error('Artifact deployment validation failed');
                         }
                         return [3 /*break*/, 1];
                     case 9: return [2 /*return*/];
