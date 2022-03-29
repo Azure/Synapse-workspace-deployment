@@ -22,6 +22,17 @@ export interface Resource {
     dependson: Array<string>;
 }
 
+export interface Database {
+    name: string,
+    children: Array<DbChildren>
+}
+
+
+export interface DbChildren{
+    name: string,
+    type: string
+}
+
 export async function getArtifacts(armParams: string, armTemplate: string, overrideArmParameters: string,
     targetWorkspaceName: string, targetLocation: string): Promise<Resource[][]> {
 

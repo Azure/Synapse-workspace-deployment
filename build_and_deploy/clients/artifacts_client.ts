@@ -9,6 +9,7 @@ import { Resource } from '../utils/arm_template_utils';
 import { Artifact, DataFactoryType } from "../utils/artifacts_enum";
 import { DeployStatus, Env, getParams, Params } from '../utils/deploy_utils';
 import { SystemLogger } from '../utils/logger';
+import {resolve} from "q";
 
 
 export var typeMap = new Map<string, Artifact>([
@@ -105,6 +106,26 @@ export class ArtifactClient {
         let param: Params = await getParams(true, environment);
         let token = param.bearer;
         return await this.artifactDeletionTask(baseUrl, resourceType, payload, token);
+    }
+
+    public async deleteDatalakeChildren(resource: string, workspace: string, location: string): Promise<string>{
+        let url = ArtifactClient.getUrlByEnvironment(workspace, location);
+        let param: Params = await getParams(true, location);
+        let token = param.bearer;
+        url = `${url}/${resource}?${this.symsApiVersion}`
+
+        return new Promise<string>(async (resolve, reject) => {
+            this.client.del(url, this.getHeaders(token)).then((res) => {
+                var resStatus = res.message.statusCode;
+                console.log(`For Artifact: ${resource}: ArtifactDeletionTask status: ${resStatus}; status message: ${res.message.statusMessage}`);
+
+                if (resStatus != 200 && resStatus != 201 && resStatus != 202) {
+                    return reject(DeployStatus.failed);
+                }
+
+                return resolve(DeployStatus.success);
+            });
+        });
     }
 
     public async WaitForAllDeployments(isDelete: boolean){
@@ -284,71 +305,62 @@ export class ArtifactClient {
 
     public async deployDatabase(baseUrl: string, payload: Resource, token: string): Promise<string> {
         try {
-            return await this.artifactsGroupDeploymentTask(baseUrl,
-                `databases/ExecuteChangeWithValidation?${this.apiVersion}&${this.idwValidation}`, payload, token);
+            return await this.artifactsGroupDeploymentTask(baseUrl, payload, token);
         } catch (err) {
             console.log(err);
             throw new Error("Database deployment failed " + JSON.stringify(err));
         }
     }
 
-    private async artifactsGroupDeploymentTask(baseUrl: string, path: string, payloadObj: Resource,
-        token: string): Promise<string> {
-        return new Promise<string>(async (resolve, reject) => {
-            var url = `${baseUrl}/${path}`;
-            var payload: string = JSON.stringify(JSON.parse(payloadObj.content)['properties']);
+    private async artifactsGroupDeploymentTask(baseUrl: string, payloadObj: Resource, token: string): Promise<string> {
 
-            this.client.post(url, payload, this.getHeaders(token)).then((res) => {
-                var resStatus = res.message.statusCode;
-                console.log(`For Artifact: ${payloadObj.name}: ArtifactDeploymentTask status: ${resStatus}; status message: ${res.message.statusMessage}`);
+        try{
+            let jsonContent = JSON.parse(payloadObj.content);
+            for(let ddl of jsonContent['properties']['Ddls']){
+                let artifact : any = {'properties': ddl['NewEntity']};
+                artifact['name'] = ddl['NewEntity']['Name'];
+                artifact['type'] = ddl['NewEntity']['EntityType'];
+                delete ddl['NewEntity']['Name'];
+                delete ddl['NewEntity']['EntityType'];
 
-                if (resStatus != 200 && resStatus != 201 && resStatus != 202) {
-                    res.readBody().then((body) => {
-                        if (!!body) {
-                            let responseJson = JSON.parse(body);
-                            console.debug(`For Artifact: ${payloadObj.name}: artifact deployment failed : ${JSON.stringify(responseJson)}`);
-                        }
-                    });
-                    return reject(DeployStatus.failed);
+                let url = "";
+                if(artifact['type'].toLowerCase() == 'database'){
+                    url = `${baseUrl}/databases/${artifact['name']}`;
                 }
-                var location: string = res.message.headers.location!;
+                else{
+                    let type = artifact['type'].toLowerCase() + 's';
+                    let dbName = artifact['properties']['Namespace']['DatabaseName'];
+                    url = `${baseUrl}/databases/${dbName}/${type}/${artifact['name']}`;
+                }
 
-                res.readBody().then(async (body) => {
-                    try {
-                        if (!location) {
-                            console.log(`For Artifact: ${payloadObj.name}: location header is missing, unable to track status`);
-                            return reject(DeployStatus.failed);
-                        }
-                        var loactionUrl = "";
-                        // Remove this once syms team fixes location header
-                        if (location.includes("/databases/operations/")) {
-                            loactionUrl = location;
-                        } else {
-                            var matchedList = location.match(/operationResults\/(.*?)\?api-version/);
-                            if (matchedList?.length != 2) {
-                                console.log(`For Artifact: ${payloadObj.name}: Failed to parse location url: ${location}`);
-                                return reject(DeployStatus.failed);
-                            }
-                            loactionUrl = `${baseUrl}/databases/operations/${matchedList[1]}?${this.apiVersion}`
-                        }
+                url = encodeURI(url) + `?${this.symsApiVersion}`;
 
-                        let deploymentTrackingRequest: DeploymentTrackingRequest = {
-                            url: loactionUrl,
-                            name: payloadObj.name,
-                            token: token
+                await this.client.put(url, JSON.stringify(artifact), this.getHeaders(token)).then((res) => {
+                    let resStatus = res.message.statusCode;
+                    console.log(`For Artifact: ${artifact['name']} of type ${artifact['type']}: ArtifactDeploymentTask status: ${resStatus}; status message: ${res.message.statusMessage}`);
+
+                    try{
+                        if (resStatus != 200 && resStatus != 201 && resStatus != 202) {
+                            res.readBody().then((body) => {
+                                if (!!body) {
+                                    console.log(`For Artifact: ${artifact['name']} of type ${artifact['type']} deployment failed : ${body}`);
+                                }
+                            });
+                            throw new Error(DeployStatus.failed);
                         }
-                        this.deploymentTrackingRequests.push(deploymentTrackingRequest);
-                    } catch (err) {
-                        console.log(`For Artifact: ${payloadObj.name}: Deployment failed with error: ${JSON.stringify(err)}`);
-                        return reject(DeployStatus.failed);
+                        console.log(`For Artifact: ${artifact['name']} of type ${artifact['type']} deployment successful.`);
                     }
-                    return resolve(DeployStatus.success);
+                    catch(err){
+                        throw err;
+                    }
                 });
-            }, (reason) => {
-                console.log(`For Artifact: ${payloadObj.name}: Artifact Deployment failed: ${reason}`);
-                return reject(DeployStatus.failed);
-            });
-        });
+            };
+
+            return resolve(DeployStatus.success);
+        }
+        catch(err) {
+            throw err;
+        }
     }
 
     private async artifactDeploymentTask(baseUrl: string, resourceType: string, payloadObj: Resource,
