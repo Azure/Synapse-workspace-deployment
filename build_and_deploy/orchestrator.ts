@@ -10,6 +10,7 @@ import { DeployStatus } from "./utils/deploy_utils";
 import { SystemLogger } from "./utils/logger";
 import { getWorkspaceLocation } from "./utils/service_principal_client_utils";
 import {
+    DatalakeSubArtifactsToDelete,
     getArtifactsFromWorkspace,
     getArtifactsToDeleteFromWorkspace,
     getArtifactsToDeleteFromWorkspaceInOrder, SKipManagedPE
@@ -62,6 +63,10 @@ export class Orchestrator {
                 SystemLogger.info(`Found ${artifactsToDeleteInWorkspace.length} artifacts in the workspace that many need to be deleted.`);
                 var artifactsToDeleteInWorkspaceInOrder = getArtifactsToDeleteFromWorkspaceInOrder(artifactsToDeleteInWorkspace);
                 await this.deleteResourcesInOrder(this.artifactClient, artifactsToDeleteInWorkspaceInOrder!, this.targetWorkspace, this.environment, armParameterContent);
+
+                var datalakeSubArtifactsToDelete = await DatalakeSubArtifactsToDelete(artifactsInWorkspace, artifactsToDeploy, this.targetWorkspace, this.environment);
+                await this.deleteDatalakeArtifacts(this.artifactClient, datalakeSubArtifactsToDelete, this.targetWorkspace, this.environment);
+
                 SystemLogger.info("Completed deleting artifacts from workspace, that were not in the template.");
             }
 
@@ -179,6 +184,22 @@ export class Orchestrator {
                 // If deletion is not a success, its ok. we move forward.
                 SystemLogger.info("Failure in deployment: " + result);
             }
+        }
+    }
+
+    private async deleteDatalakeArtifacts(artifactClient: ArtifactClient, resources: string[], workspace: string, environment: string){
+        try{
+            for(let resource of resources){
+                let response = await artifactClient.deleteDatalakeChildren(resource, workspace, environment);
+                if(response != DeployStatus.success){
+                    throw new Error(`Artifact deletion failed : ${resource}`);
+                }
+            }
+
+            console.log("Deletion successful of tables and relationships in database.");
+        }
+        catch(err){
+            throw new Error(`Database deletion failed : ${err}`);
         }
     }
 }

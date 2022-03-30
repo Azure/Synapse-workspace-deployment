@@ -2,7 +2,7 @@ import {ArtifactClient} from '../clients/artifacts_client';
 import * as deployUtils from './deploy_utils';
 import * as httpClient from 'typed-rest-client/HttpClient';
 import * as httpInterfaces from 'typed-rest-client/Interfaces';
-import {checkIfArtifactExists, Resource} from './arm_template_utils';
+import {checkIfArtifactExists, Database, DbChildren, Resource} from './arm_template_utils';
 import {Artifact, DataFactoryType} from './artifacts_enum';
 import {SystemLogger} from "./logger";
 import {isDefaultArtifact} from "./common_utils";
@@ -94,6 +94,11 @@ export async function getArtifactsFromWorkspaceOfType(artifactTypeToQuery: Artif
                 resourceUrl = resourcesJson.nextLink;
                 moreResult = true;
             }
+
+            if(type == DataFactoryType.database && resourcesJson.hasOwnProperty("continuationToken")){
+                resourceUrl = resourcesJson.ContinuationToken;
+                moreResult = true;
+            }
         }
     }
 
@@ -172,6 +177,78 @@ export function getArtifactsToDeleteFromWorkspace(
 
     return artifactsToDelete;
 }
+
+export async function DatalakeSubArtifactsToDelete(artifactsInWorkspace: Resource[], artifactsToDeploy: Resource[][], targetWorkspaceName: string, environment: string): Promise<Array<string>>{
+    let artifactsToDelete = new Array<string>();
+
+    // Get all Databases
+
+    let databases = await getArtifactsFromWorkspaceOfType(Artifact.database, targetWorkspaceName, environment);
+
+    let databaseWithChildren = await GetDatabasesWithChildren(databases, targetWorkspaceName, environment);
+
+    let tables = new Array<string>();
+    let relation = new Array<string>();
+
+    databaseWithChildren.forEach((wsArtifact)=>{
+
+        let dbFound = false;
+        outer:
+            for(let i=0;i< artifactsToDeploy.length;i++)
+            {
+                for(let j=0;j< artifactsToDeploy[i].length;j++)
+                {
+                    let resource = artifactsToDeploy[i][j];
+                    let templateResourceObj = JSON.parse(resource.content);
+
+                    // Same Database both in template and workspace.
+                    // Now check if there are any missing tables/relationships.
+
+                    if(resource.name.toLowerCase() == wsArtifact.name.toLowerCase() &&
+                        resource.type.toLowerCase() == DataFactoryType.database.toLowerCase())
+                    {
+                        dbFound = true;
+                        for(let wsDdl of wsArtifact.children){
+
+                            let dbSubResourceFound = false;
+
+                            for(let templateDdl of templateResourceObj['properties']['Ddls']){
+
+                                if(wsDdl.name == templateDdl["NewEntity"]["Name"])
+                                {
+                                    dbSubResourceFound = true;
+                                    break;
+                                }
+                            }
+
+                            if(!dbSubResourceFound){
+
+                                if(wsDdl.type.toLowerCase() == 'table'){
+                                    let path = `databases/${wsArtifact.name}/tables/${wsDdl.name}`;
+                                    tables.push(path);
+                                }
+                                if(wsDdl.type.toLowerCase() == 'relationship'){
+                                    let path = `databases/${wsArtifact.name}/relationships/${wsDdl.name}`;
+                                    relation.push(path);
+                                }
+                            }
+                        }
+                    }
+
+                    if(dbFound){
+                        break outer;
+                    }
+                }
+            }
+    });
+
+    artifactsToDelete = artifactsToDelete.concat(relation);
+    artifactsToDelete = artifactsToDelete.concat(tables);
+
+    console.log(`Found ${artifactsToDelete.length} lake database tables/relationships to delete.`);
+    return artifactsToDelete;
+}
+
 
 function countOfArtifactDependancy(checkArtifact: Resource, selectedListOfResources: Resource[]): number
 {
@@ -379,3 +456,63 @@ function SkipDatabase(artifactJsonContent: string): boolean{
     return true;
 }
 
+async function GetDatabasesWithChildren(databases: Resource[], targetWorkspaceName: string, environment: string): Promise<Database[]>{
+    let databasesWithChildren = new Array<Database>();
+    try{
+        for(let db of databases){
+            console.log(`Fetching details of database: ${db.name}`);
+            let children = new Array<DbChildren>();
+            for(let action of ['relationship', 'table']){
+                let requestURI = getResourceFromWorkspaceUrl(targetWorkspaceName, environment, `databases/${db.name}/${action}`);
+                let fetchMore = true;
+                while(fetchMore){
+                    fetchMore = false;
+                    let params = await deployUtils.getParams(true, environment);
+                    let token = params.bearer
+
+                    let headers: httpInterfaces.IHeaders = {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                        'User-Agent': userAgent
+                    }
+
+                    await client.get(requestURI, headers).then(async (res) => {
+                        let resStatus = res.message.statusCode;
+
+                        if (resStatus != 200 && resStatus != 201 && resStatus != 202) {
+                            console.info(`Failed to fetch database ${db.name} info, status: ${resStatus}; status message: ${res.message.statusMessage}`);
+                            let body = await res.readBody();
+                            throw new Error("Failed to fetch database info :" + body);
+                        }
+                        let body = await res.readBody();
+                        let childrenObj =  JSON.parse(body)["items"];
+                        for(let child of childrenObj){
+                            let childObj :DbChildren = {
+                                name : child["Name"],
+                                type: action
+                            }
+                            children.push(childObj);
+                        }
+
+                        let bodyObj = JSON.parse(body);
+                        if(bodyObj.hasOwnProperty('continuationToken')){
+                            requestURI = bodyObj['continuationToken'];
+                            fetchMore = true;
+                        }
+                    });
+                }
+
+            }
+            let dbWithChildren: Database = {
+                name: db.name,
+                children: children
+            };
+            databasesWithChildren.push(dbWithChildren);
+        }
+
+        return databasesWithChildren;
+    }
+    catch(err){
+        throw new Error(err);
+    }
+}
