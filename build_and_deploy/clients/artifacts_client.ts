@@ -333,6 +333,12 @@ export class ArtifactClient {
                     url = `${baseUrl}/databases/${dbName}/${type}/${artifact['name']}`;
                 }
 
+                if(artifact['type'].toLowerCase() == 'relationship'){
+                    if(!artifact['properties'].hasOwnProperty('RelationshipType')){
+                        artifact['properties']['RelationshipType'] = 0;
+                    }
+                }
+
                 url = encodeURI(url) + `?${this.symsApiVersion}`;
 
                 await this.client.put(url, JSON.stringify(artifact), this.getHeaders(token)).then((res) => {
