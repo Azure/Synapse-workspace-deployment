@@ -1,56 +1,35 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-
 import * as core from '@actions/core';
-import { ArtifactClient } from './clients/artifacts_client';
-import { Orchestrator } from "./orchestrator";
-import { PackageFile } from './package_file';
-import { getParams } from './utils/deploy_utils';
 import { ActionLogger, SystemLogger } from './utils/logger';
+import {BundleManager} from "./Operations/BundleManager";
+import {OPERATIONS} from "./utils/artifacts_enum";
+import {OperationManager} from "./Operations/OperationsManager";
 
 export async function main() {
 
     SystemLogger.setLogger(new ActionLogger(true));
 
-    const targetWorkspace: string = core.getInput('TargetWorkspaceName');
-    const templateFile: string = core.getInput("TemplateFile");
-    const parametersFile: string = core.getInput("ParametersFile");
-    const overrideArmParameters: string = core.getInput('OverrideArmParameters');
-    const environment: string = core.getInput('Environment');
-
-    let  deleteArtifactsNotInTemplate: boolean = false;
-    const deleteArtifactsNotInTemplateString = core.getInput("DeleteArtifactsNotInTemplate");
-    if(deleteArtifactsNotInTemplateString.toLowerCase() == "true")
-    {
-        deleteArtifactsNotInTemplate = true;
-    }
-
-    let deployMPE: boolean = false;
-    const deployMPEString = core.getInput("deployManagedPrivateEndpoint");
-    if(deployMPEString.toLowerCase() == "true")
-    {
-        deployMPE = true;
-    }
-
-    SystemLogger.info(`DeleteArtifactsNotInTemplate=${deleteArtifactsNotInTemplate}`);
-    SystemLogger.info(`deployManagedPrivateEndpoint=${deployMPE}`);
-
-
     try {
-        const packageFiles: PackageFile = new PackageFile(templateFile, parametersFile, overrideArmParameters);
-        const params = await getParams();
-        const artifactClient: ArtifactClient = new ArtifactClient(params);
-
-        const orchestrator: Orchestrator = new Orchestrator(
-            packageFiles,
-            artifactClient,
-            targetWorkspace,
-            environment,
-            deleteArtifactsNotInTemplate,
-            deployMPE
-        );
-        await orchestrator.orchestrateFromPublishBranch();
+        const operation = core.getInput('operation').toLowerCase();
+        const bundle_source = core.getInput('npmpackage');
+        const bundle_manager = new BundleManager(bundle_source);
+        switch(operation){
+            case OPERATIONS.deploy :
+                await OperationManager.DeployArtifacts();
+                break;
+            case OPERATIONS.validateDeploy :
+                await bundle_manager.invokeBundle();
+                await OperationManager.ValidateAndDeploy();
+                break;
+            case OPERATIONS.validate:
+                await bundle_manager.invokeBundle();
+                await OperationManager.ValidateArtifacts();
+                break;
+            case 'default':
+                throw new Error(`Operation not supported : ${operation}`);
+        }
     } catch (err) {
         throw new Error(err.message);
     }

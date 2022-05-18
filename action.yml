@@ -41,6 +41,18 @@ inputs:
   deployManagedPrivateEndpoint:
     description: 'Deploy managed private endpoints in the template.'
     required: false
+  FailOnMissingOverrides:
+    description: 'Mark the pipeline as failed if ARM overrides are missing.'
+    required: false
+  ArtifactsFolder:
+    description: 'Provide path to the root folder.'
+    required: false
+  operation:
+    description: 'Provide name of the operation.'
+    required: true
+  npmpackage:
+    description: 'Source for the npm package. Only for dev testing.'
+    required: false
 runs:
   using: 'node12'
   main: './dist/index.js'
