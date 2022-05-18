@@ -11806,34 +11806,33 @@ var Orchestrator = /** @class */ (function () {
                         return [4 /*yield*/, arm_template_utils_1.getArtifacts(armParameterContent, armTemplateContent, overrideArmParameters, this.targetWorkspace, targetLocation)];
                     case 4:
                         artifactsToDeploy = _a.sent();
-                        if (!this.deleteArtifactsNotInTemplate) return [3 /*break*/, 9];
+                        logger_1.SystemLogger.info("Start deploying artifacts from the template.");
+                        return [4 /*yield*/, this.deployResourcesInOrder(this.artifactClient, artifactsToDeploy, this.targetWorkspace, this.environment, canDeployMPE)];
+                    case 5:
+                        _a.sent();
+                        logger_1.SystemLogger.info("Completed deploying artifacts from the template.");
+                        if (!this.deleteArtifactsNotInTemplate) return [3 /*break*/, 10];
                         // Delete extra artifacts in the workspace
                         logger_1.SystemLogger.info("Attempting to delete artifacts from workspace, that were not in the template.");
                         return [4 /*yield*/, workspace_artifacts_getter_1.getArtifactsFromWorkspace(this.targetWorkspace, this.environment)];
-                    case 5:
+                    case 6:
                         artifactsInWorkspace = _a.sent();
                         logger_1.SystemLogger.info("Found " + artifactsInWorkspace.length + " artifacts in the workspace.");
                         artifactsToDeleteInWorkspace = workspace_artifacts_getter_1.getArtifactsToDeleteFromWorkspace(artifactsInWorkspace, artifactsToDeploy, artifacts_client_1.typeMap);
                         logger_1.SystemLogger.info("Found " + artifactsToDeleteInWorkspace.length + " artifacts in the workspace that many need to be deleted.");
                         artifactsToDeleteInWorkspaceInOrder = workspace_artifacts_getter_1.getArtifactsToDeleteFromWorkspaceInOrder(artifactsToDeleteInWorkspace);
                         return [4 /*yield*/, this.deleteResourcesInOrder(this.artifactClient, artifactsToDeleteInWorkspaceInOrder, this.targetWorkspace, this.environment, armParameterContent)];
-                    case 6:
+                    case 7:
                         _a.sent();
                         return [4 /*yield*/, workspace_artifacts_getter_1.DatalakeSubArtifactsToDelete(artifactsInWorkspace, artifactsToDeploy, this.targetWorkspace, this.environment)];
-                    case 7:
+                    case 8:
                         datalakeSubArtifactsToDelete = _a.sent();
                         return [4 /*yield*/, this.deleteDatalakeArtifacts(this.artifactClient, datalakeSubArtifactsToDelete, this.targetWorkspace, this.environment)];
-                    case 8:
+                    case 9:
                         _a.sent();
                         logger_1.SystemLogger.info("Completed deleting artifacts from workspace, that were not in the template.");
-                        _a.label = 9;
-                    case 9:
-                        logger_1.SystemLogger.info("Start deploying artifacts from the template.");
-                        return [4 /*yield*/, this.deployResourcesInOrder(this.artifactClient, artifactsToDeploy, this.targetWorkspace, this.environment, canDeployMPE)];
-                    case 10:
-                        _a.sent();
-                        logger_1.SystemLogger.info("Completed deploying artifacts from the template.");
-                        return [3 /*break*/, 12];
+                        _a.label = 10;
+                    case 10: return [3 /*break*/, 12];
                     case 11:
                         err_1 = _a.sent();
                         throw new Error("Orchestrate failed - " + err_1);

@@ -53,6 +53,11 @@ export class Orchestrator {
             let artifactsToDeploy: Resource[][] = await getArtifacts(armParameterContent, armTemplateContent, overrideArmParameters,
                 this.targetWorkspace, targetLocation);
 
+
+            SystemLogger.info("Start deploying artifacts from the template.");
+            await this.deployResourcesInOrder(this.artifactClient, artifactsToDeploy, this.targetWorkspace, this.environment, canDeployMPE);
+            SystemLogger.info("Completed deploying artifacts from the template.");
+
             if(this.deleteArtifactsNotInTemplate)
             {
                 // Delete extra artifacts in the workspace
@@ -69,10 +74,6 @@ export class Orchestrator {
 
                 SystemLogger.info("Completed deleting artifacts from workspace, that were not in the template.");
             }
-
-            SystemLogger.info("Start deploying artifacts from the template.");
-            await this.deployResourcesInOrder(this.artifactClient, artifactsToDeploy, this.targetWorkspace, this.environment, canDeployMPE);
-            SystemLogger.info("Completed deploying artifacts from the template.");
 
         } catch (err) {
             throw new Error(`Orchestrate failed - ${err}`);
