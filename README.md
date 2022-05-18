@@ -82,11 +82,15 @@ uses: Azure/synapse-workspace-deployment
 2. Validate
 
 ```yaml
-uses: Azure/synapse-workspace-deployment
+- uses: Azure/synapse-workspace-deployment
         with:
           TargetWorkspaceName: 'targetworkspace'
           ArtifactsFolder: './RootFolder'
           operation: 'validate'
+- uses: actions/upload-artifact@v3
+        with:
+          name: my-artifact
+          path: ./ExportedArtifacts
 ```
 
 3. Validate and deploy

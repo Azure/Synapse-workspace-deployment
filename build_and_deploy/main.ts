@@ -12,7 +12,7 @@ export async function main() {
     SystemLogger.setLogger(new ActionLogger(true));
 
     try {
-        const operation = core.getInput('operation').toLowerCase();
+        const operation = core.getInput('operation');
         const bundle_source = core.getInput('npmpackage');
         const bundle_manager = new BundleManager(bundle_source);
         switch(operation){

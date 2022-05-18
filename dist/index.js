@@ -299,13 +299,9 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.ExportOperation = exports.ValidateOperation = exports.DeployOperation = void 0;
 var BundleManager_1 = __nccwpck_require__(1365);
-var path_1 = __importDefault(__nccwpck_require__(1017));
 var artifacts_enum_1 = __nccwpck_require__(5724);
 var common_utils_1 = __nccwpck_require__(9123);
 var package_file_1 = __nccwpck_require__(5337);
@@ -407,9 +403,8 @@ var ExportOperation = /** @class */ (function () {
                     case 1:
                         _a.sent();
                         if (this.operationParams.publishArtifact) {
-                            logger_1.SystemLogger.info("Generating artifacts.");
+                            logger_1.SystemLogger.info("Generating artifacts in " + this.operationParams.destinationFolder);
                             // Do not remove the below log. It is used to upload the artifact.
-                            logger_1.SystemLogger.info("##vso[artifact.upload containerfolder=export;artifactname=" + this.operationParams.workspaceName + "]" + path_1.default.join(process.cwd(), this.operationParams.destinationFolder));
                         }
                         return [2 /*return*/];
                 }
@@ -1487,7 +1482,7 @@ function main() {
                     _b.label = 1;
                 case 1:
                     _b.trys.push([1, 12, , 13]);
-                    operation = core.getInput('operation').toLowerCase();
+                    operation = core.getInput('operation');
                     bundle_source = core.getInput('npmpackage');
                     bundle_manager = new BundleManager_1.BundleManager(bundle_source);
                     _a = operation;

@@ -100,9 +100,8 @@ export class ExportOperation implements Operations{
         await BundleManager.ExecuteShellCommand(cmd);
 
         if(this.operationParams.publishArtifact){
-            SystemLogger.info("Generating artifacts.")
+            SystemLogger.info("Generating artifacts in "+ this.operationParams.destinationFolder);
             // Do not remove the below log. It is used to upload the artifact.
-            SystemLogger.info(`##vso[artifact.upload containerfolder=export;artifactname=${this.operationParams.workspaceName}]${path.join(process.cwd(),this.operationParams.destinationFolder)}`);
         }
     }
 }
