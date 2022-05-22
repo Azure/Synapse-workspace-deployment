@@ -46,3 +46,16 @@ export enum DEFAULT_ARTIFACTS_TYPE {
     storage = "AzureBlobFS",
     credentials = "ManagedIdentity"
 }
+
+export enum OPERATIONS {
+    deploy = "deploy",
+    validate = "validate",
+    export = "export",
+    validateDeploy = "validateDeploy"
+}
+
+export enum ExportConstants {
+    destinationFolder = "ExportedArtifacts",
+    templateFile = "TemplateForWorkspace.json",
+    parameterFile = "TemplateParametersForWorkspace.json"
+}

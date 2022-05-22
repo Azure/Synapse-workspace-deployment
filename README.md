@@ -47,9 +47,22 @@ TargetWorkspaceName:
   deployManagedPrivateEndpoint:
     description: 'Deploy managed private endpoints in the template.'
     required: false
+  FailOnMissingOverrides:
+    description: 'Mark the pipeline as failed if ARM overrides are missing.'
+    required: false
+  ArtifactsFolder:
+      description: 'Provide path to the root folder.'
+      required: false
+  operation:
+      description: 'Provide name of the operation.'
+      required: true
 ```
 
 ## Usage
+
+Synapse Workspace Deployment action supports 3 operations : 
+
+1. Deploy
 
 ```yaml
 uses: Azure/synapse-workspace-deployment
@@ -63,7 +76,41 @@ uses: Azure/synapse-workspace-deployment
           clientSecret: ${{ secrets.CLIENTSECRET }}
           subscriptionId: ${{ secrets.SUBID }}
           tenantId: ${{ secrets.TENANTID }}
+          operation: 'deploy'
 ```
+
+2. Validate
+
+```yaml
+- uses: Azure/synapse-workspace-deployment
+        with:
+          TargetWorkspaceName: 'targetworkspace'
+          ArtifactsFolder: './RootFolder'
+          operation: 'validate'
+- uses: actions/upload-artifact@v3
+        with:
+          name: my-artifact
+          path: ./ExportedArtifacts
+```
+
+3. Validate and deploy
+
+```yaml
+uses: Azure/synapse-workspace-deployment
+        with:
+          TargetWorkspaceName: 'targetworkspace'
+          ArtifactsFolder: './RootFolder'
+          environment: 'Azure Public'
+          resourceGroup: 'myresourcegroup'
+          clientId: ${{ secrets.CLIENTID }}
+          clientSecret: ${{ secrets.CLIENTSECRET }}
+          subscriptionId: ${{ secrets.SUBID }}
+          tenantId: ${{ secrets.TENANTID }}
+          operation: 'validateDeploy'
+```
+
+Check the [documentation](https://docs.microsoft.com/en-us/azure/synapse-analytics/cicd/continuous-integration-delivery) for more details.
+
 #### Using managed identity
 MSI is only supported with self hosted VMs on Azure. Please set the runner as [self-hosted](https://docs.github.com/en/actions/hosting-your-own-runners/adding-self-hosted-runners).
 Enabled the system assigned managed identity for your VM and add it to your Synapse studio as Synapse Admin.
