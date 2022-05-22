@@ -1,6 +1,563 @@
 /******/ (() => { // webpackBootstrap
 /******/ 	var __webpack_modules__ = ({
 
+/***/ 1365:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+var __generator = (this && this.__generator) || function (thisArg, body) {
+    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
+    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
+    function verb(n) { return function (v) { return step([n, v]); }; }
+    function step(op) {
+        if (f) throw new TypeError("Generator is already executing.");
+        while (_) try {
+            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
+            if (y = 0, t) op = [op[0] & 2, t.value];
+            switch (op[0]) {
+                case 0: case 1: t = op; break;
+                case 4: _.label++; return { value: op[1], done: false };
+                case 5: _.label++; y = op[1]; op = [0]; continue;
+                case 7: op = _.ops.pop(); _.trys.pop(); continue;
+                default:
+                    if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
+                    if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
+                    if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
+                    if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
+                    if (t[2]) _.ops.pop();
+                    _.trys.pop(); continue;
+            }
+            op = body.call(thisArg, _);
+        } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
+        if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
+    }
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.BundleManager = void 0;
+var fs = __importStar(__nccwpck_require__(7147));
+var https = __importStar(__nccwpck_require__(5687));
+var path = __importStar(__nccwpck_require__(1017));
+var child_process_1 = __nccwpck_require__(2081);
+var logger_1 = __nccwpck_require__(4659);
+var BundleManager = /** @class */ (function () {
+    function BundleManager(source) {
+        if (source === void 0) { source = 'prod'; }
+        this._bundleUrl = BundleManager.prodBundleUrl;
+        this._source = "Prod";
+        this._source = source;
+        if (source.toLowerCase() == "ppe") {
+            this._bundleUrl = BundleManager.ppeBundleUrl;
+            logger_1.SystemLogger.info("Setting bundle source as PPE");
+        }
+        logger_1.SystemLogger.info("Bundle source : " + this._bundleUrl);
+    }
+    BundleManager.prototype.invokeBundle = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            var file_1;
+            var _this = this;
+            return __generator(this, function (_a) {
+                try {
+                    if (!fs.existsSync(BundleManager.defaultBundleDir)) {
+                        fs.mkdirSync(BundleManager.defaultBundleDir);
+                    }
+                    file_1 = fs.createWriteStream(BundleManager.defaultBundleFilePath);
+                    return [2 /*return*/, new Promise(function (resolve, reject) {
+                            logger_1.SystemLogger.info("Downloading asset file");
+                            https.get(_this._bundleUrl, function (response) {
+                                response.pipe(file_1);
+                                file_1.on('finish', function () {
+                                    file_1.close();
+                                    logger_1.SystemLogger.info("Asset file downloaded at : " + BundleManager.defaultBundleFilePath);
+                                    return resolve();
+                                });
+                            });
+                        })];
+                }
+                catch (ex) {
+                    logger_1.SystemLogger.info("Bundle manager failed to download asset file.");
+                    throw ex;
+                }
+                return [2 /*return*/];
+            });
+        });
+    };
+    BundleManager.ExecuteShellCommand = function (cmd) {
+        return __awaiter(this, void 0, void 0, function () {
+            var result, e_1;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        logger_1.SystemLogger.info("Executing shell command");
+                        logger_1.SystemLogger.info("Command : " + cmd);
+                        _a.label = 1;
+                    case 1:
+                        _a.trys.push([1, 3, , 4]);
+                        return [4 /*yield*/, new Promise(function (resolve, reject) {
+                                var command = child_process_1.spawn(cmd, { shell: true });
+                                command.stdout.on('data', function (data) {
+                                    logger_1.SystemLogger.info("Stdout: " + data.toString());
+                                });
+                                command.stderr.on('data', function (data) {
+                                    logger_1.SystemLogger.info("Stderr: " + data.toString());
+                                });
+                                command.on('error', function (err) {
+                                    if (err) {
+                                        logger_1.SystemLogger.info("Error: " + err.toString());
+                                        return reject("Shell execution failed.");
+                                    }
+                                });
+                                command.on('close', function (code) {
+                                    if (code != 0) {
+                                        return reject("Shell execution failed.");
+                                    }
+                                    else {
+                                        return resolve("Shell command execution is successful.");
+                                    }
+                                });
+                            })];
+                    case 2:
+                        result = _a.sent();
+                        if (result == "Shell execution failed.") {
+                            throw new Error("Shell execution failed.");
+                        }
+                        logger_1.SystemLogger.info("Shell command execution is successful.");
+                        return [3 /*break*/, 4];
+                    case 3:
+                        e_1 = _a.sent();
+                        logger_1.SystemLogger.info("Shell execution failed.");
+                        throw e_1;
+                    case 4: return [2 /*return*/];
+                }
+            });
+        });
+    };
+    BundleManager.prodBundleUrl = 'https://web.azuresynapse.net/assets/cmd-api/main.js';
+    BundleManager.ppeBundleUrl = 'https://web-ci.azuresynapse.net/assets/cmd-api/main.js';
+    BundleManager.defaultBundleDir = 'downloads';
+    BundleManager.defaultBundleName = 'main.js';
+    BundleManager.defaultBundleFilePath = path.join(process.cwd(), BundleManager.defaultBundleDir, BundleManager.defaultBundleName);
+    return BundleManager;
+}());
+exports.BundleManager = BundleManager;
+//# sourceMappingURL=BundleManager.js.map
+
+/***/ }),
+
+/***/ 5458:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.GetExportParams = exports.GetValidateParams = exports.GetDeployParams = void 0;
+var core = __importStar(__nccwpck_require__(4120));
+var common_utils_1 = __nccwpck_require__(9123);
+var artifacts_enum_1 = __nccwpck_require__(5724);
+function GetDeployParams(templateFile, parameterFile) {
+    if (templateFile === void 0) { templateFile = ""; }
+    if (parameterFile === void 0) { parameterFile = ""; }
+    templateFile = templateFile == "" ? core.getInput("TemplateFile") : templateFile;
+    parameterFile = parameterFile == "" ? core.getInput("ParametersFile") : parameterFile;
+    var overrides = core.getInput("OverrideArmParameters");
+    var workspaceName = core.getInput("TargetWorkspaceName");
+    var environment = core.getInput("Environment");
+    if (common_utils_1.isStrNullOrEmpty(environment)) {
+        environment = 'prod';
+    }
+    var deleteArtifacts = core.getInput("DeleteArtifactsNotInTemplate").toLowerCase() == "true";
+    var deployMPE = core.getInput("deployManagedPrivateEndpoint").toLowerCase() == "true";
+    var failOnMissingOverrides = core.getInput("FailOnMissingOverrides").toLowerCase() == "true";
+    return {
+        templateFile: templateFile,
+        parameterFile: parameterFile,
+        overrides: overrides,
+        environment: environment,
+        deleteArtifacts: deleteArtifacts,
+        deployMPE: deployMPE,
+        failOnMissingOverrides: failOnMissingOverrides,
+        workspaceName: workspaceName
+    };
+}
+exports.GetDeployParams = GetDeployParams;
+function GetValidateParams() {
+    var artifactsFolder = core.getInput("ArtifactsFolder");
+    var workspaceName = core.getInput("TargetWorkspaceName");
+    return {
+        artifactsFolder: artifactsFolder,
+        workspaceName: workspaceName
+    };
+}
+exports.GetValidateParams = GetValidateParams;
+function GetExportParams(publishArtifact) {
+    var destinationFolder = artifacts_enum_1.ExportConstants.destinationFolder;
+    var artifactsFolder = core.getInput("ArtifactsFolder");
+    var workspaceName = core.getInput("TargetWorkspaceName");
+    return {
+        artifactsFolder: artifactsFolder,
+        workspaceName: workspaceName,
+        destinationFolder: destinationFolder,
+        publishArtifact: publishArtifact
+    };
+}
+exports.GetExportParams = GetExportParams;
+//# sourceMappingURL=OperationParams.js.map
+
+/***/ }),
+
+/***/ 8160:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+var __generator = (this && this.__generator) || function (thisArg, body) {
+    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
+    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
+    function verb(n) { return function (v) { return step([n, v]); }; }
+    function step(op) {
+        if (f) throw new TypeError("Generator is already executing.");
+        while (_) try {
+            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
+            if (y = 0, t) op = [op[0] & 2, t.value];
+            switch (op[0]) {
+                case 0: case 1: t = op; break;
+                case 4: _.label++; return { value: op[1], done: false };
+                case 5: _.label++; y = op[1]; op = [0]; continue;
+                case 7: op = _.ops.pop(); _.trys.pop(); continue;
+                default:
+                    if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
+                    if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
+                    if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
+                    if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
+                    if (t[2]) _.ops.pop();
+                    _.trys.pop(); continue;
+            }
+            op = body.call(thisArg, _);
+        } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
+        if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
+    }
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.ExportOperation = exports.ValidateOperation = exports.DeployOperation = void 0;
+var BundleManager_1 = __nccwpck_require__(1365);
+var artifacts_enum_1 = __nccwpck_require__(5724);
+var common_utils_1 = __nccwpck_require__(9123);
+var package_file_1 = __nccwpck_require__(5337);
+var deploy_utils_1 = __nccwpck_require__(3850);
+var orchestrator_1 = __nccwpck_require__(2833);
+var artifacts_client_1 = __nccwpck_require__(5131);
+var logger_1 = __nccwpck_require__(4659);
+var DeployOperation = /** @class */ (function () {
+    function DeployOperation(operationParams) {
+        this.operationType = artifacts_enum_1.OPERATIONS.deploy;
+        this.operationParams = operationParams;
+    }
+    DeployOperation.prototype.PerformOperation = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            var packageFiles, params, artifactClient, orchestrator, err_1;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        logger_1.SystemLogger.info("Starting " + this.operationType + " operation");
+                        if (common_utils_1.isStrNullOrEmpty(this.operationParams.overrides) && this.operationParams.failOnMissingOverrides) {
+                            throw new Error("Overrides not provided.");
+                        }
+                        _a.label = 1;
+                    case 1:
+                        _a.trys.push([1, 4, , 5]);
+                        packageFiles = new package_file_1.PackageFile(this.operationParams.templateFile, this.operationParams.parameterFile, this.operationParams.overrides);
+                        return [4 /*yield*/, deploy_utils_1.getParams()];
+                    case 2:
+                        params = _a.sent();
+                        artifactClient = new artifacts_client_1.ArtifactClient(params);
+                        orchestrator = new orchestrator_1.Orchestrator(packageFiles, artifactClient, this.operationParams.workspaceName, this.operationParams.environment, this.operationParams.deleteArtifacts, this.operationParams.deployMPE);
+                        return [4 /*yield*/, orchestrator.orchestrateFromPublishBranch()];
+                    case 3:
+                        _a.sent();
+                        return [3 /*break*/, 5];
+                    case 4:
+                        err_1 = _a.sent();
+                        logger_1.SystemLogger.info(this.operationType + " operation failed");
+                        throw err_1;
+                    case 5: return [2 /*return*/];
+                }
+            });
+        });
+    };
+    return DeployOperation;
+}());
+exports.DeployOperation = DeployOperation;
+var ValidateOperation = /** @class */ (function () {
+    function ValidateOperation(operationParams) {
+        this.operationType = artifacts_enum_1.OPERATIONS.validate;
+        this.operationParams = operationParams;
+    }
+    ValidateOperation.prototype.PerformOperation = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            var cmd;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        logger_1.SystemLogger.info("Starting " + this.operationType + " operation");
+                        cmd = [
+                            'node',
+                            BundleManager_1.BundleManager.defaultBundleFilePath,
+                            this.operationType,
+                            "\"" + this.operationParams.artifactsFolder + "\"",
+                            this.operationParams.workspaceName
+                        ].join(' ');
+                        return [4 /*yield*/, BundleManager_1.BundleManager.ExecuteShellCommand(cmd)];
+                    case 1:
+                        _a.sent();
+                        return [2 /*return*/];
+                }
+            });
+        });
+    };
+    return ValidateOperation;
+}());
+exports.ValidateOperation = ValidateOperation;
+var ExportOperation = /** @class */ (function () {
+    function ExportOperation(operationParams) {
+        this.operationType = artifacts_enum_1.OPERATIONS.export;
+        this.operationParams = operationParams;
+    }
+    ExportOperation.prototype.PerformOperation = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            var cmd;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        logger_1.SystemLogger.info("Starting " + this.operationType + " operation");
+                        cmd = [
+                            'node',
+                            BundleManager_1.BundleManager.defaultBundleFilePath,
+                            this.operationType,
+                            "\"" + this.operationParams.artifactsFolder + "\"",
+                            this.operationParams.workspaceName,
+                            this.operationParams.destinationFolder
+                        ].join(' ');
+                        return [4 /*yield*/, BundleManager_1.BundleManager.ExecuteShellCommand(cmd)];
+                    case 1:
+                        _a.sent();
+                        if (this.operationParams.publishArtifact) {
+                            logger_1.SystemLogger.info("Generating artifacts in " + this.operationParams.destinationFolder);
+                            // Do not remove the below log. It is used to upload the artifact.
+                        }
+                        return [2 /*return*/];
+                }
+            });
+        });
+    };
+    return ExportOperation;
+}());
+exports.ExportOperation = ExportOperation;
+//# sourceMappingURL=Operations.js.map
+
+/***/ }),
+
+/***/ 5903:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+var __generator = (this && this.__generator) || function (thisArg, body) {
+    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
+    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
+    function verb(n) { return function (v) { return step([n, v]); }; }
+    function step(op) {
+        if (f) throw new TypeError("Generator is already executing.");
+        while (_) try {
+            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
+            if (y = 0, t) op = [op[0] & 2, t.value];
+            switch (op[0]) {
+                case 0: case 1: t = op; break;
+                case 4: _.label++; return { value: op[1], done: false };
+                case 5: _.label++; y = op[1]; op = [0]; continue;
+                case 7: op = _.ops.pop(); _.trys.pop(); continue;
+                default:
+                    if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
+                    if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
+                    if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
+                    if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
+                    if (t[2]) _.ops.pop();
+                    _.trys.pop(); continue;
+            }
+            op = body.call(thisArg, _);
+        } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
+        if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
+    }
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.OperationManager = void 0;
+var OperationParams_1 = __nccwpck_require__(5458);
+var Operations_1 = __nccwpck_require__(8160);
+var path_1 = __importDefault(__nccwpck_require__(1017));
+var artifacts_enum_1 = __nccwpck_require__(5724);
+var OperationManager = /** @class */ (function () {
+    function OperationManager() {
+    }
+    // Deploy operation
+    OperationManager.DeployArtifacts = function (templateFile, parameterFile) {
+        if (templateFile === void 0) { templateFile = ""; }
+        if (parameterFile === void 0) { parameterFile = ""; }
+        return __awaiter(this, void 0, void 0, function () {
+            var params, deployer;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        params = OperationParams_1.GetDeployParams(templateFile, parameterFile);
+                        deployer = new Operations_1.DeployOperation(params);
+                        return [4 /*yield*/, deployer.PerformOperation()];
+                    case 1:
+                        _a.sent();
+                        return [2 /*return*/];
+                }
+            });
+        });
+    };
+    // Validate operation
+    OperationManager.ValidateArtifacts = function (publishArtifacts) {
+        if (publishArtifacts === void 0) { publishArtifacts = true; }
+        return __awaiter(this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: 
+                    // Export function also internally validates
+                    return [4 /*yield*/, OperationManager.ExportArtifacts(publishArtifacts)];
+                    case 1:
+                        // Export function also internally validates
+                        _a.sent();
+                        return [2 /*return*/];
+                }
+            });
+        });
+    };
+    // Export operation
+    OperationManager.ExportArtifacts = function (publishArtifacts) {
+        return __awaiter(this, void 0, void 0, function () {
+            var params, exporter;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        params = OperationParams_1.GetExportParams(publishArtifacts);
+                        exporter = new Operations_1.ExportOperation(params);
+                        return [4 /*yield*/, exporter.PerformOperation()];
+                    case 1:
+                        _a.sent();
+                        return [2 /*return*/];
+                }
+            });
+        });
+    };
+    // Validate and deploy
+    OperationManager.ValidateAndDeploy = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            var folder, templateFile, parameterFile;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        folder = artifacts_enum_1.ExportConstants.destinationFolder;
+                        templateFile = path_1.default.join(folder, artifacts_enum_1.ExportConstants.templateFile);
+                        parameterFile = path_1.default.join(folder, artifacts_enum_1.ExportConstants.parameterFile);
+                        // Validate and then export the templates.
+                        return [4 /*yield*/, OperationManager.ValidateArtifacts(false)];
+                    case 1:
+                        // Validate and then export the templates.
+                        _a.sent();
+                        // Deploy the exported templates.
+                        return [4 /*yield*/, OperationManager.DeployArtifacts(templateFile, parameterFile)];
+                    case 2:
+                        // Deploy the exported templates.
+                        _a.sent();
+                        return [2 /*return*/];
+                }
+            });
+        });
+    };
+    return OperationManager;
+}());
+exports.OperationManager = OperationManager;
+//# sourceMappingURL=OperationsManager.js.map
+
+/***/ }),
+
 /***/ 5131:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
@@ -911,52 +1468,55 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.main = void 0;
 var core = __importStar(__nccwpck_require__(4120));
-var artifacts_client_1 = __nccwpck_require__(5131);
-var orchestrator_1 = __nccwpck_require__(2833);
-var package_file_1 = __nccwpck_require__(5337);
-var deploy_utils_1 = __nccwpck_require__(3850);
 var logger_1 = __nccwpck_require__(4659);
+var BundleManager_1 = __nccwpck_require__(1365);
+var artifacts_enum_1 = __nccwpck_require__(5724);
+var OperationsManager_1 = __nccwpck_require__(5903);
 function main() {
     return __awaiter(this, void 0, void 0, function () {
-        var targetWorkspace, templateFile, parametersFile, overrideArmParameters, environment, deleteArtifactsNotInTemplate, deleteArtifactsNotInTemplateString, deployMPE, deployMPEString, packageFiles, params, artifactClient, orchestrator, err_1;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
+        var operation, bundle_source, bundle_manager, _a, err_1;
+        return __generator(this, function (_b) {
+            switch (_b.label) {
                 case 0:
                     logger_1.SystemLogger.setLogger(new logger_1.ActionLogger(true));
-                    targetWorkspace = core.getInput('TargetWorkspaceName');
-                    templateFile = core.getInput("TemplateFile");
-                    parametersFile = core.getInput("ParametersFile");
-                    overrideArmParameters = core.getInput('OverrideArmParameters');
-                    environment = core.getInput('Environment');
-                    deleteArtifactsNotInTemplate = false;
-                    deleteArtifactsNotInTemplateString = core.getInput("DeleteArtifactsNotInTemplate");
-                    if (deleteArtifactsNotInTemplateString.toLowerCase() == "true") {
-                        deleteArtifactsNotInTemplate = true;
-                    }
-                    deployMPE = false;
-                    deployMPEString = core.getInput("deployManagedPrivateEndpoint");
-                    if (deployMPEString.toLowerCase() == "true") {
-                        deployMPE = true;
-                    }
-                    logger_1.SystemLogger.info("DeleteArtifactsNotInTemplate=" + deleteArtifactsNotInTemplate);
-                    logger_1.SystemLogger.info("deployManagedPrivateEndpoint=" + deployMPE);
-                    _a.label = 1;
+                    _b.label = 1;
                 case 1:
-                    _a.trys.push([1, 4, , 5]);
-                    packageFiles = new package_file_1.PackageFile(templateFile, parametersFile, overrideArmParameters);
-                    return [4 /*yield*/, deploy_utils_1.getParams()];
-                case 2:
-                    params = _a.sent();
-                    artifactClient = new artifacts_client_1.ArtifactClient(params);
-                    orchestrator = new orchestrator_1.Orchestrator(packageFiles, artifactClient, targetWorkspace, environment, deleteArtifactsNotInTemplate, deployMPE);
-                    return [4 /*yield*/, orchestrator.orchestrateFromPublishBranch()];
+                    _b.trys.push([1, 12, , 13]);
+                    operation = core.getInput('operation');
+                    bundle_source = core.getInput('npmpackage');
+                    bundle_manager = new BundleManager_1.BundleManager(bundle_source);
+                    _a = operation;
+                    switch (_a) {
+                        case artifacts_enum_1.OPERATIONS.deploy: return [3 /*break*/, 2];
+                        case artifacts_enum_1.OPERATIONS.validateDeploy: return [3 /*break*/, 4];
+                        case artifacts_enum_1.OPERATIONS.validate: return [3 /*break*/, 7];
+                        case 'default': return [3 /*break*/, 10];
+                    }
+                    return [3 /*break*/, 11];
+                case 2: return [4 /*yield*/, OperationsManager_1.OperationManager.DeployArtifacts()];
                 case 3:
-                    _a.sent();
-                    return [3 /*break*/, 5];
-                case 4:
-                    err_1 = _a.sent();
+                    _b.sent();
+                    return [3 /*break*/, 11];
+                case 4: return [4 /*yield*/, bundle_manager.invokeBundle()];
+                case 5:
+                    _b.sent();
+                    return [4 /*yield*/, OperationsManager_1.OperationManager.ValidateAndDeploy()];
+                case 6:
+                    _b.sent();
+                    return [3 /*break*/, 11];
+                case 7: return [4 /*yield*/, bundle_manager.invokeBundle()];
+                case 8:
+                    _b.sent();
+                    return [4 /*yield*/, OperationsManager_1.OperationManager.ValidateArtifacts()];
+                case 9:
+                    _b.sent();
+                    return [3 /*break*/, 11];
+                case 10: throw new Error("Operation not supported : " + operation);
+                case 11: return [3 /*break*/, 13];
+                case 12:
+                    err_1 = _b.sent();
                     throw new Error(err_1.message);
-                case 5: return [2 /*return*/];
+                case 13: return [2 /*return*/];
             }
         });
     });
@@ -11246,34 +11806,33 @@ var Orchestrator = /** @class */ (function () {
                         return [4 /*yield*/, arm_template_utils_1.getArtifacts(armParameterContent, armTemplateContent, overrideArmParameters, this.targetWorkspace, targetLocation)];
                     case 4:
                         artifactsToDeploy = _a.sent();
-                        if (!this.deleteArtifactsNotInTemplate) return [3 /*break*/, 9];
+                        logger_1.SystemLogger.info("Start deploying artifacts from the template.");
+                        return [4 /*yield*/, this.deployResourcesInOrder(this.artifactClient, artifactsToDeploy, this.targetWorkspace, this.environment, canDeployMPE)];
+                    case 5:
+                        _a.sent();
+                        logger_1.SystemLogger.info("Completed deploying artifacts from the template.");
+                        if (!this.deleteArtifactsNotInTemplate) return [3 /*break*/, 10];
                         // Delete extra artifacts in the workspace
                         logger_1.SystemLogger.info("Attempting to delete artifacts from workspace, that were not in the template.");
                         return [4 /*yield*/, workspace_artifacts_getter_1.getArtifactsFromWorkspace(this.targetWorkspace, this.environment)];
-                    case 5:
+                    case 6:
                         artifactsInWorkspace = _a.sent();
                         logger_1.SystemLogger.info("Found " + artifactsInWorkspace.length + " artifacts in the workspace.");
                         artifactsToDeleteInWorkspace = workspace_artifacts_getter_1.getArtifactsToDeleteFromWorkspace(artifactsInWorkspace, artifactsToDeploy, artifacts_client_1.typeMap);
                         logger_1.SystemLogger.info("Found " + artifactsToDeleteInWorkspace.length + " artifacts in the workspace that many need to be deleted.");
                         artifactsToDeleteInWorkspaceInOrder = workspace_artifacts_getter_1.getArtifactsToDeleteFromWorkspaceInOrder(artifactsToDeleteInWorkspace);
                         return [4 /*yield*/, this.deleteResourcesInOrder(this.artifactClient, artifactsToDeleteInWorkspaceInOrder, this.targetWorkspace, this.environment, armParameterContent)];
-                    case 6:
+                    case 7:
                         _a.sent();
                         return [4 /*yield*/, workspace_artifacts_getter_1.DatalakeSubArtifactsToDelete(artifactsInWorkspace, artifactsToDeploy, this.targetWorkspace, this.environment)];
-                    case 7:
+                    case 8:
                         datalakeSubArtifactsToDelete = _a.sent();
                         return [4 /*yield*/, this.deleteDatalakeArtifacts(this.artifactClient, datalakeSubArtifactsToDelete, this.targetWorkspace, this.environment)];
-                    case 8:
+                    case 9:
                         _a.sent();
                         logger_1.SystemLogger.info("Completed deleting artifacts from workspace, that were not in the template.");
-                        _a.label = 9;
-                    case 9:
-                        logger_1.SystemLogger.info("Start deploying artifacts from the template.");
-                        return [4 /*yield*/, this.deployResourcesInOrder(this.artifactClient, artifactsToDeploy, this.targetWorkspace, this.environment, canDeployMPE)];
-                    case 10:
-                        _a.sent();
-                        logger_1.SystemLogger.info("Completed deploying artifacts from the template.");
-                        return [3 /*break*/, 12];
+                        _a.label = 10;
+                    case 10: return [3 /*break*/, 12];
                     case 11:
                         err_1 = _a.sent();
                         throw new Error("Orchestrate failed - " + err_1);
@@ -12146,7 +12705,7 @@ exports.getDependentsFromArtifact = getDependentsFromArtifact;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.DEFAULT_ARTIFACTS_TYPE = exports.DEFAULT_ARTIFACTS = exports.DataFactoryType = exports.Artifact = void 0;
+exports.ExportConstants = exports.OPERATIONS = exports.DEFAULT_ARTIFACTS_TYPE = exports.DEFAULT_ARTIFACTS = exports.DataFactoryType = exports.Artifact = void 0;
 var Artifact;
 (function (Artifact) {
     Artifact["notebook"] = "notebook";
@@ -12197,6 +12756,19 @@ var DEFAULT_ARTIFACTS_TYPE;
     DEFAULT_ARTIFACTS_TYPE["storage"] = "AzureBlobFS";
     DEFAULT_ARTIFACTS_TYPE["credentials"] = "ManagedIdentity";
 })(DEFAULT_ARTIFACTS_TYPE = exports.DEFAULT_ARTIFACTS_TYPE || (exports.DEFAULT_ARTIFACTS_TYPE = {}));
+var OPERATIONS;
+(function (OPERATIONS) {
+    OPERATIONS["deploy"] = "deploy";
+    OPERATIONS["validate"] = "validate";
+    OPERATIONS["export"] = "export";
+    OPERATIONS["validateDeploy"] = "validateDeploy";
+})(OPERATIONS = exports.OPERATIONS || (exports.OPERATIONS = {}));
+var ExportConstants;
+(function (ExportConstants) {
+    ExportConstants["destinationFolder"] = "ExportedArtifacts";
+    ExportConstants["templateFile"] = "TemplateForWorkspace.json";
+    ExportConstants["parameterFile"] = "TemplateParametersForWorkspace.json";
+})(ExportConstants = exports.ExportConstants || (exports.ExportConstants = {}));
 //# sourceMappingURL=artifacts_enum.js.map
 
 /***/ }),
@@ -13348,6 +13920,14 @@ function GetDatabasesWithChildren(databases, targetWorkspaceName, environment) {
 
 "use strict";
 module.exports = require("assert");
+
+/***/ }),
+
+/***/ 2081:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("child_process");
 
 /***/ }),
 
