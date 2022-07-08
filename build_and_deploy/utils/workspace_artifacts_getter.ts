@@ -24,7 +24,8 @@ const artifactTypesToQuery:Artifact[] = [
     Artifact.trigger,
     Artifact.managedprivateendpoints,
     Artifact.database,
-    Artifact.kqlScript
+    Artifact.kqlScript,
+    Artifact.sparkconfiguration
 ];
 
 export async function getArtifactsFromWorkspaceOfType(artifactTypeToQuery: Artifact, targetWorkspaceName: string, environment: string): Promise<Resource[]> {

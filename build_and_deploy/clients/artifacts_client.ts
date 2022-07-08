@@ -29,6 +29,7 @@ export var typeMap = new Map<string, Artifact>([
     [DataFactoryType.managedPrivateEndpoints.toLowerCase(), Artifact.managedprivateendpoints],
     [DataFactoryType.kqlScript.toLowerCase(), Artifact.kqlScript],
     [DataFactoryType.database.toLowerCase(), Artifact.database],
+    [DataFactoryType.sparkconfiguration.toLowerCase(), Artifact.sparkconfiguration],
 ]);
 
 export interface DeploymentTrackingRequest {
@@ -96,6 +97,8 @@ export class ArtifactClient {
                 return this.deployManagedPrivateEndpoint(baseUrl, payload, token);
             case Artifact.database:
                 return this.deployDatabase(baseUrl, payload, token);
+            case Artifact.sparkconfiguration:
+                return this.deploySparkConfiguration(baseUrl, payload, token);
             default:
                 return DeployStatus.skipped;
         }
@@ -309,6 +312,16 @@ export class ArtifactClient {
         } catch (err) {
             console.log(err);
             throw new Error("Database deployment failed " + JSON.stringify(err));
+        }
+    }
+
+    public async deploySparkConfiguration(baseUrl: string, payload: Resource, token: string): Promise<string> {
+        try {
+            return await this.artifactDeploymentTask(baseUrl,
+                `${Artifact.sparkconfiguration.toString()}s`, payload, token);
+        } catch (err) {
+            console.log(err);
+            throw new Error("Spark Configuration deployment failed " + JSON.stringify(err));
         }
     }
 
