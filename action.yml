@@ -54,5 +54,5 @@ inputs:
     description: 'Source for the npm package. Only for dev testing.'
     required: false
 runs:
-  using: 'node12'
+  using: 'node16'
   main: './dist/index.js'
