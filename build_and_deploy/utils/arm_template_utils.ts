@@ -84,6 +84,16 @@ function replaceBackSlash(inputString: string): string {
 
     let outputString: string = inputString;
 
+    while(outputString.indexOf(`\\\\\\\\`)>=0)
+    {
+        outputString = outputString.substr(0, outputString.indexOf(`\\\\\\\\`)) + backslash + backslash + backslash + backslash + outputString.substr(outputString.indexOf(`\\\\\\\\`)+4);
+    }
+
+    while(outputString.indexOf(`\\\\`)>=0)
+    {
+        outputString = outputString.substr(0, outputString.indexOf(`\\\\`)) + backslash + backslash + outputString.substr(outputString.indexOf(`\\\\`)+2);
+    }
+    
     while (outputString.indexOf(`\\\"`) >= 0) {
         outputString = outputString.substr(0, outputString.indexOf(`\\\"`)) + quote + outputString.substr(outputString.indexOf(`\\\"`) + 2);
     }
