@@ -6,6 +6,7 @@ import * as https from 'https';
 import * as path from 'path';
 import {spawn} from "child_process";
 import {SystemLogger} from "../utils/logger";
+import { HttpsProxyAgent } from 'https-proxy-agent';
 
 export class BundleManager {
     private static readonly prodBundleUrl = 'https://web.azuresynapse.net/assets/cmd-api/main.js';
@@ -35,7 +36,9 @@ export class BundleManager {
             const file = fs.createWriteStream(BundleManager.defaultBundleFilePath);
             return new Promise((resolve, reject) => {
                 SystemLogger.info("Downloading asset file");
-                https.get(this._bundleUrl, (response) => {
+                const proxy = process.env.HTTPS_PROXY;
+                const agent = proxy ? new HttpsProxyAgent(proxy) : undefined;
+                https.get(this._bundleUrl, { agent }, (response) => {
                     response.pipe(file);
                     file.on('finish', () => {
                         file.close();
