@@ -35,7 +35,8 @@
     "tsconfig-paths": "^3.9.0",
     "typed-rest-client": "^1.7.3",
     "uuid": "8.3.0",
-    "https-proxy-agent": "^5.0.0"
+    "https-proxy-agent": "^5.0.0",
+    "proxy-from-env": "^1.0.0"
   },
   "devDependencies": {
     "@types/uuid": "^8.3.0",
