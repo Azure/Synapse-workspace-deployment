@@ -85,7 +85,7 @@ uses: Azure/synapse-workspace-deployment
 - uses: Azure/synapse-workspace-deployment
         with:
           TargetWorkspaceName: 'targetworkspace'
-          ArtifactsFolder: './RootFolder'
+          ArtifactsFolder: '$GITHUB_WORKSPACE'
           operation: 'validate'
 - uses: actions/upload-artifact@v3
         with:
@@ -99,7 +99,7 @@ uses: Azure/synapse-workspace-deployment
 uses: Azure/synapse-workspace-deployment
         with:
           TargetWorkspaceName: 'targetworkspace'
-          ArtifactsFolder: './RootFolder'
+          ArtifactsFolder: '$GITHUB_WORKSPACE'
           environment: 'Azure Public'
           resourceGroup: 'myresourcegroup'
           clientId: ${{ secrets.CLIENTID }}
