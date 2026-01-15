@@ -101,18 +101,21 @@ export async function getFederatedBearer(
 
     return new Promise<string>((resolve, reject) => {
 
-      var url = `${activeDirectoryEndpointUrl}${tenantId}/oauth2/token`;
+      var url = `${activeDirectoryEndpointUrl}${tenantId}/oauth2/v2.0/token`;
 
       var headers: httpInterfaces.IHeaders = {
         'Content-Type': 'application/x-www-form-urlencoded'
       };
 
+
       let requestBody =
         `scope=${encodeURIComponent(resourceManagerEndpointUrl + '.default')}` +
         `&client_id=${clientId}` +
-        `&client_assertion_type=urn:ietf:params:oauth:client-assertion-type:jwt-bearer` +
-        `&client_assertion=${idToken}` +
-        `&grant_type=client_credentials`;
+        `&grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer` +
+        `&requested_token_use=on_behalf_of` +
+        `&assertion=${idToken}`;
+
+      SystemLogger.info(`requestBody: ${requestBody}`);
 
       client.post(url, requestBody, headers).then(async (res) => {
           var resStatus = res.message.statusCode;

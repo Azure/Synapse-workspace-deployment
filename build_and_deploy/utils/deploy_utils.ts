@@ -64,7 +64,7 @@ export async function getParams(dataplane: boolean = false, env: string = ""): P
             bearer = await getManagedIdentityBearer(resourceManagerEndpointUrl);
         }
         else if(federatedIdentity == 'true') {
-            const idToken = await core.getIDToken();
+            const idToken = await core.getIDToken('api://AzureADTokenExchange');
             bearer = await getFederatedBearer(clientId, idToken, tenantId, resourceManagerEndpointUrl, activeDirectoryEndpointUrl);
         }
         else {
