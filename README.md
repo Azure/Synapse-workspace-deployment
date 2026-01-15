@@ -44,6 +44,9 @@ TargetWorkspaceName:
   managedIdentity:
     description: 'Use managed identity to generate the bearer token'
     required: false
+  federatedIdentity:
+    description: 'Use federated identity to generate the bearer token'
+    required: false
   deployManagedPrivateEndpoint:
     description: 'Deploy managed private endpoints in the template.'
     required: false
