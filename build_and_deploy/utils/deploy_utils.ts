@@ -3,7 +3,8 @@
 
 
 import * as core from '@actions/core';
-import { getBearer, getManagedIdentityBearer, getFederatedBearer } from './service_principal_client_utils';
+import { getBearer, getManagedIdentityBearer } from './service_principal_client_utils';
+import { getAzureFederatedToken } from './federated_identity_utils';
 
 export enum DeployStatus {
     success = 'Success',
@@ -64,8 +65,11 @@ export async function getParams(dataplane: boolean = false, env: string = ""): P
             bearer = await getManagedIdentityBearer(resourceManagerEndpointUrl);
         }
         else if(federatedIdentity == 'true') {
-            const idToken = await core.getIDToken('api://AzureADTokenExchange');
-            bearer = await getFederatedBearer(clientId, idToken, tenantId, resourceManagerEndpointUrl, activeDirectoryEndpointUrl);
+            bearer = await getAzureFederatedToken({
+              clientId: clientId,
+              tenantId: tenantId,
+              subscriptionId: subscriptionId
+            });
         }
         else {
             bearer = await getBearer(clientId, clientSecret, subscriptionId, tenantId, resourceManagerEndpointUrl, activeDirectoryEndpointUrl);

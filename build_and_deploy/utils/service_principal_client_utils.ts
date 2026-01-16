@@ -49,7 +49,7 @@ export async function getBearer(
         });
 
     } catch (err) {
-        throw new Error("Unable to fetch the service principal token: " + err.message);
+        throw new Error("Unable to fetch the service principal token: " + (err instanceof Error ? err.message : String(err)));
     }
 }
 
@@ -85,57 +85,8 @@ export async function getManagedIdentityBearer(
         });
 
     } catch (err) {
-        throw new Error("Unable to fetch the managed identity bearer token: " + err.message);
+        throw new Error("Unable to fetch the managed identity bearer token: " + (err instanceof Error ? err.message : String(err)));
     }
-}
-
-export async function getFederatedBearer(
-  clientId: string,
-  idToken: string,
-  tenantId: string,
-  resourceManagerEndpointUrl: string,
-  activeDirectoryEndpointUrl: string
-): Promise<string> {
-
-  try {
-
-    return new Promise<string>((resolve, reject) => {
-
-      var url = `${activeDirectoryEndpointUrl}${tenantId}/oauth2/v2.0/token`;
-
-      var headers: httpInterfaces.IHeaders = {
-        'Content-Type': 'application/x-www-form-urlencoded'
-      };
-
-
-      let requestBody =
-        `scope=${encodeURIComponent(resourceManagerEndpointUrl + '.default')}` +
-        `&client_id=${clientId}` +
-        `&grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer` +
-        `&requested_token_use=on_behalf_of` +
-        `&assertion=${idToken}`;
-
-      SystemLogger.info(`requestBody: ${requestBody}`);
-
-      client.post(url, requestBody, headers).then(async (res) => {
-          var resStatus = res.message.statusCode;
-          if (resStatus != 200 && resStatus != 201 && resStatus != 202) {
-              SystemLogger.info(`Unable to fetch federated bearer token, status: ${resStatus}; status message: ${res.message.statusMessage}`);
-              let error = await res.readBody();
-              SystemLogger.info(error);
-              return reject(DeployStatus.failed);
-          }
-
-          SystemLogger.info(`Able to fetch federated bearer token: ${resStatus}; status message: ${res.message.statusMessage}`);
-          let body = await res.readBody();
-          return resolve(JSON.parse(body)["access_token"]);
-      });
-
-    });
-
-  } catch (err) {
-    throw new Error('Unable to fetch the federated bearer token: ' + err.message);
-  }
 }
 
 export async function getWorkspaceLocation(params: Params, targetWorkspace: string): Promise<string> {
@@ -168,6 +119,6 @@ export async function getWorkspaceLocation(params: Params, targetWorkspace: stri
             })
         });
     } catch (err) {
-        throw new Error("Unable to fetch the location of the workspace: " + err.message);
+        throw new Error("Unable to fetch the location of the workspace: " + (err instanceof Error ? err.message : String(err)));
     }
 }

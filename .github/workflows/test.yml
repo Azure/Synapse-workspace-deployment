@@ -31,8 +31,8 @@ jobs:
           ParametersFile: "./TemplateParametersForWorkspace.json"
           environment: "Azure Public"
           resourceGroup: "myresourcegroup"
-          clientId: ${{ secrets.AZURE_CLIENT_ID }}
+          clientId: ${{ vars.AZURE_CLIENT_ID }}
           federatedIdentity: true
-          subscriptionId: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-          tenantId: ${{ secrets.AZURE_TENANT_ID }}
+          subscriptionId: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+          tenantId: ${{ vars.AZURE_TENANT_ID }}
           operation: "deploy"
