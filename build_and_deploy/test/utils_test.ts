@@ -8,6 +8,7 @@ import {
 import { getParams, getRMUrl } from "../utils/deploy_utils";
 import { ILogger, SystemLogger } from "../utils/logger";
 import { armParams, armTemplate, armTemplate_complete, expectedArmTemplate } from "./helpers/utils_test_helpers";
+import { appendDefaultScope } from '../utils/federated_identity_utils';
 const pcu = require("../utils/service_principal_client_utils");
 
 const chai_object = require('chai');
@@ -108,5 +109,13 @@ describe("Test SystemLogger utils", () => {
         expect(SystemLogger.debug("1")).to.be.equal("1");
         expect(SystemLogger.error("1")).to.be.equal("1");
         expect(SystemLogger.warn("1")).to.be.equal("1");
+    });
+});
+
+describe("Test Federated Identity utils", () => {
+    it("Scopes should have /.default appended regardles of presence of trailing /'s", () => {
+      expect(appendDefaultScope("https://management.azure.com")).to.be.equal("https://management.azure.com/.default");
+      expect(appendDefaultScope("https://management.azure.com/")).to.be.equal("https://management.azure.com/.default");
+      expect(appendDefaultScope("https://management.azure.com//")).to.be.equal("https://management.azure.com/.default");
     });
 });

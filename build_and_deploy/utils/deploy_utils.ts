@@ -4,6 +4,7 @@
 
 import * as core from '@actions/core';
 import { getBearer, getManagedIdentityBearer } from './service_principal_client_utils';
+import { getAzureFederatedToken } from './federated_identity_utils';
 
 export enum DeployStatus {
     success = 'Success',
@@ -23,6 +24,7 @@ export interface Params {
     subscriptionId: string;
     tenantId: string;
     managedIdentity: string;
+    federatedIdentity: string;
     activeDirectoryEndpointUrl: string;
     resourceManagerEndpointUrl: string;
     bearer: string,
@@ -44,6 +46,7 @@ export async function getParams(dataplane: boolean = false, env: string = ""): P
         var subscriptionId = core.getInput("subscriptionId");
         var tenantId = core.getInput("tenantId");
         var managedIdentity = core.getInput("managedIdentity");
+        var federatedIdentity = core.getInput("federatedIdentity");
         var activeDirectoryEndpointUrl = getAdEndpointUrl(env);
         var resourceManagerEndpointUrl = getRmEndpointUrl(env);
 
@@ -58,9 +61,18 @@ export async function getParams(dataplane: boolean = false, env: string = ""): P
 
         let bearer: string;
 
-        if(managedIdentity == 'true'){
+        if(managedIdentity == 'true') {
             bearer = await getManagedIdentityBearer(resourceManagerEndpointUrl);
-        }else{
+        }
+        else if(federatedIdentity == 'true') {
+            bearer = await getAzureFederatedToken({
+              clientId: clientId,
+              tenantId: tenantId,
+              subscriptionId: subscriptionId,
+              resourceManagerEndpointUrl: resourceManagerEndpointUrl
+            });
+        }
+        else {
             bearer = await getBearer(clientId, clientSecret, subscriptionId, tenantId, resourceManagerEndpointUrl, activeDirectoryEndpointUrl);
         }
 
@@ -70,6 +82,7 @@ export async function getParams(dataplane: boolean = false, env: string = ""): P
             'subscriptionId': subscriptionId,
             'tenantId': tenantId,
             'managedIdentity': managedIdentity,
+            'federatedIdentity': federatedIdentity,
             'activeDirectoryEndpointUrl': activeDirectoryEndpointUrl,
             'resourceManagerEndpointUrl': resourceManagerEndpointUrl,
             'bearer': bearer,

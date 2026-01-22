@@ -36,7 +36,10 @@ inputs:
     description: 'Delete the artifacts which are in the workspace but not in the template.'
     required: false
   managedIdentity:
-    description: 'Use managed identity to generate the bearer token?'
+    description: 'Use managed identity to generate the bearer token? (Takes precedence over federatedIdentity and clientSecret if present)'
+    required: false
+  federatedIdentity:
+    description: 'Use federated identity to generate the bearer token? (Takes precedence over clientSecret if present)'
     required: false
   deployManagedPrivateEndpoint:
     description: 'Deploy managed private endpoints in the template.'

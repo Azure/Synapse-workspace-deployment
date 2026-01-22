@@ -514,6 +514,6 @@ async function GetDatabasesWithChildren(databases: Resource[], targetWorkspaceNa
         return databasesWithChildren;
     }
     catch(err){
-        throw new Error(err);
+        throw new Error(err instanceof Error ? err.message : String(err));
     }
 }
