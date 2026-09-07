@@ -52,13 +52,15 @@ export class BundleManager {
 
     }
 
-    public static async ExecuteShellCommand(cmd: string){
+    public static async ExecuteShellCommand(cmd: string, cmdArgs: string[]){
         SystemLogger.info("Executing shell command");
         SystemLogger.info("Command : "+ cmd);
+        SystemLogger.info("Command args : "+ cmdArgs.join(' '));
+
         try {
 
             const result = await new Promise((resolve, reject) => {
-                let command = spawn(cmd, {shell: true});
+                let command = spawn(cmd, cmdArgs, {shell: false});
 
                 command.stdout.on('data', data => {
                     SystemLogger.info("Stdout: "+ data.toString());
