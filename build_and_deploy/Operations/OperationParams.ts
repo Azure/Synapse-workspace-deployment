@@ -3,7 +3,7 @@
 
 import {DeployParams, ExportParams, ValidateParams} from "./OperationInterfaces";
 import * as core from '@actions/core';
-import {isStrNullOrEmpty} from "../utils/common_utils";
+import {isStrNullOrEmpty, resolveArtifactsFolder} from "../utils/common_utils";
 import {ExportConstants} from "../utils/artifacts_enum";
 
 
@@ -51,7 +51,7 @@ export function GetExportParams(publishArtifact: boolean): ExportParams{
     let workspaceName = core.getInput("TargetWorkspaceName")!;
 
     return {
-        artifactsFolder: artifactsFolder,
+        artifactsFolder: resolveArtifactsFolder(artifactsFolder),
         workspaceName: workspaceName,
         destinationFolder: destinationFolder,
         publishArtifact: publishArtifact

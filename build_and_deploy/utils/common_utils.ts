@@ -2,6 +2,8 @@
 // Licensed under the MIT license.
 
 import {DataFactoryType} from "./artifacts_enum";
+import * as path from 'path';
+import * as fs from 'fs';
 
 export function isStrNullOrEmpty(val: string): boolean {
     if (val === undefined || val === null || val.trim() === '') {
@@ -36,4 +38,38 @@ export class DefaultArtifact {
             && type.toLowerCase() === this.type.toLowerCase()
             && dataFactoryType.toLowerCase() === this.dataFactoryType.toLowerCase();
     }
+}
+
+export function resolveArtifactsFolder(inputFolder: string): string {
+    const workspace = path.resolve(
+        process.env.GITHUB_WORKSPACE || process.cwd()
+    );
+
+    const resolvedFolder = path.resolve(workspace, inputFolder);
+    const relative = path.relative(workspace, resolvedFolder);
+
+    const escapesWorkspace =
+        relative === '..' ||
+        relative.startsWith(`..${path.sep}`) ||
+        path.isAbsolute(relative);
+
+    if (escapesWorkspace) {
+        throw new Error(
+            `ArtifactsFolder must be located within the GitHub workspace.`
+        );
+    }
+
+    if (!fs.existsSync(resolvedFolder)) {
+        throw new Error(
+            `ArtifactsFolder does not exist: ${resolvedFolder}`
+        );
+    }
+
+    if (!fs.statSync(resolvedFolder).isDirectory()) {
+        throw new Error(
+            `ArtifactsFolder must point to a directory: ${resolvedFolder}`
+        );
+    }
+
+    return resolvedFolder;
 }
