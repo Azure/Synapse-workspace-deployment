@@ -61,3 +61,5 @@ export enum ExportConstants {
     templateFile = "TemplateForWorkspace.json",
     parameterFile = "TemplateParametersForWorkspace.json"
 }
+
+export const WORKSPACENAME_REGEX = /^[a-z0-9][a-z0-9-]{1,48}[a-z0-9]$/

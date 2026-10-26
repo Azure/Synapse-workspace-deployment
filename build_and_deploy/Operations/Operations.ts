@@ -66,15 +66,16 @@ export class ValidateOperation implements Operations{
 
     public async PerformOperation(): Promise<void> {
         SystemLogger.info(`Starting ${this.operationType} operation`);
-        let cmd = [
-            'node',
+        let cmd = 'node';
+
+        let cmdArgs = [
             BundleManager.defaultBundleFilePath,
             this.operationType,
             `"${this.operationParams.artifactsFolder}"`,
             this.operationParams.workspaceName
-        ].join(' ');
+        ];
 
-        await BundleManager.ExecuteShellCommand(cmd);
+        await BundleManager.ExecuteShellCommand(cmd, cmdArgs);
     }
 }
 
@@ -88,16 +89,16 @@ export class ExportOperation implements Operations{
 
     public async PerformOperation(): Promise<void> {
         SystemLogger.info(`Starting ${this.operationType} operation`);
-        let cmd = [
-            'node',
+        let cmd = 'node';
+        let cmdArgs = [
             BundleManager.defaultBundleFilePath,
             this.operationType,
             `"${this.operationParams.artifactsFolder}"`,
             this.operationParams.workspaceName,
             this.operationParams.destinationFolder
-        ].join(' ');
+        ];
 
-        await BundleManager.ExecuteShellCommand(cmd);
+        await BundleManager.ExecuteShellCommand(cmd, cmdArgs);
 
         if(this.operationParams.publishArtifact){
             SystemLogger.info("Generating artifacts in "+ this.operationParams.destinationFolder);

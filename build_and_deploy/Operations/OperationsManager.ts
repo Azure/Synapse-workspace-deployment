@@ -5,7 +5,7 @@ import {DeployParams, ExportParams, Operations} from "./OperationInterfaces";
 import {GetDeployParams, GetExportParams} from "./OperationParams";
 import {DeployOperation, ExportOperation} from "./Operations";
 import path from "path";
-import {ExportConstants} from "../utils/artifacts_enum";
+import {ExportConstants, WORKSPACENAME_REGEX} from "../utils/artifacts_enum";
 
 export class OperationManager{
 
@@ -25,6 +25,11 @@ export class OperationManager{
     // Export operation
     static async ExportArtifacts(publishArtifacts: boolean){
         let params: ExportParams = GetExportParams(publishArtifacts);
+        if (!WORKSPACENAME_REGEX.test(params?.workspaceName))
+        {
+            throw new Error(`Invalid workspace name: ${params?.workspaceName}`);
+        }
+
         let exporter: Operations = new ExportOperation(params);
         await exporter.PerformOperation();
     }
