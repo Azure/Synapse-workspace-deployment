@@ -31,7 +31,7 @@ export async function main() {
                 throw new Error(`Operation not supported : ${operation}`);
         }
     } catch (err) {
-        throw new Error(err.message);
+        throw new Error(err instanceof Error ? err.message : String(err));
     }
 }
 

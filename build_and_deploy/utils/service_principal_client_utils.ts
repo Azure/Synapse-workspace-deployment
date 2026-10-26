@@ -49,7 +49,8 @@ export async function getBearer(
         });
 
     } catch (err) {
-        throw new Error("Unable to fetch the service principal token: " + err.message);
+        const message = err instanceof Error ? err.message : String(err);
+        throw new Error("Unable to fetch the service principal token: " + message);
     }
 }
 
@@ -85,7 +86,8 @@ export async function getManagedIdentityBearer(
         });
 
     } catch (err) {
-        throw new Error("Unable to fetch the managed identity bearer token: " + err.message);
+        const message = err instanceof Error ? err.message : String(err);
+        throw new Error("Unable to fetch the managed identity bearer token: " + message);
     }
 }
 
@@ -120,6 +122,7 @@ export async function getWorkspaceLocation(params: Params, targetWorkspace: stri
             })
         });
     } catch (err) {
-        throw new Error("Unable to fetch the location of the workspace: " + err.message);
+        const message = err instanceof Error ? err.message : String(err);
+        throw new Error("Unable to fetch the location of the workspace: " + message);
     }
 }
