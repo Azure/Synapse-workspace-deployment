@@ -93,7 +93,7 @@ export class ExportOperation implements Operations{
         let cmdArgs = [
             BundleManager.defaultBundleFilePath,
             this.operationType,
-            `"${this.operationParams.artifactsFolder}"`,
+            this.operationParams.artifactsFolder,
             this.operationParams.workspaceName,
             this.operationParams.destinationFolder
         ];
