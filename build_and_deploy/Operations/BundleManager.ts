@@ -1,11 +1,13 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
+import { spawn } from "child_process";
 import * as fs from 'fs';
 import * as https from 'https';
+import { HttpsProxyAgent } from 'https-proxy-agent';
+import { getProxyForUrl } from 'proxy-from-env';
 import * as path from 'path';
-import {spawn} from "child_process";
-import {SystemLogger} from "../utils/logger";
+import { SystemLogger } from "../utils/logger";
 
 export class BundleManager {
     private static readonly prodBundleUrl = 'https://web.azuresynapse.net/assets/cmd-api/main.js';
@@ -19,7 +21,7 @@ export class BundleManager {
 
     constructor(source: string = 'prod') {
         this._source = source;
-        if(source.toLowerCase() == "ppe"){
+        if (source.toLowerCase() == "ppe") {
             this._bundleUrl = BundleManager.ppeBundleUrl;
             SystemLogger.info("Setting bundle source as PPE");
         }
@@ -27,65 +29,67 @@ export class BundleManager {
         SystemLogger.info("Bundle source : " + this._bundleUrl);
     }
 
-    public async invokeBundle(): Promise<void>{
-        try{
+    public async invokeBundle(): Promise<void> {
+        try {
             if (!fs.existsSync(BundleManager.defaultBundleDir)) {
                 fs.mkdirSync(BundleManager.defaultBundleDir);
             }
             const file = fs.createWriteStream(BundleManager.defaultBundleFilePath);
             return new Promise((resolve, reject) => {
                 SystemLogger.info("Downloading asset file");
-                https.get(this._bundleUrl, (response) => {
+                const proxyUrl = getProxyForUrl(this._bundleUrl);
+                const agent = proxyUrl ? new HttpsProxyAgent(proxyUrl) : undefined;
+                https.get(this._bundleUrl, { agent }, (response) => {
                     response.pipe(file);
                     file.on('finish', () => {
                         file.close();
-                        SystemLogger.info("Asset file downloaded at : "+ BundleManager.defaultBundleFilePath);
+                        SystemLogger.info("Asset file downloaded at : " + BundleManager.defaultBundleFilePath);
                         return resolve();
                     });
                 });
             });
         }
-        catch(ex){
+        catch (ex) {
             SystemLogger.info("Bundle manager failed to download asset file.");
             throw ex;
         }
 
     }
 
-    public static async ExecuteShellCommand(cmd: string){
+    public static async ExecuteShellCommand(cmd: string) {
         SystemLogger.info("Executing shell command");
-        SystemLogger.info("Command : "+ cmd);
+        SystemLogger.info("Command : " + cmd);
         try {
 
             const result = await new Promise((resolve, reject) => {
-                let command = spawn(cmd, {shell: true});
+                let command = spawn(cmd, { shell: true });
 
                 command.stdout.on('data', data => {
-                    SystemLogger.info("Stdout: "+ data.toString());
+                    SystemLogger.info("Stdout: " + data.toString());
                 });
 
                 command.stderr.on('data', data => {
-                    SystemLogger.info("Stderr: "+ data.toString());
+                    SystemLogger.info("Stderr: " + data.toString());
                 });
 
                 command.on('error', err => {
-                    if(err){
-                        SystemLogger.info("Error: "+ err.toString());
+                    if (err) {
+                        SystemLogger.info("Error: " + err.toString());
                         return reject("Shell execution failed.");
                     }
                 });
 
                 command.on('close', code => {
-                    if(code != 0){
+                    if (code != 0) {
                         return reject("Shell execution failed.");
                     }
-                    else{
+                    else {
                         return resolve("Shell command execution is successful.");
                     }
                 });
             });
 
-            if (result == "Shell execution failed."){
+            if (result == "Shell execution failed.") {
                 throw new Error("Shell execution failed.");
             }
             SystemLogger.info("Shell command execution is successful.");
